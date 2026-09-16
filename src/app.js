@@ -27,7 +27,7 @@ function modal(html){el('sheet').className='';lastFocus=document.activeElement;e
 function close(){el('sheet').close();lastFocus?.focus?.();}
 el('sheet').addEventListener('close',()=>{if(el('sheet').classList.contains('match-intro'))el('sheet').querySelectorAll('iframe').forEach(f=>f.remove());lastFocus?.focus?.();});
 function pirate(id){return M.PIRATES.find(p=>p.id===Number(id));}
-function art(p,cls='pirate-art'){if(p.id>=1&&p.id<=36)return '<img class="'+cls+'" src="/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+p.id+'.png" alt="'+esc(p.name)+'">';return '<div class="pirate-icon">'+p.icon+'</div>';}
+function art(p,cls='pirate-art'){if(p.id>=1&&p.id<=36)return '<img class="'+cls+'" src="/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+p.id+'.png" alt="'+esc(p.name)+'">';return '<div class="pirate-icon">'+p.icon+'</div>';}
 function cost(c){return Object.entries(c).map(([k,v])=>({gold:'🪙',gems:'💎',wood:'🪵',metal:'⚙',cloth:'▱'}[k]||'')+' '+fmt(v)+' '+k).join(' · ');}
 function materials(){return '<div class="materials">'+Object.entries(state.mats).map(([k,v])=>'<div class="material">'+cost({[k]:v})+'</div>').join('')+'</div>';}
 function shell(){
