@@ -1,0 +1,374 @@
+/* The reference menu is 1792 × 1008. Desktop coordinates remain invariant;
+   CSS zoom scales pixels, text and hit testing together. Different aspect
+   ratios get surrounding wood instead of a distorted interface. */
+.wallet-plaque{height:auto;aspect-ratio:1758/464}
+.header-art{object-fit:contain}
+.season-orders{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.scenery-selector{margin-top:20px}
+.scenery-selector .harbor-picker{grid-template-columns:repeat(3,minmax(0,1fr))}
+.scenery-selector .harbor-choice img{aspect-ratio:16/9}
+body.scaled-ui{height:100dvh;min-height:0;display:grid;place-items:center;overflow:hidden}
+.scaled-ui #app{position:relative;width:1792px;height:1008px;min-height:0;zoom:var(--ui-scale);overflow:hidden;background:var(--wood) center/800px 580px;box-shadow:0 0 80px #000}
+.scaled-ui #rail{position:absolute;inset:0 auto 0 0;width:244px;height:1008px;padding:12px 17px 12px 12px;gap:12px;border-right-width:5px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.scaled-ui #rail .brand,.scaled-ui #rail .version{display:none}
+.scaled-ui .nav-btn{width:210px;height:154px;min-height:154px;flex:0 0 154px;display:flex;flex-direction:column;justify-content:center;padding:4px;gap:0;font-size:28px;border-radius:8px}
+.scaled-ui .nav-art{width:122px;height:114px;object-fit:contain}
+.nav-art-slot{display:contents}
+.scaled-ui .nav-art-slot{display:block;position:relative;width:122px;height:114px;flex-shrink:0}
+/* Transparent padding differs between exports. Position each complete image
+   around its visible tile, retaining the source aspect ratio and shadows. */
+.scaled-ui .nav-art{position:absolute;height:auto;max-width:none}
+.scaled-ui .nav-btn[data-id=battle] .nav-art{width:164px;left:-21px;top:-17px}
+.scaled-ui .nav-btn[data-id=crew] .nav-art{width:154px;left:-8px;top:-6px}
+.scaled-ui .nav-btn[data-id=ports] .nav-art{width:110px;left:7px;top:3px}
+.scaled-ui .nav-btn[data-id=booty] .nav-art{width:182px;left:-22px;top:-7px}
+.scaled-ui .nav-btn[data-id=store] .nav-art{width:152px;left:-10px;top:-17px}
+.scaled-ui .nav-btn[data-id=settings] .nav-art{width:173px;left:-22px;top:-13px}
+.scaled-ui .nav-btn.active::after{display:block;right:-16px;border-width:9px}
+.scaled-ui #workspace{width:1548px;height:1008px;margin-left:244px;min-width:0}
+.scaled-ui #topbar{height:92px;padding:0 28px 0 20px;gap:24px;border-bottom-width:5px}
+.scaled-ui .captain-mark{min-width:240px;max-width:550px;gap:3px}
+.scaled-ui .captain-mark strong{font-size:30px}
+.scaled-ui .captain-mark .eyebrow{font-size:12px}
+.scaled-ui .captain-mark small{font-size:15px}
+.scaled-ui .wallet-plaque{width:322px;height:auto;aspect-ratio:1758/464;margin-left:auto}
+.scaled-ui .wallet{inset:16% 42% 15% 14%;column-gap:10px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.scaled-ui .wallet-label{display:block;font-size:8px}
+.scaled-ui .wallet strong{font-size:22px}
+.scaled-ui .wallet small{font-size:9px}
+.scaled-ui .wallet-add{width:48px;height:48px;min-height:48px;right:-92%;top:8%}
+.scaled-ui .header-help{display:block;font-size:16px}
+.scaled-ui #main{position:relative;height:916px;width:1548px;min-height:0;max-width:none;margin:0;padding:8px 28px 10px 20px;overflow:auto;scrollbar-gutter:stable}
+.scaled-ui .page-title{min-height:142px;margin:0 0 20px;display:flex;flex-direction:row;align-items:center;gap:20px}
+.scaled-ui .page-heading{gap:22px}
+.scaled-ui .title-art{width:250px;height:136px;object-fit:contain}
+.scaled-ui .page-title h2{font-size:38px}
+.scaled-ui .page-title .eyebrow{font-size:12px}
+.scaled-ui .page-title p{display:block;max-width:240px;font-size:16px}
+.scaled-ui h1{font-size:60px}
+.scaled-ui h2{font-size:36px}
+.scaled-ui h3{font-size:28px}
+.scaled-ui button{font-size:18px}
+.scaled-ui button.small{font-size:16px;min-height:48px}
+.scaled-ui .card{padding:16px;border-width:24px;border-image-width:24px}
+.scaled-ui .card h3{font-size:28px}
+.scaled-ui .footer-note{font-size:15px}
+.scaled-ui .split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+.scaled-ui .tabs{gap:10px;flex-wrap:nowrap}
+.scaled-ui .tabs button{min-width:132px;flex:0 0 auto;padding:12px 18px;font-size:20px}
+.scaled-ui .roster{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.scaled-ui .pirate-card .framed-portrait{max-width:210px}
+.scaled-ui .pirate-card .name{font-size:21px}
+.scaled-ui .pirate-card small{font-size:16px}
+.scaled-ui .scroll-panel{max-height:570px}
+.scaled-ui .ship-diagram{min-height:340px}
+.scaled-ui .slot{width:76px;height:76px}
+.scaled-ui .gear-grid,.scaled-ui .pack-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.scaled-ui .store-layout{grid-template-columns:300px minmax(0,1fr);gap:24px}
+.scaled-ui .deals{display:block}
+.scaled-ui .deals .card{margin-bottom:18px}
+.scaled-ui .ports-layout{grid-template-columns:minmax(0,1.1fr) minmax(220px,.55fr) minmax(0,1fr);gap:20px}
+.scaled-ui .ports-layout>section:last-child{grid-column:auto}
+.scaled-ui .port-regions{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.scaled-ui .port-region button{font-size:16px;min-height:48px}
+.scaled-ui .port-region h3{font-size:18px}
+.scaled-ui .port-fact{display:block;width:auto;margin:20px 0}
+.scaled-ui .board-row{font-size:17px;min-height:52px}
+.scaled-ui .chart,.scaled-ui .map-svg{min-height:480px}
+.scaled-ui .board{max-height:520px}
+.scaled-ui .season-intro{padding:22px;flex-direction:row;align-items:center}
+.scaled-ui .reward{height:150px}
+.scaled-ui .reward .label{font-size:17px}
+.scaled-ui .settings-grid{max-width:1120px}
+.scaled-ui .setting{flex-wrap:nowrap}
+.scaled-ui .setting input{width:240px;max-width:240px}
+.scaled-ui .water-tuner{height:590px}
+
+/* Mockup anchor rectangles: rail x=0..244; main x=264..1268;
+   right panels x=1288..1764. Keep the entire main menu in one view. */
+.scaled-ui[data-page=battle] #main{display:grid;grid-template-columns:1004px 476px;grid-template-rows:156px 482px 218px;gap:20px;overflow:hidden;scrollbar-gutter:auto}
+.scaled-ui[data-page=battle] .page-title{grid-column:1;grid-row:1;min-height:0;height:156px;padding:8px 22px;margin:0;border:24px solid transparent;border-image:url('/pirate-bash/public/menu-art/panel.svg') 48 / 24px stretch;background:var(--wood) center/800px 580px}
+.scaled-ui[data-page=battle] .page-title p{display:none}
+.scaled-ui[data-page=battle] .page-heading{gap:16px}
+.scaled-ui[data-page=battle] .page-title h2{font-size:36px;max-width:590px}
+.scaled-ui[data-page=battle] .title-art{width:246px;height:122px}
+.scaled-ui[data-page=battle] .harbor-layout,.scaled-ui[data-page=battle] .harbor-main,.scaled-ui[data-page=battle] .harbor-aside{display:contents}
+.scaled-ui .harbor-scene{grid-column:1;grid-row:2;width:1004px;height:482px;border-width:24px;border-image-width:24px;padding:0}
+.scaled-ui .harbor-image{object-fit:cover}
+.scaled-ui .harbor-caption{left:30px;bottom:26px;max-width:54%}
+.scaled-ui .harbor-caption h1{font-size:62px}
+.scaled-ui .harbor-caption .eyebrow{font-size:12px}
+.scaled-ui .sail-action{left:auto;right:28px;bottom:28px;width:290px;gap:8px}
+.scaled-ui .sail-action small{font-size:16px}
+.scaled-ui .sail-action button{width:290px}
+.scaled-ui .crew-overview{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;gap:0;min-height:0;padding:18px;height:658px}
+.scaled-ui .crew-overview h3{font-size:30px}
+.scaled-ui .crew-overview .crew-dots{display:flex;flex-wrap:nowrap;flex-shrink:0;margin-top:14px;gap:8px;overflow:auto;height:170px}
+.scaled-ui .crew-preview{flex:0 0 124px}
+.scaled-ui .crew-preview .framed-portrait{width:124px;height:124px;max-width:none;margin:0}
+.scaled-ui .crew-preview>span:last-child{font-size:16px}
+.scaled-ui .crew-overview>.footer-note{margin:6px 0 14px;font-size:17px}
+.scaled-ui .crew-overview>.full-width{flex-shrink:0}
+.scaled-ui .scenery-selector{margin-top:20px}
+.scaled-ui .scenery-note{margin:0 0 10px;font-size:12px}
+.scaled-ui .scenery-selector .harbor-picker{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0}
+.scaled-ui .harbor-choice{font-size:12px;line-height:1.2;padding:4px;height:98px}
+.scaled-ui .harbor-choice img{aspect-ratio:16/9;width:100%;height:auto;margin-bottom:8px}
+.scaled-ui .harbor-choice.active{padding:3px}
+.scaled-ui .last-battle{margin-top:auto;padding:10px 0;border:0;background:none;gap:12px;font-size:17px}
+.scaled-ui .last-battle button{flex-shrink:0}
+.scaled-ui .orders-card{grid-column:2;grid-row:3;display:grid;grid-template-columns:1.15fr 1fr;gap:16px;padding:14px;height:218px}
+.scaled-ui .orders-card h3{font-size:23px}
+.scaled-ui .orders-card .pill{display:none}
+.scaled-ui .orders-card .quest{font-size:15px;margin-top:10px;gap:8px}
+.scaled-ui .orders-card button{font-size:15px;padding:7px;min-height:44px}
+.scaled-ui .season-orders{margin:0;padding:0 0 0 14px;border:0;border-left:1px solid var(--line)}
+.scaled-ui .season-orders .row{display:block}
+.scaled-ui .season-orders .eyebrow{font-size:10px}
+.scaled-ui .season-orders h3{font-size:26px;margin:6px 0}
+.scaled-ui .season-orders .spaced{margin-top:9px}
+.scaled-ui .hold-panel{grid-column:1;grid-row:3;padding:10px 18px;margin:0;height:218px}
+.scaled-ui .hold-title{display:block;width:145px;height:56px}
+.scaled-ui .hold-panel h3{font-size:27px}
+.scaled-ui .hold-panel .chests{margin-top:8px;gap:12px;flex-wrap:nowrap}
+.scaled-ui .hold-panel .chest{height:90px;min-height:90px;min-width:0;padding:4px;gap:0}
+.scaled-ui .hold-panel .chest-art{width:46px;height:44px}
+.scaled-ui .hold-panel .chest small{font-size:12px}
+.scaled-ui .hold-panel>.row>small{font-size:15px;max-width:none}
+.scaled-dialogs #sheet{zoom:var(--ui-scale);max-height:var(--dialog-height);width:760px;max-width:760px;font-size:16px}
+.scaled-dialogs #sheet h2{font-size:34px}
+.scaled-dialogs #sheet .result-title{font-size:48px!important}
+.scaled-dialogs #toast{zoom:var(--ui-scale)}
+
+/* Browser fullscreen and Home Screen web apps share the same safe viewport. */
+:root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px)}
+.fullscreen-control{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;min-height:44px;flex-shrink:0;white-space:nowrap}
+.fullscreen-control>span:first-child{font:28px/1 sans-serif}
+.screen-steps{padding-left:24px;line-height:1.6;margin-top:18px}.screen-steps li+li{margin-top:10px}
+.battle-top .fullscreen-control{position:absolute;left:50%;top:4px;transform:translateX(-50%);pointer-events:auto;width:44px;height:44px;padding:0}
+.battle-top .fullscreen-label{display:none}
+.combat-arena{padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left)}
+body.scaled-ui{padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left)}
+body:not(.scaled-ui):not(.battle-mode) #app{padding:var(--safe-top) var(--safe-right) 0 var(--safe-left)}
+body:not(.scaled-ui):not(.battle-mode) #rail{left:var(--safe-left);top:var(--safe-top);padding-bottom:max(4px,var(--safe-bottom))}
+@media(max-width:1000px){#topbar .fullscreen-label{display:none}#topbar .fullscreen-control{width:44px;height:44px;padding:0}}
+@media(max-width:600px){
+  #topbar .wallet-plaque{width:210px}#topbar .captain-mark{min-width:0;flex:1}#topbar .captain-mark small{display:none}
+  body:not(.scaled-ui):not(.battle-mode) #rail{top:auto;left:0;height:calc(76px + var(--safe-bottom))}
+  body:not(.battle-mode) #main{padding-bottom:calc(100px + var(--safe-bottom))}
+}
+@media(max-height:560px) and (min-width:650px){
+  .combat-arena{min-height:0;grid-template-rows:60px 32px minmax(60px,1fr) 22px 132px}
+  .combat-arena .health-card{width:calc(50% - 30px)}
+}
+
+/* Compact menu revision: titles live in the shared header. */
+.game-wordmark{display:block;font-size:11px;letter-spacing:.16em;color:#e9c583;font-weight:800}
+.screen-heading{display:flex;align-items:center;gap:18px;min-width:0}
+.screen-heading h1{font-size:34px;margin:2px 0}
+.screen-heading .screen-tagline{font-size:16px;color:#e3caa2;line-height:1.2}
+.screen-title-art{width:180px;height:94px;object-fit:contain;flex-shrink:0}
+.screen-heading.has-banner h1{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#topbar{height:100px;gap:14px;padding:0 20px}
+#main{min-height:0;padding:14px 20px 22px}
+#rail .brand,#rail .version{display:none}
+#rail{gap:8px;justify-content:space-between}
+#rail .nav-btn{flex:1;min-height:0;max-height:154px;font-size:16px;flex-direction:column;justify-content:center;gap:0}
+.nav-art-slot{display:block;position:relative;width:122px;height:114px;flex-shrink:0;zoom:.6}
+.nav-art{position:absolute!important;height:auto!important;max-width:none;object-fit:contain}
+.nav-btn[data-id=battle] .nav-art{width:164px;left:-21px;top:-17px}
+.nav-btn[data-id=crew] .nav-art{width:154px;left:-8px;top:-6px}
+.nav-btn[data-id=ports] .nav-art{width:110px;left:7px;top:3px}
+.nav-btn[data-id=booty] .nav-art{width:182px;left:-22px;top:-7px}
+.nav-btn[data-id=store] .nav-art{width:152px;left:-10px;top:-17px}
+.nav-btn[data-id=settings] .nav-art{width:173px;left:-22px;top:-13px}
+.scaled-ui #rail .nav-btn{font-size:28px;min-height:154px;max-height:154px;flex-basis:154px}
+.scaled-ui .nav-art-slot{zoom:1.07}
+.scaled-ui #topbar{height:112px;padding:0 28px 0 20px;gap:20px}
+.scaled-ui .screen-title-art{width:220px;height:108px}
+.scaled-ui .screen-heading{gap:24px}
+.scaled-ui .screen-heading h1{font-size:40px}
+.scaled-ui .screen-heading .screen-tagline{font-size:24px;max-width:610px}
+.scaled-ui .game-wordmark{font-size:14px;margin-bottom:5px}
+.scaled-ui #main{height:896px;padding:14px 28px 16px 20px}
+.scaled-ui[data-page=battle] #main{grid-template-columns:1004px 476px;grid-template-rows:minmax(0,1fr) 200px;gap:20px}
+.scaled-ui .harbor-scene{grid-row:1;width:auto;height:100%}
+.scaled-ui .crew-overview{grid-row:1;grid-column:2;height:auto;gap:14px;justify-content:flex-start}
+.scaled-ui .crew-overview .crew-dots{height:auto;min-height:180px;flex-wrap:wrap;overflow:auto;align-content:start;max-height:400px}
+.scaled-ui .crew-preview{flex:0 0 130px}
+.scaled-ui .crew-preview .framed-portrait{width:130px;height:130px}
+.scaled-ui .crew-overview>.footer-note{font-size:18px}
+.scaled-ui .hold-panel{grid-row:2;height:200px}
+.scaled-ui .orders-card{grid-row:2;height:200px}
+.harbor-caption h2{font-size:clamp(30px,4vw,54px);color:#ffedbe}
+.scaled-ui .harbor-caption h2{font-size:64px}
+.scenery-toggle{position:absolute;top:14px;right:14px;z-index:2;background:#24170ce8!important}
+.scenery-dialog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.scenery-dialog .harbor-choice img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+.last-battle{margin-top:auto}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:none}
+.settings-grid>.footer-note{grid-column:1/-1;margin:0}
+.setting{gap:12px;padding:12px}
+.setting input{min-width:0;max-width:200px}
+.settings-grid .water-card{grid-row:span 2}
+.settings-grid .card{margin:0}
+.scaled-ui .settings-grid{max-width:none;gap:18px}
+.scaled-ui .setting{flex-wrap:wrap}
+.scaled-ui .settings-grid .card{padding:12px;border-width:16px;border-image-width:16px}
+.scaled-ui .settings-grid .card h3{font-size:25px}
+.scaled-ui .settings-grid .card p{font-size:17px}
+.scaled-ui .settings-grid .water-card{grid-row:span 2}
+.store-layout .shop-art{width:70px;height:70px;float:right;margin:0 0 8px 8px}
+.store-layout .gear-icon{height:52px;font-size:40px;margin-bottom:4px}
+.store-layout .gear-icon .currency-art{width:52px;height:52px}
+.store-layout .pack-grid .card{padding:10px;border-width:14px;border-image-width:14px}
+.store-layout .mini-number{font-size:32px}
+.store-layout .pack-grid{gap:12px}
+.store-layout .card p{line-height:1.3}
+.store-layout .pack-grid .card>button{margin-top:8px}
+.scaled-ui .store-layout{grid-template-columns:340px minmax(0,1fr)}
+.scaled-ui .store-layout .card h3{font-size:24px}
+.scaled-ui .store-layout .shop-art{width:80px;height:80px}
+.scaled-ui .store-layout .pack-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+/* One map window, one city control, one independently scrolling board. */
+.ports-layout,.scaled-ui .ports-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:16px;height:100%;min-height:0}
+.ports-layout>section:last-child,.scaled-ui .ports-layout>section:last-child{grid-column:auto}
+.port-explorer{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;min-height:0;min-width:0}
+.city-switcher{text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}
+.port-cycle{display:flex;align-items:center;gap:24px;font-size:15px;font-weight:800;letter-spacing:.12em}
+.port-cycle button{width:48px;height:44px;padding:0;font-size:26px}
+.city-switcher h2{font-size:32px}
+.map-frame{padding:0;overflow:hidden;min-height:0;position:relative}
+.port-map-window{height:100%;width:100%;min-height:0;overflow:hidden;position:relative;background:#b99660;touch-action:pan-y pinch-zoom;isolation:isolate}
+.map-plane{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 750ms cubic-bezier(.22,.7,.25,1);will-change:transform}
+.world-map-art{display:block;width:100%;height:100%;pointer-events:none;user-select:none}
+.city-pin{position:absolute;transform:translate(-50%,-50%);display:none;pointer-events:none;text-align:center}
+.city-pin.selected{display:block}
+.city-pin i{display:block;width:100px;height:42px;border:3px solid #fff0af;box-shadow:0 0 0 3px #532e17,0 0 24px #ffdb54;border-radius:50%}
+.city-pin>span{display:none}
+.city-pin[data-port="7"]>span,.city-pin[data-port="10"]>span{display:block;background:#29180f;padding:4px 8px;color:#ffe9b0;border:1px solid #d2a75b;border-radius:4px}
+.map-continent{position:absolute;z-index:2;top:12px;left:50%;transform:translateX(-50%);padding:7px 24px;border:1px solid #d6ac65;border-radius:5px;background:#28190eed;color:#ffe1a4;font-size:16px;letter-spacing:.2em;white-space:nowrap;box-shadow:0 3px 8px #0008}
+.map-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;background:#28190ee0;padding:3px 14px;border-radius:20px;color:#eacf9b}
+.port-rules{font-size:12px;text-align:center;line-height:1.3}
+.standings{display:flex;flex-direction:column;gap:12px;min-height:0;padding:10px}
+.standings>.row{flex-shrink:0}
+.standings .board{max-height:none;min-height:0;flex:1;overflow:auto;overscroll-behavior:contain}
+.standings .board-head{position:sticky;top:0;z-index:1;background:#26190e}
+.standings .board-row{min-height:44px}
+.standings .footer-note{margin:0;font-size:12px;line-height:1.3}
+.scaled-ui .city-switcher h2{font-size:42px}
+.scaled-ui .port-cycle{font-size:19px}
+.scaled-ui .map-continent{font-size:24px}
+.scaled-ui .port-rules{font-size:17px}
+.scaled-ui .standings .footer-note{font-size:17px}
+.scaled-ui .standings .board{max-height:none}
+.scaled-ui .standings .board-row{min-height:48px;font-size:19px}
+@media(min-width:650px){
+ body:not(.scaled-ui):not(.battle-mode) #workspace{height:calc(100dvh - var(--safe-top) - var(--safe-bottom))}
+ body:not(.scaled-ui):not(.battle-mode) #main{height:calc(100% - 100px);overflow:auto}
+ body:not(.scaled-ui)[data-page=ports] #main{overflow:hidden}
+}
+@media(max-height:600px) and (min-width:650px){
+ #rail{width:86px;padding:4px;gap:3px}#rail .nav-btn{font-size:12px;max-height:none;line-height:1;min-height:44px;padding:0}
+ .nav-art-slot{zoom:.37}
+ #workspace{margin-left:86px;width:calc(100% - 86px)}
+ #topbar{height:64px;padding:0 8px;gap:8px}
+ .screen-heading{gap:8px}.screen-title-art{display:none}.screen-heading h1{font-size:25px!important;margin:0}
+ .screen-heading.has-banner h1{position:static;width:auto;height:auto;clip-path:none;white-space:normal}
+ .game-wordmark{font-size:8px}.screen-heading .screen-tagline{font-size:12px;white-space:nowrap}
+ #topbar .wallet-plaque{width:240px}#topbar .wallet strong{font-size:18px}
+ body:not(.scaled-ui):not(.battle-mode) #main{height:calc(100% - 64px);padding:6px 10px 8px}
+ .card,.brass-panel{border-width:10px;border-image-width:10px;padding:6px}
+ .card h3{font-size:19px}.card p{font-size:12px}.footer-note{margin-top:6px;font-size:11px}
+ .spaced{margin-top:8px}.tabs{margin-bottom:8px}.tabs button{padding:4px 12px}
+ .split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.ship-diagram{min-height:190px}
+ .roster{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.scroll-panel{max-height:300px}
+ .pirate-card .framed-portrait{max-width:90px}.pirate-card{padding:6px;min-height:0}.pirate-card .name{font-size:15px}
+ [data-page=battle] #main{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(245px,1fr);grid-template-rows:minmax(180px,1fr) 96px;gap:8px}
+ .harbor-layout,.harbor-main,.harbor-aside{display:contents}
+ .harbor-scene{grid-column:1;grid-row:1;height:auto;min-height:0;padding:0;border-width:10px;border-image-width:10px}
+ .harbor-caption{left:10px;bottom:12px;max-width:52%}.harbor-caption .eyebrow{display:none}.harbor-caption h2{font-size:29px}.harbor-caption .pill{font-size:9px;padding:4px 7px}
+ .sail-action{width:170px;left:auto;right:8px;bottom:10px;gap:0}.sail-action button{width:170px}.sail-action small{font-size:10px}
+ .scenery-toggle{top:6px;right:6px}
+ .crew-overview{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:2px;min-height:0;overflow:auto}
+ .crew-overview .row{gap:4px}.crew-overview h3{font-size:17px;max-width:100px}
+ .crew-overview button.small{padding:4px 8px;font-size:12px}
+ .crew-overview .crew-dots{display:flex;flex-wrap:nowrap;margin:0;gap:3px;overflow-x:auto;flex-shrink:0;min-height:74px}
+ .crew-preview{flex:0 0 64px;padding:0}.crew-preview .framed-portrait{width:62px;height:62px;max-width:none}
+ .crew-preview>span:last-child{font-size:10px;white-space:nowrap}.crew-overview>.footer-note{font-size:10px;margin:0}
+ .last-battle{margin-top:auto;padding:0;border:0;background:none;gap:4px}.last-battle>span{font-size:11px}
+ .hold-panel{grid-column:1;grid-row:2;margin:0!important;padding:3px 6px}
+ .hold-panel>.row{gap:5px;height:17px}.hold-panel h3{font-size:15px}.hold-panel .eyebrow,.hold-title{display:none}.hold-panel>.row>small{font-size:10px}
+ .hold-panel .chests{margin-top:3px;gap:5px;flex-wrap:nowrap}
+ .hold-panel .chest{height:48px;min-height:48px;min-width:0;padding:0;gap:0;display:flex;flex-direction:row}
+ .hold-panel .chest-art{width:30px;height:32px}.hold-panel .chest small{font-size:9px}.hold-panel .chest strong{font-size:11px}
+ .orders-card{grid-column:2;grid-row:2;display:grid;grid-template-columns:1.2fr 1fr;gap:8px;padding:3px 6px}
+ .orders-card h3{font-size:14px}.orders-card .pill,.orders-card .eyebrow,.orders-card .quest progress{display:none}
+ .orders-card .quest{margin-top:2px;font-size:10px;gap:0}.orders-card button{padding:2px 4px;font-size:10px;min-height:44px}
+ .orders-card .season-orders{margin:0;padding:0 0 0 8px;border:0;border-left:1px solid var(--line)}
+ .season-orders>.row{gap:3px}.season-orders .spaced{margin:3px 0 0}.season-orders small{font-size:10px}
+ .ports-layout{grid-template-columns:minmax(0,1.4fr) minmax(240px,1fr);gap:10px}
+ .port-explorer{gap:4px}.city-switcher{flex-direction:row-reverse;justify-content:space-between;gap:4px}
+ .city-switcher h2{font-size:24px}.port-cycle{gap:8px;font-size:12px}.port-cycle button{width:44px}
+ .map-frame{padding:0}.map-continent{top:6px;font-size:12px;padding:4px 14px}.map-hint{display:none}
+ .port-rules{font-size:10px}.standings{gap:6px}.standings .board-row{font-size:12px;padding:4px;grid-template-columns:26px 1fr 32px 34px}
+ .standings .footer-note{font-size:10px}.standings h3{font-size:18px}
+ .settings-grid{gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}.settings-grid .water-card{grid-row:span 3}
+ .settings-grid .setting{gap:8px}.settings-grid .row{gap:5px}.settings-grid .water-card h3{font-size:23px}
+ .store-layout{grid-template-columns:210px minmax(0,1fr);gap:12px}.deals{display:block}.deals .card{margin-bottom:10px}
+ .pack-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.store-layout .pack-grid .card{padding:4px;border-width:8px;border-image-width:8px}
+ .store-layout .pack-grid .card h3{font-size:17px}.store-layout .pack-grid button{padding:3px;font-size:11px}.store-layout .gear-icon{height:34px}
+ .store-layout .shop-art,.store-layout .gear-icon .currency-art{width:34px;height:34px}
+ .season-intro{padding:4px 8px;flex-direction:row;align-items:center;margin:0 0 4px;gap:8px}
+ .season-intro h3{font-size:20px}.season-intro p{font-size:11px}.season-intro .mini-number{font-size:32px}.season-intro .row{gap:8px}
+ .season-intro button{font-size:12px;padding:4px 8px}.season-track{padding:4px 0}.reward{height:76px;padding:4px}.reward .reward-art{font-size:22px;height:24px}
+ .reward .currency-art{width:26px;height:26px}.reward .label{font-size:13px}.reward small{font-size:8px}.waypoint{height:25px}
+ [data-page=booty] #main>.card{padding:3px 8px;margin-top:4px}[data-page=booty] #main>.card h3{font-size:16px}
+}
+@media(max-height:350px) and (min-width:650px){.nav-art-slot{zoom:.28}[data-page=battle] #main{grid-template-rows:180px 96px}}
+@media(max-width:649px){
+ .screen-title-art{display:none}.screen-heading.has-banner h1{position:static;width:auto;height:auto;clip-path:none;white-space:normal}
+ #topbar{height:82px;padding:4px 8px;gap:4px}.screen-heading{display:block;flex:1}.screen-heading h1{font-size:23px!important}
+ .game-wordmark{font-size:8px}.screen-heading .screen-tagline{font-size:11px;line-height:1.1;max-width:145px}
+ #topbar .wallet-plaque{width:174px}#topbar .wallet strong{font-size:16px}#topbar .wallet small{font-size:7px}
+ #rail .nav-btn{font-size:12px;min-height:62px;max-height:none}.nav-art-slot{zoom:.36}
+ #main{padding:10px 12px calc(100px + var(--safe-bottom))}.settings-grid{grid-template-columns:1fr}.settings-grid .water-card{grid-row:auto}
+ .ports-layout{display:flex;flex-direction:column;height:auto;gap:12px}.port-explorer{height:360px;flex-shrink:0}.standings{height:350px}
+ .city-switcher h2{font-size:29px}.port-cycle{gap:18px}.map-frame{padding:0}
+ .harbor-scene{height:290px}.harbor-caption{bottom:105px}.harbor-caption h2{font-size:38px}
+ .crew-overview{padding:8px}.crew-dots{margin-top:6px}.crew-preview .framed-portrait{max-width:90px}
+ .harbor-aside{gap:12px}.orders-card{display:grid;grid-template-columns:1fr 1fr;gap:12px}.orders-card h3{font-size:18px}
+ .season-orders{margin:0;padding:0 0 0 12px;border:0;border-left:1px solid var(--line)}
+ .scenery-dialog{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .hold-panel .chests{gap:5px}.hold-panel .chest{min-width:65px;min-height:80px}
+ .store-layout .pack-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.store-layout .card h3{font-size:19px}.store-layout .pack-grid button{padding:5px;font-size:12px}
+ .season-intro{padding:10px;gap:10px}.season-intro h3{font-size:21px}.season-intro .row{gap:8px}.season-intro button{font-size:12px;padding:5px 8px}
+ .reward{height:105px}.reward .label{font-size:15px}.reward .reward-art{height:32px}.reward .currency-art{width:32px;height:32px}
+}
+
+.scaled-ui .crew-preview{flex-basis:120px}.scaled-ui .crew-preview .framed-portrait{width:120px;height:120px}
+@media(max-height:600px) and (min-width:650px){
+ .harbor-aside .crew-overview{padding:4px 6px}.harbor-aside .crew-overview h3{font-size:17px;line-height:1.05}
+ .harbor-aside .orders-card{padding:3px 6px;grid-template-rows:minmax(0,1fr)}
+ .harbor-aside .orders-card h3{font-size:14px;line-height:1.05}
+ .harbor-aside .orders-card .season-orders{min-width:0}
+ .harbor-aside .orders-card .season-orders>.row{display:flex;gap:3px}
+ .harbor-aside .orders-card .quest{margin-top:2px;gap:0}
+ .harbor-aside .orders-card .quest>.row{font-size:10px;gap:2px;line-height:1.1}
+ .harbor-aside .orders-card .quest button{margin-top:2px}
+}
+
+@media(max-height:600px) and (min-width:650px){
+ .harbor-aside .crew-overview .row>h3{font-size:17px}
+ .harbor-aside .orders-card .row>h3{font-size:13px;line-height:1}
+ .harbor-aside .orders-card .quest{margin-top:1px}.harbor-aside .orders-card .quest button{margin-top:1px}
+ .harbor-aside .orders-card .season-orders progress{display:block;margin-top:3px;height:5px}.harbor-aside .orders-card .season-orders>small{display:block;font-size:9px;line-height:1.2;margin-top:2px}
+}
+
+.settings-grid .water-card{grid-column:auto}
+@media(max-height:600px) and (min-width:650px){
+ .city-switcher{flex-direction:column;gap:0}.city-switcher h2{font-size:23px}
+ .season-intro .row button{padding:4px 6px;font-size:11px}
+}
+
+.city-pin{width:6.3%;height:4.2%}.city-pin i{width:100%;height:100%}

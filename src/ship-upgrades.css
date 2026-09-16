@@ -1,0 +1,42 @@
+/* Reference result boards retain their 1792 x 1008 coordinates. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#sheet.battle-result-sheet{width:min(1440px,96vw);max-width:96vw;max-height:96dvh;padding:0;border:2px solid #9c7137;border-radius:12px;background:#1c130e;overflow:hidden}
+.battle-result-sheet>.close{z-index:5!important;background:#1a110de6!important;color:#fff!important;width:44px;height:44px;border:1px solid #dfbc70!important;border-radius:50%;top:6px!important;right:6px!important}
+.battle-result-sheet>.close{width:72px;height:72px;top:10px!important;right:10px!important;font-size:34px!important;line-height:1}
+.result-canvas{position:relative;width:100%;aspect-ratio:1792/1008;container-type:inline-size}
+.result-rematch{position:absolute;z-index:2;right:3.5%;bottom:4%;width:23%;padding:0;border:0;background:transparent!important;box-shadow:none!important;min-height:0;line-height:0}
+.result-rematch img{display:block;width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 3px 5px #000b)}
+.result-port-button{position:absolute;z-index:2;right:3.5%;bottom:4%;width:26%;min-height:48px;padding:6px 10px;border:3px ridge #f3d27d;border-radius:9px;background:linear-gradient(180deg,#b37c32 0%,#825020 46%,#4b2b18 100%)!important;color:#fff0c0!important;font:700 1.65cqw Georgia,serif;letter-spacing:.025em;text-transform:uppercase;text-shadow:0 2px 3px #201006;box-shadow:inset 0 1px 0 #fff6ce88,inset 0 -4px 0 #24120899,0 3px 8px #000c!important}
+.result-port-button span{color:#ffe39a;margin-inline:4px}
+.result-background{width:100%;height:100%;display:block;object-fit:contain}
+.result-values{margin:0}.result-value{position:absolute;left:34%;width:8%;text-align:right;color:#ffe3a1;text-shadow:0 2px 3px #000;font:bold 3.1cqw Georgia,serif;transform:translateY(-50%)}
+.result-value dd{margin:0}.victory .value-0{top:31%}.victory .value-1{top:45.3%}.victory .value-2{top:59.3%}.victory .value-3{top:73.5%}
+.defeat .result-value{left:35%;width:9%}.defeat .value-0{top:47.5%}.defeat .value-1{top:56.5%}.defeat .value-2{top:65%}.defeat .value-3{top:74%}
+.result-footer{display:flex;justify-content:center;align-items:center;gap:16px;padding:16px 22px;color:#f5dfba}.result-summary strong{display:block;text-align:center;font:700 clamp(20px,2.2cqw,34px) Georgia,serif;letter-spacing:.02em;color:#ffe3a1;text-shadow:0 2px 3px #000}.result-actions{display:none}.result-log{display:none}
+.ship-customization{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;height:calc(100% - 70px);min-height:640px}
+.ship-focus{display:flex;flex-direction:column;min-width:0}.ship-focus .ship-diagram{flex:1;min-height:340px;background:radial-gradient(ellipse at 50% 72%,#aa7d3933,transparent 65%);border:0}
+.ship-summary{display:flex;gap:16px;justify-content:space-around;text-align:center}.ship-summary strong,.ship-summary small{display:block}.ship-summary strong{color:#ffdf85;font-size:24px}
+.ship-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.ship-controls button{min-height:52px}.ship-controls small{display:block;font-size:12px}
+.custom-shortcuts{display:flex;gap:6px;margin-top:10px}.custom-shortcuts button{flex:1;font-size:13px!important;padding:8px 5px}
+.ship-inventory{min-width:0;min-height:0;display:flex;flex-direction:column}.inventory-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.inventory-tabs button{flex:1;min-width:0!important;font-size:17px!important;padding:10px!important}.inventory-tabs [aria-selected=true]{background:#997031;color:#fff}
+.inventory-scroll{overflow:auto;min-height:0;max-height:640px;padding:4px 6px 16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start;scrollbar-gutter:stable}
+.equipment-card{min-width:0;text-align:center;border:2px solid #765327;border-radius:12px;background:#251c12;padding:12px;display:flex;flex-direction:column;align-items:center;gap:9px}.equipment-card.equipped{border-color:#f5d57d;box-shadow:inset 0 0 15px #bf882025}.equipment-card img{width:100%;height:135px;object-fit:contain}.equipment-card h3{font-size:22px!important}.equipment-card small{font-size:13px}.equipment-card button{width:100%;margin-top:auto}.equipment-card .equipment-label{font-size:12px;color:#f8d884}.equipment-card .asset-pending{height:135px;display:grid;place-content:center;color:#bca789;font-size:14px}
+.ship-diagram .slot{transform:translate(-50%,-50%);width:46px!important;height:46px!important;min-height:44px;padding:0;background:#2b1b10b3;border:1px solid #e0bc68;box-shadow:0 0 0 3px #2b1b1066}.ship-diagram .slot.occupied{opacity:.25;background:transparent}.ship-diagram .slot.occupied:hover,.ship-diagram .slot.occupied:focus{opacity:1}.ship-diagram:not(.assigning) .slot{display:none}
+.upgrade-stage{position:relative}.construction-cloud{position:absolute;inset:5%;z-index:15;pointer-events:none;overflow:hidden}.construction-cloud i{position:absolute;left:var(--x);top:var(--y);width:28%;aspect-ratio:1;border-radius:50%;background:radial-gradient(ellipse,#e0cba7 10%,#b49d7b 47%,#9a876bbb 62%,transparent 73%);opacity:0;animation:build-puff 3.3s var(--delay) both}.construction-veil{position:absolute;inset:22% 0 9%;background:radial-gradient(ellipse,#cfb58c 35%,#b59a75cc 63%,transparent 75%);opacity:0;animation:build-veil 3.3s both}
+@keyframes build-puff{0%{opacity:0;transform:translate(-50%,-50%) scale(.15)}20%,70%{opacity:.98;transform:translate(-50%,-50%) scale(1.7)}100%{opacity:0;transform:translate(-50%,-75%) scale(2.6)}}
+@keyframes build-veil{0%,12%{opacity:0}26%,80%{opacity:1}100%{opacity:0}}
+.upgrade-rays{position:absolute;inset:4%;z-index:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,#ffcd5738 0deg 10deg,transparent 10deg 25deg);mask-image:radial-gradient(ellipse,#000 12%,transparent 70%);animation:upgrade-rays 6s linear infinite;pointer-events:none}.upgrade-stage iframe{position:relative;z-index:1}.upgrade-status{text-align:center;color:#ffe4a5;min-height:24px;font-size:17px;font-weight:bold}
+@keyframes upgrade-rays{to{transform:rotate(40deg)}}
+.upgrade-comparison{width:100%;border-collapse:collapse;margin:24px 0}.upgrade-comparison th,.upgrade-comparison td{padding:12px 8px;border-bottom:1px solid #795b36;text-align:left}.upgrade-comparison td:last-child{color:#bce9ab;font-weight:bold}
+.reduce-motion .construction-cloud i,.reduce-motion .construction-veil,.reduce-motion .upgrade-rays{animation:none}.reduce-motion .construction-veil{opacity:1}.reduce-motion .upgrade-rays{opacity:.6}
+.construction-cloud{inset:0;overflow:visible;mask-image:radial-gradient(ellipse at 50% 65%,#000 40%,transparent 76%)}
+.ship-diagram.upgrade-stage iframe{position:absolute;inset:0;width:100%;height:100%;transform:none}
+body:not(.scaled-ui) .ship-customization{min-height:0;height:auto}
+body:not(.scaled-ui) .ship-focus .ship-diagram{height:280px;min-height:280px;flex:none}
+body:not(.scaled-ui) .inventory-scroll{max-height:500px}
+body:not(.scaled-ui) .ship-summary strong{font-size:20px}
+body:not(.scaled-ui) .equipment-card h3{font-size:18px!important}
+@media(max-width:600px){.ship-customization{grid-template-columns:minmax(0,1fr)}.inventory-scroll{max-height:460px}.inventory-tabs button{font-size:16px!important}.ship-focus h2{font-size:26px}.ship-focus .row{flex-wrap:wrap}.ship-controls small{font-size:11px}.equipment-card img{height:100px}.custom-shortcuts{flex-wrap:wrap}.ship-inventory{margin-bottom:20px}}
+@media(max-width:600px){.result-footer{flex-direction:column;align-items:stretch;padding:12px}.result-actions{justify-content:space-between}.result-footer strong{font-size:13px}.result-actions button{font-size:12px;padding:8px}.result-value{font-size:3.5cqw}}
+@media(orientation:landscape) and (max-height:800px){#sheet.battle-result-sheet{width:min(96vw,130dvh)}.result-rematch{width:30%}.result-port-button{width:34%;font-size:2.1cqw}}
+@media(orientation:landscape) and (max-height:500px){#sheet.battle-result-sheet{width:min(96vw,100dvh)}.result-footer{flex-direction:row;align-items:center;padding:8px 12px}.result-footer p{font-size:10px}.result-log{padding:0 12px 8px}}

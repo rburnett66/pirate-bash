@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PIRATE BASH · Ship Art</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#141d25;color:#fff5db;font:16px system-ui}main{max-width:1400px;margin:auto;padding:20px}h1{font-size:24px;margin:0 0 8px}p{color:#bdcbd2}label{display:inline-flex;gap:8px;align-items:center;margin:5px}select,button{font:inherit;background:#263b48;color:inherit;border:1px solid #8ba0ac;border-radius:6px;padding:8px}button{cursor:pointer}.stage{margin-top:16px;background:#28566a;border-radius:10px;overflow:hidden}.stage.dark{background:#130f1d}.stage.check{background:repeating-conic-gradient(#bcc3c5 0 25%,#e7e9e9 0 50%) 0/28px 28px}canvas{display:block;width:100%;height:auto}details{margin:22px 0}summary{cursor:pointer;font-size:20px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.tile{background:#28566a;padding:10px;border-radius:8px}.tile img{width:100%;height:170px;object-fit:contain}.tile a{color:#fff5db;font-size:13px}#status{font-size:14px}input{accent-color:#e9b959}
+</style><main><h1>PIRATE BASH · Ship Art</h1><p>Assembly preview · Original artwork, deterministic cutouts, registered replacement masts.</p>
+<label>Hull <select id="hull"></select></label><label>Sails <select id="sail"><option value="">None</option></select></label><label>Flag <select id="flag"><option value="set">Matching pair</option><option value="">None</option></select></label>
+<label><input id="mirror" type="checkbox">Face left</label><label><input id="interior" type="checkbox">X-ray interior</label>
+<label>Background <select id="bg"><option value="">Sea</option><option value="dark">Dark</option><option value="check">Checkerboard</option></select></label>
+<div><label><input class="mast" type="checkbox" checked>Aft mast</label><label><input class="mast" type="checkbox" checked>Main mast</label><label><input class="mast" type="checkbox" checked>Fore mast</label></div>
+<div class="stage"><canvas width="1792" height="1150" aria-label="Assembled pirate ship preview"></canvas></div><p id="status" role="status">Loading artwork…</p>
+<details><summary>Hull cutouts with original rigging</summary><div class="grid" id="hulls"></div></details>
+<details><summary>Sail sets</summary><div class="grid" id="sails"></div></details>
+<details><summary>Individual flags</summary><div class="grid" id="flags"></div></details>
+<p>The assembled ship above previews the modular art kit. Selected designs now appear in combat, match introductions, Crew and Shipyard. The full hull cutouts retain the original rigging; the assembly uses hull bodies and the new wooden masts, five sails and two flags.</p></main>
+<script type="module">
+import {SHIP_ART as data,RIG_SAILS,RIG_FLAGS,sailPanels,clothPlacement} from '/pirate-bash/src/ship-art-layout.js';
+const $=id=>document.getElementById(id),cache=new Map(),canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d');
+const picture=path=>{if(!cache.has(path))cache.set(path,new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=path;}));return cache.get(path)};
+const option=(id,value,text)=>$(id).add(new Option(text,value));
+data.hulls.filter(h=>!h.interior).forEach(h=>option('hull',h.id,h.id));data.sailSets.forEach(s=>option('sail',s.id,s.id));data.flags.forEach(f=>option('flag',f.id,'Flag '+f.id));
+function tiles(id,entries){$(id).innerHTML=entries.map(([name,path])=>`<div class="tile"><a href="${path}" target="_blank"><img loading="lazy" src="${path}" alt="${name}">${name}</a></div>`).join('')}
+tiles('hulls',data.hulls.map(h=>[h.id,h.full.right]));tiles('sails',data.sailSets.map(s=>[s.id,s.sheet]));tiles('flags',data.flags.map(f=>['Flag '+f.id,f.image]));
+let generation=0;
+async function draw(){const request=++generation,hull=data.hulls.find(h=>h.id===$('hull').value),body=$('interior').checked?data.hulls.find(h=>h.interior):hull,sails=data.sailSets.find(s=>s.id===$('sail').value),flag=data.flags.find(f=>f.id===$('flag').value*1),enabled=[...document.querySelectorAll('.mast')].map(e=>e.checked);
+ const bodyImage=await picture(body.body.right),masts=await Promise.all(data.masts.map(m=>picture(m.images.right))),panels=sails?sailPanels(sails):[],cloth=await Promise.all(panels.map(s=>picture(s.cloth))),banners=flag?[await picture(flag.image),await picture(flag.image)]:$('flag').value==='set'&&sails?await Promise.all(sails.flags.map(f=>picture(f.image))):[];if(request!==generation)return;
+ ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();if($('mirror').checked){ctx.translate(1792,0);ctx.scale(-1,1)}ctx.translate(0,65);
+ for(let i=0;i<3;i++){if(!enabled[i])continue;const m=data.masts[i],mount=hull.mastMounts[i],dx=mount[0]-m.pivot[0],dy=mount[1]-m.pivot[1];ctx.drawImage(masts[i],dx,dy);
+  panels.forEach((part,j)=>{if(RIG_SAILS[j].mast!==i)return;const place=clothPlacement(j,part);ctx.save();ctx.translate(...place.origin);ctx.rotate(place.angle);ctx.scale(place.scale,place.scale);ctx.drawImage(cloth[j],0,0);ctx.restore()});
+  RIG_FLAGS.filter(f=>f.mast===i).forEach(f=>{const banner=banners[f.part];if(banner)ctx.drawImage(banner,...f.origin,f.width,banner.height*f.width/banner.width)});
+
+ }
+ ctx.drawImage(bodyImage,0,0);ctx.restore();$('status').textContent=`${data.hulls.length-1} exterior hulls · x-ray interior · 3 shared masts · 5 sails · 2 flags · ${data.sailSets.length} sail sets · ${data.flags.length} flags. Mast toggles remove attached sails and flags together.`;
+}
+document.querySelectorAll('select,input').forEach(e=>e.addEventListener('change',()=>{document.querySelector('.stage').className='stage '+$('bg').value;draw().catch(e=>$('status').textContent=e.message)}));
+$('sail').value='IMG_7255';$('flag').value='set';await draw();
+</script></html>

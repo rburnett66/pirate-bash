@@ -1,0 +1,1910 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hull damage: PIRATE BASH ship prototype</title>
+<style>
+  :root {
+    --sky-top: #1F98E4;
+    --sky-mid: #74CBF1;
+    --sky-low: #D6F4F2;
+    --sea: #0A6DB2;
+    --ink: #0C2D4C;
+    --card: rgba(248, 252, 247, 0.94);
+    --rope: #E9A23B;
+  }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 34%, var(--sky-low) 56%, var(--sea) 57%, #06507F 100%);
+    font-family: "Avenir Next", "Nunito", "Trebuchet MS", system-ui, sans-serif;
+    color: var(--ink);
+  }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .title {
+    position: fixed; left: max(16px, env(safe-area-inset-left)); top: max(12px, env(safe-area-inset-top));
+    pointer-events: none; text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+  .title p { margin: 2px 0 0; font-size: 14px; font-weight: 600; opacity: 0.85; }
+  .stats { margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; opacity: 0.8; }
+  .guns {
+    position: fixed; left: max(14px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom));
+    display: flex; flex-wrap: wrap; gap: 6px; width: min(420px, calc(100vw - 28px));
+  }
+  .guns button {
+    font: inherit; font-weight: 700; font-size: 13px; color: var(--ink);
+    background: var(--card); border: 2px solid #cfdde3; border-radius: 10px; padding: 7px 11px; cursor: pointer;
+  }
+  .guns button[aria-pressed=true] { border-color: var(--rope); background: #FFF4E0; }
+  .toggle {
+    position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom));
+    font: inherit; font-weight: 800; font-size: 15px; color: var(--ink);
+    background: var(--card); border: 2px solid var(--rope); border-radius: 999px; padding: 9px 18px; cursor: pointer;
+  }
+  .toggle:focus-visible, .panel button:focus-visible, .panel input:focus-visible, .guns button:focus-visible {
+    outline: 3px solid var(--ink); outline-offset: 2px;
+  }
+  .panel {
+    position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: calc(max(14px, env(safe-area-inset-bottom)) + 52px);
+    width: min(330px, calc(100vw - 28px)); max-height: 62vh; overflow-y: auto;
+    background: var(--card); border: 2px solid var(--rope); border-radius: 14px; padding: 12px 14px 14px;
+    box-sizing: border-box; display: none;
+  }
+  .panel.open { display: block; }
+  .panel h2 { font-size: 13px; font-weight: 800; margin: 12px 0 4px; opacity: 0.7; }
+  .panel h2:first-child { margin-top: 0; }
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; margin: 6px 0; font-size: 14px; }
+  .row input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--rope); }
+  .row output { font-variant-numeric: tabular-nums; opacity: 0.7; font-size: 13px; }
+  .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
+  .check input { width: 18px; height: 18px; accent-color: var(--rope); }
+  .note { font-size: 12.5px; line-height: 1.4; opacity: 0.78; margin: 4px 0 0; }
+  .actions { display: flex; gap: 6px; margin-top: 10px; }
+  .actions button {
+    flex: 1; font: inherit; font-weight: 700; font-size: 14px; color: var(--ink); background: #fff;
+    border: 2px solid #cfdde3; border-radius: 10px; padding: 7px 8px; cursor: pointer;
+  }
+  .fatal { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-size: 17px; font-weight: 700; }
+  .scope-labels { position: fixed; inset: 0; pointer-events: none; }
+  .scope-label {
+    position: fixed; transform: translate(-50%, -100%); display: none; white-space: nowrap;
+    font-size: 12px; font-weight: 800; letter-spacing: 0.02em; color: #DFF6E4;
+    background: rgba(8, 24, 18, 0.72); border: 1px solid rgba(190, 240, 200, 0.6);
+    border-radius: 6px; padding: 2px 7px;
+  }
+  .scope-label[data-port="1"] { color: #FFD9A8; border-color: rgba(255, 200, 130, 0.7); }
+</style>
+<style>html,body{color-scheme:dark;background:transparent!important}body>*:not(canvas):not(script):not(style):not(#scopeLabels):not(#pirateMark):not(#gameCrew):not(#gamePorts):not(#deathEffects){display:none!important}#ship{position:fixed!important;inset:0!important;width:100%!important;height:100%!important}canvas{touch-action:none}</style></head>
+<body>
+<canvas id="ship" aria-label="A pirate ship in cross section. Tap the hull to fire the selected projectile at it."></canvas>
+<div class="scope-labels" id="scopeLabels" aria-live="polite"></div>
+<div class="title">
+  <h1>Hull damage</h1>
+  <p>Tap the ship to hit it</p>
+  <div class="stats" id="stats">Starting…</div>
+</div>
+<div class="guns" id="guns"></div>
+<button class="toggle" id="toggle" aria-expanded="false" aria-controls="panel">Tune</button>
+<div class="panel" id="panel" role="region" aria-label="Ship and damage settings">
+  <p class="note" id="fmtNote"></p>
+  <div id="sliders"></div>
+  <label class="check"><input type="checkbox" id="showMask"> Show the damage mask</label>
+  <label class="check"><input type="checkbox" id="showInner" checked> Draw the inner structure</label>
+  <label class="check"><input type="checkbox" id="showRig" checked> Draw masts and sails</label>
+  <label class="check"><input type="checkbox" id="scope"> Enemy telescope on the deck</label>
+  <label class="check"><input type="checkbox" id="shakeOn" checked> Screen shake</label>
+  <div class="actions"><button id="repair">Repair ship</button><button id="broadside">Take a broadside</button></div>
+  <div class="actions"><button id="rake">Rake the rigging</button><button id="snap">Snap a mast</button></div>
+  <div class="actions"><button id="returnFire">Ship returns fire</button><button id="scopeBtn">Glass the deck</button></div>
+</div>
+
+<!-- ============================================================================
+     Shared shader code, pasted into any shader with a "// #include common" line.
+     The hull silhouette and the mask mapping MUST agree between the stamping pass
+     and the renderer, so they live here in one copy.
+     ============================================================================ -->
+<script type="x-shader/x-glsl" id="common">
+const vec2 SHIP_HALF = vec2(1.30, 0.80);   // ship-local bounds that the mask covers
+
+// Dave Hoskins, "Hash without Sine" (MIT)
+float hash12(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = p - i;
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x),
+             mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+float fbm(vec2 p) {
+  return 0.6 * vnoise(p) + 0.3 * vnoise(p * 2.03 + 11.7) + 0.15 * vnoise(p * 4.11 + 3.1);
+}
+// Flatten fbm to a roughly even spread over 0..1. Measured over 300k samples the
+// field has mean 0.5254 and standard deviation 0.1472, and this logistic fit of
+// that distribution is within 4 percentage points everywhere. With it, a threshold
+// of t removes about t of the surface, which is what makes a damage number mean
+// something instead of everything tearing at once in the middle of its range.
+float flatten(float n) { return 1.0 / (1.0 + exp(-(n - 0.5254) / 0.08114)); }
+vec2 shipToMask(vec2 p) { return p / SHIP_HALF * 0.5 + 0.5; }
+
+// One gunner figure, used by both the interior and the exposed crew layer, so a
+// face seen through a shot hole is the same figure the enemy's telescope reads.
+// lean carries the body forward, as when leaning out of a gun port. The hat is the
+// identifying mark: tricorn, bandana, watch cap, helmet.
+// Returns coverage for (body, head, arm, hat).
+vec4 gunnerParts(vec2 q, float lean, int type, float aa) {
+  q.x -= lean * 0.05 * clamp(q.y * 5.0 + 0.7, 0.0, 1.0);
+  float body = 1.0 - smoothstep(0.055 - aa, 0.055 + aa, length(q * vec2(1.0, 0.62)));
+  vec2 h = q - vec2(lean * 0.030, 0.072);
+  float head = 1.0 - smoothstep(0.034 - aa, 0.034 + aa, length(h));
+  float arm = (1.0 - smoothstep(0.017 - aa, 0.017 + aa, abs(q.y - 0.020)))
+            * step(0.0, q.x) * (1.0 - smoothstep(0.085 - aa, 0.085 + aa, q.x));
+  float hat = 0.0;
+  if (type == 0) {        // tricorn: wide, with a peak
+    hat = (1.0 - smoothstep(0.060 - aa, 0.060 + aa, abs(h.x)))
+        * (1.0 - smoothstep(0.010 - aa, 0.010 + aa, abs(h.y - 0.030)));
+    hat = max(hat, 1.0 - smoothstep(0.030 - aa, 0.030 + aa, length((h - vec2(0.0, 0.045)) * vec2(1.0, 1.7))));
+  } else if (type == 1) { // bandana: tight, with a tail
+    hat = 1.0 - smoothstep(0.035 - aa, 0.035 + aa, length((h - vec2(0.0, 0.016)) * vec2(1.0, 1.9)));
+    hat = max(hat, (1.0 - smoothstep(0.026 - aa, 0.026 + aa, abs(h.x + 0.040)))
+                 * (1.0 - smoothstep(0.008 - aa, 0.008 + aa, abs(h.y - 0.006))));
+  } else if (type == 2) { // watch cap: low and round
+    hat = 1.0 - smoothstep(0.036 - aa, 0.036 + aa, length((h - vec2(0.0, 0.022)) * vec2(1.0, 1.35)));
+  } else {                // helmet: domed with a brim
+    hat = 1.0 - smoothstep(0.038 - aa, 0.038 + aa, length((h - vec2(0.0, 0.010)) * vec2(1.0, 1.1)));
+    hat *= step(h.y, 0.030);
+    hat = max(hat, (1.0 - smoothstep(0.052 - aa, 0.052 + aa, abs(h.x)))
+                 * (1.0 - smoothstep(0.007 - aa, 0.007 + aa, abs(h.y - 0.028))));
+  }
+  return vec4(body, head, arm, hat);
+}
+
+// Read the damage mask. Hardware filtering is deliberately NOT used: a 32-bit
+// float texture is only filterable with OES_texture_float_linear, and if that is
+// missing the texture is incomplete and EVERY sample silently returns zero — the
+// hull would simply never break. Doing it by hand is four fetches and always works.
+// Damage is interpolated so hole edges stay smooth; the timestamp is taken from the
+// nearest texel, because blending the times of two separate hits is meaningless.
+vec2 sampleMask(sampler2D tex, vec2 uv) {
+  vec2 size = vec2(textureSize(tex, 0));
+  vec2 t = uv * size - 0.5;
+  vec2 base = floor(t);
+  vec2 f = t - base;
+  ivec2 i = ivec2(base);
+  ivec2 hi = ivec2(size) - 1;
+  vec4 s00 = texelFetch(tex, clamp(i, ivec2(0), hi), 0);
+  vec4 s10 = texelFetch(tex, clamp(i + ivec2(1, 0), ivec2(0), hi), 0);
+  vec4 s01 = texelFetch(tex, clamp(i + ivec2(0, 1), ivec2(0), hi), 0);
+  vec4 s11 = texelFetch(tex, clamp(i + ivec2(1, 1), ivec2(0), hi), 0);
+  float dmg = mix(mix(s00.r, s10.r, f.x), mix(s01.r, s11.r, f.x), f.y);
+  vec4 near = f.x < 0.5 ? (f.y < 0.5 ? s00 : s01) : (f.y < 0.5 ? s10 : s11);
+  return vec2(dmg, near.g);
+}
+vec2 maskToShip(vec2 uv) { return (uv - 0.5) * 2.0 * SHIP_HALF; }
+
+// Hull silhouette in ship-local units, as a signed distance-ish value:
+// positive inside, roughly in ship units near the edge. Bow is +x.
+float hullField(vec2 p, float deckH, float keelH) {
+  float deck = deckH * (1.0 + 0.42 * p.x * p.x);
+  float ax = min(abs(p.x), 1.0);
+  float keel = -keelH * sqrt(max(0.0, 1.0 - pow(ax, p.x > 0.0 ? 1.8 : 3.0)));
+  float up = clamp(p.y / max(deckH, 0.01), 0.0, 1.6);
+  float bowEnd = 1.0 + 0.22 * up;
+  float sternEnd = -1.0 - 0.04 * up;
+  return min(min(deck - p.y, p.y - keel), min(bowEnd - p.x, p.x - sternEnd));
+}
+</script>
+
+<script type="x-shader/x-vertex" id="vs-fullscreen">#version 300 es
+void main() {
+  vec2 p = vec2(gl_VertexID == 1 ? 3.0 : -1.0, gl_VertexID == 2 ? 3.0 : -1.0);
+  gl_Position = vec4(p, 0.0, 1.0);
+}
+</script>
+
+<!-- ============================================================================
+     STAMP PASS. Runs once per hit, over the damage mask only.
+     Mask texel: r = damage 0..1 (1 = hull gone), g = time that texel was damaged.
+     The scatter points for one shot arrive as a uniform array, so a whole volley
+     is one draw. Damage is max-combined, so it can only ever grow: that is what
+     makes it persist from one attack to the next for the whole match.
+     ============================================================================ -->
+<script type="x-shader/x-fragment" id="fs-stamp">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int MAX_POINTS = 32;
+uniform sampler2D uMask;
+uniform vec4 uPoints[32];   // ship-local x, y, radius, rotation (radians)
+uniform int uCount;
+uniform float uNow;
+uniform int uClear;
+// Removal-pattern parameters for this projectile type.
+uniform float uRagged;      // how uneven the torn edge is
+uniform float uGrain;       // >1 tears along the planks (wider than tall)
+uniform float uSpikes;      // number of radial splinters
+uniform float uSpikeDepth;  // how far the splinters reach
+uniform float uSoft;        // width of the partly-damaged rim
+out vec4 outMask;
+
+// One removal pattern: 1 at the centre, falling to 0 past the torn edge.
+float removal(vec2 d, float radius, float seed) {
+  float c = cos(-seed), s = sin(-seed);
+  vec2 q = vec2(c * d.x - s * d.y, s * d.x + c * d.y);
+  q.y *= uGrain;                                   // planks tear sideways
+  float r = length(q);
+  float a = atan(q.y, q.x);
+  // Torn edge: low-frequency wobble plus radial splinters.
+  float wob = fbm(vec2(cos(a), sin(a)) * 2.2 + seed * 7.3) - 0.5;
+  float spike = uSpikeDepth * max(0.0, sin(a * uSpikes + seed * 11.0));
+  float edge = radius * (1.0 + uRagged * wob + spike);
+  return 1.0 - smoothstep(edge * (1.0 - uSoft), edge, r);
+}
+void main() {
+  ivec2 t = ivec2(gl_FragCoord.xy);
+  if (uClear == 1) { outMask = vec4(0.0, -99.0, 0.0, 1.0); return; }
+  vec4 prev = texelFetch(uMask, t, 0);
+  vec2 p = maskToShip((vec2(t) + 0.5) / vec2(textureSize(uMask, 0)));
+  float add = 0.0;
+  for (int i = 0; i < MAX_POINTS; i++) {
+    if (i >= uCount) break;
+    vec4 pt = uPoints[i];
+    vec2 d = p - pt.xy;
+    if (dot(d, d) > pt.z * pt.z * 9.0) continue;   // cheap reject
+    add = max(add, removal(d, pt.z, pt.w));
+  }
+  float dmg = max(prev.r, add);
+  // Stamp the time only where this shot actually removed something new, so the
+  // char and the reveal animate for the new damage and not the old.
+  float when = add > prev.r + 0.01 ? uNow : prev.g;
+  outMask = vec4(dmg, when, 0.0, 1.0);
+}
+</script>
+
+<!-- ============================================================================
+     INNER STRUCTURE. A static cross-section: decks, ribs, gun stations and the
+     gunners manning them. Drawn first, so holes in the hull reveal it.
+     ============================================================================ -->
+<script type="x-shader/x-vertex" id="vs-quad">#version 300 es
+precision highp float;
+uniform vec4 uCam;      // centre x, centre y, pixels per ship unit, unused
+uniform vec2 uRes;
+uniform vec2 uQuadHalf; // how much ship-space this quad covers
+out vec2 vShip;
+void main() {
+  // Two triangles covering the whole quad: (0,1,2) and (3,4,5).
+  // Corners: 0 and 3 must not repeat, or the second triangle collapses to nothing
+  // and only half the ship draws.
+  int i = gl_VertexID;
+  vec2 c = vec2(i == 0 || i == 2 || i == 3 ? -1.0 : 1.0,
+                i == 0 || i == 1 || i == 4 ? -1.0 : 1.0);
+  vShip = c * uQuadHalf;
+  gl_Position = vec4((vShip - uCam.xy) * uCam.z / (0.5 * uRes), 0.0, 1.0);
+}
+</script>
+<script type="x-shader/x-fragment" id="fs-inner">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int MAX_STATIONS = 8;
+in vec2 vShip;
+uniform vec4 uStations[8];  // x, y, kind (0 deck, 1 hull), gunner id (<0 = empty)
+uniform vec4 uCrew[8];      // lean out, muzzle flash, knocked out, type id
+uniform int uStationCount;
+uniform vec2 uHullShape;    // deck height, keel depth
+uniform float uUnit;        // ship units per device pixel, for anti-aliasing
+uniform float uTime;
+out vec4 outColor;
+
+float band(float v, float a, float b, float aa) {
+  return smoothstep(a - aa, a + aa, v) * (1.0 - smoothstep(b - aa, b + aa, v));
+}
+
+uniform float uFoamLook;
+uniform float uOceanSurface[32];
+uniform float uOceanFoam[32];
+float oceanAt(float x,bool foam){float q=clamp((x+1.35)/2.7*31.0,0.0,31.0);int a=int(floor(q)),b=min(31,a+1);return foam?mix(uOceanFoam[a],uOceanFoam[b],fract(q)):mix(uOceanSurface[a],uOceanSurface[b],fract(q));}
+uniform sampler2D uMaterial;
+uniform vec4 uMaterialBounds;
+float materialAt(vec2 p){
+ ivec2 size=textureSize(uMaterial,0);
+ ivec2 cell=ivec2(floor((p-uMaterialBounds.xy)/uMaterialBounds.zw*vec2(size)));
+ if(any(lessThan(cell,ivec2(0)))||any(greaterThanEqual(cell,size)))return 0.0;
+ return texelFetch(uMaterial,cell,0).r;
+}
+void main() {
+  vec2 p = vShip;
+  if(materialAt(p)<0.5)discard;
+  float aa = uUnit * 1.5;
+  float inside = hullField(p, uHullShape.x, uHullShape.y);
+  if (inside < -0.02) discard;                    // nothing inside the hull here
+
+  // Dim interior, lit slightly from the open deck above.
+  vec3 col = mix(vec3(0.085, 0.062, 0.048), vec3(0.20, 0.15, 0.11),
+                 smoothstep(-uHullShape.y, uHullShape.x, p.y));
+
+  // Deck planking: two decks plus the hold floor.
+  float deckY[3];
+  deckY[0] = uHullShape.x * 0.62;
+  deckY[1] = -0.02;
+  deckY[2] = -uHullShape.y * 0.62;
+  for (int i = 0; i < 3; i++) {
+    float d = abs(p.y - deckY[i]);
+    float th = 0.035;
+    float onDeck = 1.0 - smoothstep(th - aa, th + aa, d);
+    float grain = 0.5 + 0.5 * sin(p.x * 62.0 + float(i) * 2.3);
+    col = mix(col, mix(vec3(0.40, 0.27, 0.15), vec3(0.28, 0.18, 0.10), grain), onDeck);
+  }
+  // Ribs.
+  float rib = band(fract(p.x * 6.0 + 0.5), 0.42, 0.58, 0.03);
+  col = mix(col, vec3(0.26, 0.17, 0.10), rib * 0.75 * step(-uHullShape.y * 0.95, p.y));
+
+  // Gun stations and their gunners.
+  for (int i = 0; i < MAX_STATIONS; i++) {
+    if (i >= uStationCount) break;
+    vec4 st = uStations[i];
+    if (st.z < 0.5) continue;          // deck stations are drawn above the hull
+    vec2 q = p - st.xy;
+    float alcove = 1.0 - smoothstep(0.155 - aa, 0.155 + aa, length(q * vec2(0.85, 1.0)));
+    col = mix(col, vec3(0.045, 0.035, 0.030), alcove * 0.85);   // recess behind the station
+
+    // The gun: a barrel pointing at the bow, on a small carriage.
+    float barrel = 1.0 - smoothstep(0.030 - aa, 0.030 + aa, abs(q.y - 0.015)) ;
+    barrel *= band(q.x, -0.02, 0.175, aa);
+    float carriage = band(q.x, -0.06, 0.06, aa) * band(q.y, -0.075, -0.01, aa);
+    col = mix(col, vec3(0.17, 0.17, 0.19), barrel);
+    col = mix(col, vec3(0.33, 0.21, 0.12), carriage);
+
+    // The gunner at their post below decks. This layer sits behind the hull, so
+    // they are only ever seen through a hole shot in the planking.
+    if (false) {
+      float g = st.w;
+      vec3 skin = vec3(0.78, 0.58, 0.42);
+      vec3 shirt = 0.32 + 0.48 * vec3(hash12(vec2(g, 1.7)), hash12(vec2(g, 5.1)), hash12(vec2(g, 9.3)));
+      vec4 parts = gunnerParts(q - vec2(-0.085, 0.0), 0.0, int(uCrew[i].w + 0.5), aa);
+      col = mix(col, shirt, max(parts.x, parts.z));
+      col = mix(col, skin, parts.y);
+      col = mix(col, shirt * 0.42, parts.w);
+    }
+  }
+  // Soften the very edge so the interior never shows outside the hull line.
+  float a = smoothstep(-0.02, 0.01, inside);
+  outColor = vec4(col * a, a);
+}
+</script>
+
+<!-- ============================================================================
+     OUTER HULL. Drawn over the inner structure, with the damage mask removing
+     sections. Near the torn edge it splinters and chars, and the char cools over
+     a couple of seconds so fresh damage reads differently from old damage.
+     ============================================================================ -->
+<script type="x-shader/x-fragment" id="fs-hull">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int MAX_STATIONS = 8;
+in vec2 vShip;
+uniform sampler2D uMask;
+uniform vec4 uStations[8];
+uniform int uStationCount;
+uniform vec2 uHullShape;
+uniform float uUnit, uTime, uReveal, uCharTime;
+uniform vec3 uPlank, uPlankDark, uTrim, uOutline, uChar;
+out vec4 outColor;
+
+
+uniform float uFoamLook;
+uniform float uOceanSurface[32];
+uniform float uOceanFoam[32];
+float oceanAt(float x,bool foam){float q=clamp((x+1.35)/2.7*31.0,0.0,31.0);int a=int(floor(q)),b=min(31,a+1);return foam?mix(uOceanFoam[a],uOceanFoam[b],fract(q)):mix(uOceanSurface[a],uOceanSurface[b],fract(q));}
+uniform sampler2D uMaterial;
+uniform vec4 uMaterialBounds;
+float materialAt(vec2 p){
+ ivec2 size=textureSize(uMaterial,0);
+ ivec2 cell=ivec2(floor((p-uMaterialBounds.xy)/uMaterialBounds.zw*vec2(size)));
+ if(any(lessThan(cell,ivec2(0)))||any(greaterThanEqual(cell,size)))return 0.0;
+ return texelFetch(uMaterial,cell,0).r;
+}
+void main() {
+  vec2 p = vShip;
+  if(materialAt(p)<0.5)discard;
+  float aa = uUnit * 1.5;
+  float inside = hullField(p, uHullShape.x, uHullShape.y);
+  if (inside < -0.03) discard;
+
+  vec2 uv = shipToMask(p);
+  vec2 m = sampleMask(uMask, uv);
+  float dmg = m.r;
+  float age = uTime - m.g;
+  // A fresh hole OPENS rather than pops: the damage level that counts as "gone"
+  // starts above 1 and descends, so the hole eats outward from its worst point
+  // while the flash and smoke cover it. At full open this is a no-op.
+  float open_ = smoothstep(0.0, uReveal, age);
+  float cut = mix(1.05, 0.67, open_);
+  float dRel = dmg - cut + 0.67;
+
+  // Planking, with the seams following the sheer of the deck.
+  float sheer = 0.42 * p.x * p.x * uHullShape.x;
+  float plank = fract((p.y - sheer) * 11.0);
+  float seam = 1.0 - smoothstep(0.0, 0.10, plank) * (1.0 - smoothstep(0.88, 1.0, plank));
+  vec3 col = mix(uPlank, uPlankDark, seam * 0.55);
+  col *= 0.88 + 0.24 * fbm(p * vec2(7.0, 22.0));                   // wood grain
+  col *= mix(0.72, 1.06, smoothstep(-uHullShape.y, uHullShape.x, p.y));  // lit from above
+
+  // Wale and gunwale trim.
+  float wale = 1.0 - smoothstep(0.022 - aa, 0.022 + aa, abs(p.y - (sheer + uHullShape.x * 0.18)));
+  col = mix(col, uTrim, wale * 0.9);
+  float rail = smoothstep(uHullShape.x * (1.0 + 0.42 * p.x * p.x) - 0.045, uHullShape.x * (1.0 + 0.42 * p.x * p.x) - 0.03, p.y);
+  col = mix(col, uTrim, rail * 0.8);
+
+  // Gun ports: a dark square with a trim frame, at every hull station.
+  for (int i = 0; i < MAX_STATIONS; i++) {
+    if (i >= uStationCount) break;
+    vec4 st = uStations[i];
+    if (st.z < 0.5) continue;                      // deck stations are not ports
+    vec2 q = abs(p - st.xy - vec2(0.03, 0.0)) - vec2(0.085, 0.070);
+    float d = max(q.x, q.y);
+    col = mix(col, vec3(0.05, 0.04, 0.035), 1.0 - smoothstep(-aa, aa, d));
+    col = mix(col, uTrim * 0.8, 1.0 - smoothstep(0.014 - aa, 0.014 + aa, abs(d + 0.007)));
+  }
+
+  // Outline along the silhouette.
+  col = mix(uOutline, col, smoothstep(0.012 - aa, 0.012 + aa, inside));
+
+  // ---- Damage ----
+  // Splintered rim: the band of the mask that is damaged but not yet gone.
+  float rim = smoothstep(0.25, 0.55, dRel) * (1.0 - smoothstep(0.55, 0.92, dRel));
+  float charAmt = exp(-max(age, 0.0) / max(uCharTime, 0.05));
+  col = mix(col, uChar, rim * 0.85);
+  // Embers on a fresh tear.
+  vec3 hot = mix(vec3(0.95, 0.42, 0.10), vec3(1.0, 0.85, 0.35), fbm(p * 30.0 + uTime));
+  col = mix(col, hot, rim * charAmt * 0.55);
+  // Shade the inside of the hull just behind the hole.
+  col = mix(col, col * 0.45, smoothstep(0.55, 0.9, dRel));
+
+  float gone = 0.0;
+  // Reach full opacity slightly INSIDE the silhouette, so undamaged hull always
+  // covers the inner structure completely and no interior shows at the edge.
+  float a = (1.0 - gone) * smoothstep(-0.035, -0.005, inside);
+
+  // Climbing foam / wet wood adapted from the supplied ocean prototype.
+  float x=p.x, ax=abs(x);
+  float waterY=oceanAt(x,false);
+  float dy=(p.y-waterY)/uUnit;
+  float foamHere=max(0.18,oceanAt(x,true));
+  float climb=smoothstep(0.35,1.0,ax)*(x>0.0?1.4:0.6);
+  float torn=0.65+0.7*fbm(vec2(x*17.0,uTime*1.4));
+  float foamH=uFoamLook*max(2.5,(3.0+(5.0+16.0*foamHere)*(0.6+1.6*climb))*torn*0.55);
+  float band=clamp(foamH-dy+0.5,0.0,1.0)*clamp(dy+1.5,0.0,1.0);
+  float foamA=band*min(1.0,uFoamLook*10.0)*smoothstep(-aa,aa,inside);
+  vec3 foamCol=mix(vec3(0.87,0.97,0.95),vec3(0.40,0.70,0.73),clamp(1.0-dy/max(foamH,1.0),0.0,1.0)*0.45);
+  float bubble=step(0.76,fbm(vec2(x*180.0,dy*2.0+uTime)));
+  foamCol=mix(foamCol,vec3(0.32,0.63,0.67),bubble*0.7);
+  float wet=clamp(foamH+3.0-dy,0.0,1.0)*step(0.0,dy);
+  col=mix(col,col*0.72,wet*0.8);
+  col=mix(col,foamCol,foamA);
+  col=mix(col,vec3(0.07,0.37,0.43),smoothstep(0.0,0.12,waterY-p.y)*0.65);
+
+  outColor = vec4(col * a, a);
+}
+</script>
+<!-- ============================================================================
+     RIG: masts and sails. Drawn twice from one program: everything still attached
+     first (behind the hull, so the hull covers the mast feet), then any falling
+     mast section after the hull, so a topple reads in front of the ship.
+     Sails are cloth, so they are NOT part of the hull's damage mask. Each sail
+     carries one damage value that drives a procedural tear pattern, which is both
+     cheaper and a better match for how canvas actually fails.
+     ============================================================================ -->
+<script type="x-shader/x-fragment" id="fs-rig">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int MAX_MASTS = 3;
+const int MAX_SAILS = 8;
+in vec2 vShip;
+uniform vec4 uMasts[3];     // x, foot y, top y, break y (below foot = not broken)
+uniform vec4 uMastFall[3];  // break time (<0 = standing), fall angle now, fade, unused
+uniform vec4 uSails[8];     // centre x, centre y, half width, half height
+uniform vec4 uSailInfo[8];  // mast index, damage 0..1, burn start (<0 = not burning), seed
+uniform vec4 uSailBurn[8];  // burn origin x, y in sail space (-1..1), atlas cell, unused
+uniform sampler2D uSailAtlas;
+uniform int uMastCount, uSailCount, uPhase;   // uPhase 0 = attached, 1 = falling piece
+uniform float uUnit, uTime, uBurnTime;
+uniform vec3 uMastCol, uMastDark, uSailCol, uSailShade, uRopeCol;
+out vec4 outColor;
+
+// Rounded box coverage, in ship units, anti-aliased.
+float boxCov(vec2 p, vec2 half_, float round_, float aa) {
+  vec2 d = abs(p) - half_ + round_;
+  float dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - round_;
+  return 1.0 - smoothstep(-aa, aa, dist);
+}
+void main() {
+  float aa = uUnit * 1.5;
+  vec4 acc = vec4(0.0);   // premultiplied
+
+  for (int mi = 0; mi < MAX_MASTS; mi++) {
+    if (mi >= uMastCount) break;
+    vec4 M = uMasts[mi];
+    vec4 F = uMastFall[mi];
+    bool broken = F.x >= 0.0;
+    float breakY = M.w;
+
+    // Fragment position in this mast's own frame. For the falling piece we undo
+    // the topple, so the same upright geometry can be tested.
+    vec2 p = vShip;
+    float fade = 1.0;
+    if (uPhase == 1) {
+      if (!broken) continue;
+      vec2 pivot = vec2(M.x, breakY);
+      float c = cos(-F.y), s = sin(-F.y);
+      vec2 q = vShip - pivot - vec2(0.0, -F.z * 0.35);   // the piece also drops as it turns
+      p = pivot + vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+      fade = 1.0 - F.z;
+      if (fade <= 0.0) continue;
+    } else if (broken) {
+      fade = 1.0;
+    }
+
+    // The mast pole. Attached phase draws foot to break; falling phase draws
+    // break to top.
+    float lo = uPhase == 1 ? breakY : M.y;
+    float hi = uPhase == 1 ? M.z : (broken ? breakY : M.z);
+    if (hi > lo) {
+      vec2 c0 = vec2(M.x, (lo + hi) * 0.5);
+      float w = 0.022 * mix(1.0, 0.62, clamp((p.y - M.y) / max(M.z - M.y, 0.01), 0.0, 1.0));
+      float cov = boxCov(p - c0, vec2(w, (hi - lo) * 0.5), 0.01, aa);
+      vec3 col = mix(uMastCol, uMastDark, 0.5 + 0.5 * sin(p.y * 90.0));
+      // Splintered stump where it snapped.
+      if (broken) {
+        float dEdge = uPhase == 1 ? p.y - breakY : breakY - p.y;
+        float jag = 0.020 * (0.4 + fbm(vec2(p.x * 60.0, float(mi) * 9.1)));
+        if (dEdge < jag) cov *= smoothstep(0.0, jag, dEdge);
+        col = mix(col, vec3(0.10, 0.07, 0.05), 1.0 - smoothstep(0.0, 0.06, dEdge));
+      }
+      acc = acc + (1.0 - acc.a) * vec4(col * cov * fade, cov * fade);
+    }
+  }
+
+  for (int si = 0; si < MAX_SAILS; si++) {
+    if (si >= uSailCount) break;
+    vec4 S = uSails[si];
+    vec4 I = uSailInfo[si];
+    int mi = int(I.x + 0.5);
+    vec4 M = uMasts[mi];
+    vec4 F = uMastFall[mi];
+    bool broken = F.x >= 0.0;
+    bool above = broken && S.y > M.w;
+    if (uPhase == 1 && !above) continue;         // only the piece above the break falls
+    if (uPhase == 0 && above) continue;
+
+    vec2 p = vShip;
+    float fade = 1.0;
+    if (uPhase == 1) {
+      vec2 pivot = vec2(M.x, M.w);
+      float c = cos(-F.y), s = sin(-F.y);
+      vec2 q = vShip - pivot - vec2(0.0, -F.z * 0.35);
+      p = pivot + vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+      fade = 1.0 - F.z;
+      if (fade <= 0.0) continue;
+    }
+
+    vec2 d = p - S.xy;
+    // The yard across the top of the sail.
+    float yard = boxCov(d - vec2(0.0, S.w), vec2(S.z * 1.12, 0.013), 0.006, aa);
+    // Only a bound for the sprite: the sprite's own alpha gives the sail its shape.
+    float cov = boxCov(d, vec2(S.z, S.w) * 1.02, 0.0, aa);
+
+    if (cov > 0.0 || yard > 0.0) {
+      vec2 uvN = clamp(d / max(vec2(S.z, S.w), vec2(0.01)), -1.0, 1.0);   // -1..1 in the sail
+      vec4 B = uSailBurn[si];
+
+      // The sail itself is a SPRITE. Its alpha carries the shape, so the quad test
+      // above is only a bound; everything below is the mask that eats it away.
+      vec2 cell = vec2(mod(B.z, 2.0), floor(B.z * 0.5));
+      vec2 atlasUv = (cell + (uvN * 0.5 + 0.5)) * 0.5;
+      vec4 sprite = texture(uSailAtlas, atlasUv);
+      float keep = sprite.a;
+
+      // --- Rip mask: accumulated shot damage tears the canvas ---
+      // The raw noise clusters around 0.52, so a threshold there would put holes in
+      // a brand new sail, and a linear threshold would tear it open all at once.
+      // Flattening the noise through its own distribution first makes damage mean
+      // what it says: damage 0.4 removes about 40% of the canvas, 0 removes none.
+      float dmg = clamp(I.y, 0.0, 1.0);
+      float n = flatten(fbm(uvN * vec2(2.6, 3.4) + I.w * 13.0));
+      // The band sits BELOW the damage value, so zero damage removes nothing at all
+      // and full damage removes everything.
+      float t = dmg * 1.07;
+      keep *= smoothstep(t - 0.07, t, n);
+      float frayed = 1.0 - smoothstep(t, t + 0.16, n);   // darker along the rips
+
+      // --- Burn mask: fire eats outward from where it caught ---
+      // A ragged front advances from the burn origin: everything it has passed is
+      // gone, with embers on the front line and a charred band just behind it.
+      float ember = 0.0, charred = 0.0;
+      if (I.z >= 0.0) {
+        float prog = (uTime - I.z) / max(uBurnTime, 0.05);
+        float f = length(uvN - B.xy) / 2.4 + 0.30 * (fbm(uvN * 3.2 + I.w * 5.1) - 0.5);
+        keep *= smoothstep(prog - 0.02, prog + 0.03, f);
+        ember = 1.0 - smoothstep(prog + 0.01, prog + 0.05, f);
+        charred = 1.0 - smoothstep(prog + 0.04, prog + 0.14, f);
+      }
+
+      vec3 col = sprite.rgb * mix(uSailCol, uSailShade, 0.18 + 0.28 * (1.0 - uvN.x * uvN.x));
+      col = mix(col, uSailShade * 0.72, frayed * 0.6);
+      col = mix(col, vec3(0.14, 0.10, 0.08), charred * 0.85);
+      col = mix(col, vec3(1.0, 0.52, 0.13), ember * 0.9);
+      float a = clamp(keep, 0.0, 1.0) * cov * fade;
+      acc = acc + (1.0 - acc.a) * vec4(col * a, a);
+      float ya = yard * fade;
+      acc = acc + (1.0 - acc.a) * vec4(uMastDark * ya, ya);
+      // A rope from the yard tip down to the rail, cheap rigging suggestion.
+      float rope = boxCov(vec2(abs(d.x) - S.z * 1.12 + (S.y - p.y) * 0.16, 0.0), vec2(0.006, 0.0001), 0.002, aa);
+      rope *= step(-S.w * 3.0, d.y) * step(d.y, S.w);
+      acc = acc + (1.0 - acc.a) * vec4(uRopeCol * rope * fade * 0.7, rope * fade * 0.7);
+    }
+  }
+
+  if (acc.a <= 0.002) discard;
+  outColor = acc;
+}
+</script>
+<!-- ============================================================================
+     CREW. Drawn AFTER the hull, so these are the figures the enemy can actually
+     see: deck gunners standing above the rail, and port gunners only in the moment
+     they lean out of a gun port to fire. Below decks a gunner is behind planking,
+     which is both cover and concealment: they are invisible until they shoot.
+     ============================================================================ -->
+<script type="x-shader/x-fragment" id="fs-crew">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int MAX_STATIONS = 8;
+in vec2 vShip;
+uniform sampler2D uMask;
+uniform vec4 uStations[8];   // x, y, kind (0 deck, 1 port), gunner id (<0 = empty)
+uniform vec4 uCrew[8];       // lean out 0..1, muzzle flash 0..1, knocked out 0..1, type id
+uniform int uStationCount;
+uniform vec2 uHullShape;
+uniform float uUnit, uTime;
+out vec4 outColor;
+
+void main() {
+  float aa = uUnit * 1.5;
+  vec4 acc = vec4(0.0);
+  for (int i = 0; i < MAX_STATIONS; i++) {
+    if (i >= uStationCount) break;
+    vec4 st = uStations[i];
+    vec4 cr = uCrew[i];
+    if (st.w < 0.0 || cr.z > 0.5) continue;          // empty station, or the gunner is down
+
+    bool port = st.z > 0.5;
+    // A deck gunner is always out. A port gunner is only out while firing.
+    float out_ = port ? cr.x : 1.0;
+    if (out_ <= 0.001) continue;
+
+    // Leaning carries the figure forward through the port and a little downward.
+    vec2 base = st.xy + (port ? vec2(0.10 + 0.085 * out_, -0.01) : vec2(-0.085, 0.0));
+    vec2 q = vShip - base;
+    float lean = port ? out_ : 0.0;
+
+    vec4 parts = gunnerParts(q, lean, int(cr.w + 0.5), aa);
+    float any = max(max(parts.x, parts.y), max(parts.z, parts.w));
+    if (any <= 0.0 && cr.y <= 0.0) continue;
+
+    // A port gunner is clipped by the port opening: only the part leaning through
+    // it is visible, which is what makes them hard to identify.
+    if (port) {
+      vec2 pq = vShip - st.xy - vec2(0.03, 0.0);
+      float insidePort = max(abs(pq.y) - 0.070, 0.0);
+      float ahead = step(st.x + 0.03 - 0.085, vShip.x);
+      float vis = max(ahead, 1.0 - smoothstep(0.0, aa * 2.0, insidePort));
+      parts *= vis;
+      any *= vis;
+    }
+
+    vec3 skin = vec3(0.78, 0.58, 0.42);
+    vec3 shirt = 0.32 + 0.48 * vec3(hash12(vec2(st.w, 1.7)), hash12(vec2(st.w, 5.1)), hash12(vec2(st.w, 9.3)));
+    vec3 col = shirt;
+    float a = max(parts.x, parts.z);
+    col = mix(col, skin, parts.y * step(0.001, parts.y));
+    a = max(a, parts.y);
+    col = mix(col, shirt * 0.42, parts.w);
+    a = max(a, parts.w);
+    // Dark outline so a figure reads against planking or sky.
+    acc = acc + (1.0 - acc.a) * vec4(col * a, a);
+
+    // Muzzle flash at the gun, which is the giveaway that a port is manned.
+    if (cr.y > 0.0) {
+      vec2 mz = st.xy + vec2(port ? 0.30 : 0.19, port ? 0.0 : 0.015);
+      float d = length((vShip - mz) * vec2(0.7, 1.0));
+      float r = 0.075 * cr.y;
+      float f = 1.0 - smoothstep(r * 0.35, r, d);
+      vec3 fc = mix(vec3(1.0, 0.95, 0.7), vec3(1.0, 0.45, 0.12), smoothstep(0.0, r, d));
+      acc = acc + (1.0 - acc.a) * vec4(fc * f, f);
+    }
+  }
+  if (acc.a <= 0.002) discard;
+  outColor = acc;
+}
+</script>
+
+<!-- Telescope: what the enemy sees when they glass the deck. Everything outside the
+     eyepiece falls away, so only the figures standing above the rail can be read. -->
+<script type="x-shader/x-fragment" id="fs-scope">#version 300 es
+precision highp float;
+// #include common
+uniform vec2 uRes;
+uniform vec2 uCentre;     // eyepiece centre, in pixels
+uniform float uRadius, uTime;
+out vec4 outColor;
+void main() {
+  vec2 p = gl_FragCoord.xy - uCentre;
+  float d = length(p) / uRadius;
+  float vign = smoothstep(0.86, 1.0, d);
+  vec3 col = vec3(0.03, 0.05, 0.06);
+  float a = vign;                                   // black outside the eyepiece
+  // Brass ring and a faint bloom just inside it.
+  float ring = (1.0 - smoothstep(0.0, 0.012, abs(d - 0.90))) * 0.9;
+  col = mix(col, vec3(0.72, 0.55, 0.22), ring);
+  a = max(a, ring);
+  // Reticle: cross hairs with a gap at the centre, plus range ticks.
+  float cross_ = (1.0 - smoothstep(0.0, 1.6, abs(p.x))) * step(0.10, d) * step(d, 0.80)
+               + (1.0 - smoothstep(0.0, 1.6, abs(p.y))) * step(0.10, d) * step(d, 0.80);
+  float ticks = (1.0 - smoothstep(0.0, 1.6, abs(p.y))) * step(0.0, sin(p.x / uRadius * 40.0)) * step(d, 0.55);
+  float marks = clamp(cross_ + ticks * 0.6, 0.0, 1.0) * 0.55;
+  col = mix(col, vec3(0.85, 0.93, 0.88), marks);
+  a = max(a, marks);
+  if (a <= 0.003) discard;
+  outColor = vec4(col * a, a);
+}
+</script>
+
+<!-- ============================================================================
+     EFFECTS. Debris chunks, smoke and the impact flash, all from the same
+     program and one draw. Each live hit carries its scatter points, so debris
+     leaves the places the hull actually broke.
+     ============================================================================ -->
+<script type="x-shader/x-vertex" id="vs-fx">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int SLOTS = 4;
+const int PER_SLOT = 96;     // debris + smoke quads per hit
+uniform vec4 uCam;
+uniform vec2 uRes;
+uniform vec4 uHits[4];       // x, y, start time (<0 empty), strength
+uniform vec4 uHitPts[16];    // up to 4 scatter points per slot: x, y, radius, seed
+uniform vec2 uHullShape;     // deck height, keel depth: used to tell hull hits from air bursts
+uniform float uTime, uDebrisLife, uSmokeLife, uDebrisSpeed, uDebrisSize, uSmokeSize;
+out vec2 vUV;
+out float vAlpha;
+out float vKind;             // 0 debris, 1 smoke, 2 flash
+out float vSpin;
+void main() {
+  int per = PER_SLOT * 6;
+  int slot = gl_VertexID / per;
+  int local = gl_VertexID - slot * per;
+  int idx = local / 6;
+  int corner = local - idx * 6;
+  vec2 uv = vec2(corner == 1 || corner == 4 || corner == 5 ? 1.0 : -1.0,
+                 corner == 2 || corner == 3 || corner == 5 ? 1.0 : -1.0);
+  vUV = uv; vAlpha = 0.0; vKind = 0.0; vSpin = 0.0;
+  gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
+
+  vec4 hit = uHits[slot];
+  if (hit.z < 0.0) return;
+  float age = uTime - hit.z;
+  if (age < 0.0) return;
+
+  // Each hit's particles start from one of its scatter points.
+  vec4 pt = uHitPts[slot * 4 + (idx & 3)];
+  vec2 origin = pt.xy;
+  float seed = float(idx) * 1.71 + pt.w * 3.3 + float(slot) * 7.7;
+  float h1 = hash12(vec2(seed, 1.3)), h2 = hash12(vec2(seed, 4.9));
+  float h3 = hash12(vec2(seed, 8.1)), h4 = hash12(vec2(seed, 12.7));
+
+  if (idx < 8) {
+    // Impact flash: a couple of quick bright quads.
+    float life = 0.16;
+    if (age > life) return;
+    vKind = 2.0;
+    vAlpha = 1.0 - age / life;
+    float r = (0.10 + 0.16 * h1) * (0.6 + hit.w) * (1.0 + 2.2 * age / life);
+    gl_Position = vec4((origin + uv * r - uCam.xy) * uCam.z / (0.5 * uRes), 0.0, 1.0);
+    return;
+  }
+  if (idx < 48) {
+    // Wood debris: tumbling chunks under gravity. Debris is hull, so it only comes
+    // from scatter points that actually landed on the hull. A shot that goes off
+    // into the air still flashes and smokes, but throws no splinters.
+    if (hullField(origin, uHullShape.x, uHullShape.y) < 0.0) return;
+    float life = uDebrisLife * mix(0.6, 1.0, h3);
+    if (age > life) return;
+    float ang = h1 * 6.2831853;
+    float spd = uDebrisSpeed * mix(0.35, 1.0, h2) * (0.7 + hit.w);
+    vec2 vel = vec2(cos(ang), sin(ang)) * spd + vec2(-0.6, 0.9) * spd * 0.35;
+    vec2 pos = origin + vel * age - vec2(0.0, 0.5 * 4.5 * age * age);
+    float k = age / life;
+    vKind = 0.0;
+    vAlpha = 1.0 - smoothstep(0.7, 1.0, k);
+    vSpin = (h4 - 0.5) * 26.0 * age;
+    float r = 2.0 * uDebrisSize * mix(0.45, 1.0, h4) * pt.z / 0.12;
+    gl_Position = vec4((pos + uv * r - uCam.xy) * uCam.z / (0.5 * uRes), 0.0, 1.0);
+    return;
+  }
+  // Smoke: rises, spreads and thins.
+  float life = uSmokeLife * mix(0.65, 1.0, h3);
+  if (age > life) return;
+  float k = age / life;
+  vec2 pos = origin + vec2((h1 - 0.5) * 0.5, 0.15 + 0.75 * k) * (0.6 + hit.w) + vec2(0.35 * k * k, 0.0);
+  float r = uSmokeSize * (0.35 + 1.5 * k) * mix(0.6, 1.2, h2) * (0.7 + hit.w);
+  vKind = 1.0;
+  vAlpha = (1.0 - smoothstep(0.25, 1.0, k)) * mix(0.35, 0.7, h4);
+  vSpin = (h4 - 0.5) * 2.0 * age;
+  gl_Position = vec4((pos + uv * r - uCam.xy) * uCam.z / (0.5 * uRes), 0.0, 1.0);
+}
+</script>
+<script type="x-shader/x-fragment" id="fs-fx">#version 300 es
+precision highp float;
+// #include common
+in vec2 vUV;
+in float vAlpha;
+in float vKind;
+in float vSpin;
+out vec4 outColor;
+void main() {
+  float c = cos(vSpin), s = sin(vSpin);
+  vec2 q = vec2(c * vUV.x - s * vUV.y, s * vUV.x + c * vUV.y);
+  if (vKind < 0.5) {
+    // Debris: a rough splinter, longer than it is wide.
+    vec2 d = abs(q * vec2(1.0, 2.6)) - vec2(0.55, 0.55);
+    float cov = 1.0 - smoothstep(0.0, 0.25, max(d.x, d.y));
+    vec3 col = mix(vec3(0.36, 0.23, 0.12), vec3(0.16, 0.10, 0.06), step(0.0, q.x));
+    float a = cov * vAlpha;
+    outColor = vec4(col * a, a);
+  } else if (vKind < 1.5) {
+    // Smoke: soft puff, lit slightly from above.
+    float d = length(q);
+    float cov = 1.0 - smoothstep(0.35, 1.0, d);
+    cov *= 0.55 + 0.9 * fbm(q * 2.2 + vSpin);
+    vec3 col = mix(vec3(0.34, 0.33, 0.32), vec3(0.72, 0.72, 0.71), clamp(q.y * 0.5 + 0.5, 0.0, 1.0));
+    float a = clamp(cov, 0.0, 1.0) * vAlpha;
+    outColor = vec4(col * a, a);
+  } else {
+    float d = length(q);
+    float cov = 1.0 - smoothstep(0.2, 1.0, d);
+    vec3 col = mix(vec3(1.0, 0.95, 0.7), vec3(1.0, 0.45, 0.12), smoothstep(0.0, 0.8, d));
+    float a = cov * vAlpha;
+    outColor = vec4(col * a, a);
+  }
+}
+</script>
+
+<!-- Debug view of the damage mask itself. -->
+<script type="x-shader/x-fragment" id="fs-maskview">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+uniform sampler2D uMask;
+uniform vec2 uRes;
+uniform vec2 uViewSize;
+out vec4 outColor;
+void main() {
+  vec2 uv = gl_FragCoord.xy / uViewSize;
+  if (uv.x > 1.0 || uv.y > 1.0) discard;
+  float d = sampleMask(uMask, uv).x;
+  vec3 col = mix(vec3(0.10, 0.16, 0.10), vec3(1.0, 0.35, 0.2), d);
+  float edge = min(min(uv.x, uv.y), min(1.0 - uv.x, 1.0 - uv.y));
+  col = mix(vec3(0.95, 0.65, 0.25), col, smoothstep(0.0, 0.006, edge));
+  outColor = vec4(col, 0.92);
+}
+</script>
+
+<script type="module">
+import {HULL_MASK,maskPixels} from "/pirate-bash/src/hull-mask.js";
+import {stationPosition,SHIP_LADDER} from "/pirate-bash/src/ballistics.js";
+import {stationAnchors} from "/pirate-bash/src/ship-config.js";
+import {ShipArtRenderer} from "/pirate-bash/src/ship-art-renderer.js";
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Ship layout and projectile archetypes
+  // ---------------------------------------------------------------------------
+  const MASK_W = 512, MASK_H = 320;   // damage mask resolution over the whole ship
+  const MAX_POINTS = 32;              // scatter points one shot can apply
+  const FX_SLOTS = 4;                 // hits whose effects can play at once
+  const FX_PER_SLOT = 96;
+
+  const HULL = { deck: 0.34, keel: 0.56 };
+  const MAX_MASTS = 3, MAX_SAILS = 8;
+  const QUAD_HULL = [1.30 * 1.35, 0.80 * 1.35];   // hull and interior quad
+  const QUAD_RIG = [2.0, 2.9];                    // tall enough for the whole rig
+
+  // Every projectile type is a row of numbers: how the shot scatters, and what
+  // each scatter point removes. New weapons are new rows, not new code.
+  const ARCHETYPES = [
+    { id: 'roundshot', name: 'Round shot',
+      points: 1, spread: 0.0, radius: 0.16, radiusVar: 0.1,
+      ragged: 0.35, grain: 1.5, spikes: 5, spikeDepth: 0.10, soft: 0.35,
+      shake: 0.5, debris: 1.0, smoke: 0.7 },
+    { id: 'grape', name: 'Grapeshot',
+      points: 14, spread: 0.42, radius: 0.045, radiusVar: 0.5,
+      ragged: 0.45, grain: 1.2, spikes: 4, spikeDepth: 0.14, soft: 0.5,
+      shake: 0.3, debris: 0.6, smoke: 0.45 },
+    { id: 'chain', name: 'Chain shot',
+      points: 6, spread: 0.55, radius: 0.075, radiusVar: 0.2, alongLine: true,
+      ragged: 0.3, grain: 2.6, spikes: 3, spikeDepth: 0.18, soft: 0.3,
+      shake: 0.45, debris: 0.9, smoke: 0.5 },
+    { id: 'shell', name: 'Explosive shell',
+      points: 5, spread: 0.16, radius: 0.20, radiusVar: 0.35,
+      ragged: 0.55, grain: 1.1, spikes: 7, spikeDepth: 0.26, soft: 0.28,
+      shake: 1.0, debris: 1.5, smoke: 1.4 },
+    { id: 'fire', name: 'Incendiary',
+      points: 9, spread: 0.30, radius: 0.085, radiusVar: 0.6,
+      ragged: 0.85, grain: 1.0, spikes: 9, spikeDepth: 0.30, soft: 0.62,
+      shake: 0.35, debris: 0.5, smoke: 1.6 },
+    { id: 'rail', name: 'Heavy bolt',
+      points: 3, spread: 0.30, radius: 0.10, radiusVar: 0.1, alongLine: true, lineAngle: -0.35,
+      ragged: 0.2, grain: 3.4, spikes: 2, spikeDepth: 0.12, soft: 0.22,
+      shake: 0.7, debris: 1.1, smoke: 0.6 },
+  ];
+  let archetype = ARCHETYPES[0];
+
+  const P = {
+    leanTime: 0.9,       // how long a port gunner is exposed when firing (s)
+    scopeZoom: 1.0,      // telescope magnification
+    masts: 3,            // 1 to 3 masts
+    sailsPerMast: 3,     // sails on each mast, capped so the ship never exceeds 8
+    mastToughness: 1.0,  // how much hull damage near a mast foot it takes to snap
+    fallTime: 2.2,       // how long a broken mast takes to topple and vanish (s)
+    burnTime: 1.6,       // how long a sail above the break takes to burn away (s)
+    deckStations: 4,     // gun stations on the decks (2 to 4)
+    hullStations: 4,     // gun stations in the hull, seen as gun ports (2 to 4)
+    gunners: 8,          // how many collected gunners are assigned
+    reveal: 0.35,        // how long a fresh hole takes to open (s)
+    charTime: 1.6,       // how long the torn edge stays hot (s)
+    debrisLife: 1.1,
+    smokeLife: 1.7,
+    debrisSpeed: 1.6,
+    debrisSize: 0.045,
+    smokeSize: 0.16,
+    shake: 1.0,
+  };
+
+  // Stations: kind 0 on a deck, kind 1 in the hull (a gun port from outside).
+  let stations = [];
+  // The four gunner archetypes a player can collect. The hat is the identifying
+  // mark, which is what an enemy telescope is reading.
+  const GUNNER_TYPES = [
+    { name: 'Cannoneer', mark: 'tricorn' },
+    { name: 'Swivel gunner', mark: 'bandana' },
+    { name: 'Bomb lobber', mark: 'watch cap' },
+    { name: 'Powder monkey', mark: 'helmet' },
+  ];
+
+  const stationBuf = new Float32Array(8 * 4);
+  const crewBuf = new Float32Array(8 * 4);   // lean out, muzzle flash, knocked out, type
+
+  function buildStations() {
+    stations = [];
+    const spread = (n, i) => n === 1 ? 0 : (i / (n - 1) - 0.5) * 1.45;
+    // Deck gunners stand ABOVE the rail, so the enemy can see and count them.
+    for (let i = 0; i < P.deckStations; i++) {
+      const x = spread(P.deckStations, i);
+      const deckTop = HULL.deck * (1 + 0.42 * x * x);
+      stations.push({ x, y: deckTop + 0.055, port: false, gunner: -1, type: 0,
+                      firedAt: -99, out: false });
+    }
+    // Port gunners sit behind planking: cover and concealment both.
+    for (let i = 0; i < P.hullStations; i++) {
+      stations.push({ x: spread(P.hullStations, i), y: 0.03, port: true, gunner: -1, type: 0,
+                      firedAt: -99, out: false });
+    }
+    // Collected gunners are assigned to stations in order; the rest stand empty.
+    stations.forEach((st, i) => {
+      st.gunner = i < P.gunners ? i + 1 : -1;
+      st.type = i % GUNNER_TYPES.length;
+    });
+    uploadStations();
+  }
+  function uploadStations() {
+    stationBuf.fill(0); crewBuf.fill(0);
+    stations.forEach((st, i) => {
+      stationBuf.set([st.x, st.y, st.port ? 1 : 0, st.gunner], i * 4);
+      // A port gunner leans out to fire and ducks back in: that brief moment is the
+      // only time the enemy can see them at all.
+      const t = now - st.firedAt;
+      const lean = st.port ? Math.max(0, Math.min(1, Math.min(t / 0.12, (P.leanTime - t) / 0.25))) : 1;
+      const flash = Math.max(0, 1 - t / 0.11);
+      crewBuf.set([lean, flash, st.out ? 1 : 0, st.type], i * 4);
+    });
+  }
+  // Is this gunner visible to an enemy right now?
+  function crewVisible(st) {
+    if (st.gunner < 0 || st.out) return false;
+    if (!st.port) return true;                       // on deck, always in view
+    return now - st.firedAt < P.leanTime;            // below decks, only while firing
+  }
+  function fireStation(st) {
+    if (st.gunner < 0 || st.out) return;
+    st.firedAt = now;
+  }
+  // Note: buildStations() reads the clock, so it is called from repair() at startup,
+  // after `now` exists. Calling it here would throw before the page ever drew.
+
+  // ---------------------------------------------------------------------------
+  // Masts and sails.
+  // Sails are cloth, so they are not part of the hull's damage mask: each sail
+  // carries one damage number that drives a procedural tear pattern. A mast snaps
+  // when enough damage lands near its foot, whether that came from shots at the
+  // rigging or from heavy hull damage around the step.
+  // ---------------------------------------------------------------------------
+  let masts = [], sails = [];
+  const mastBuf = new Float32Array(MAX_MASTS * 4);
+  const mastFallBuf = new Float32Array(MAX_MASTS * 4);
+  const sailBuf = new Float32Array(MAX_SAILS * 4);
+  const sailInfoBuf = new Float32Array(MAX_SAILS * 4);
+  const sailBurnBuf = new Float32Array(MAX_SAILS * 4);   // burn origin x, y in sail space, atlas cell
+
+  function buildRig() {
+    const n = Math.max(1, Math.min(MAX_MASTS, Math.round(P.masts)));
+    masts = []; sails = [];
+    // Main mast tallest, then fore, then mizzen, in the usual pirate arrangement.
+    const xs = n === 1 ? [0.0] : n === 2 ? [-0.45, 0.42] : [-0.62, 0.02, 0.62];
+    const heights = n === 1 ? [2.25] : n === 2 ? [1.95, 2.25] : [1.80, 2.35, 1.65];
+    // Spend the whole sail budget: divide what was asked for across the masts, and
+    // give any remainder to the taller masts first, as a real ship would.
+    const total = Math.min(n * Math.round(P.sailsPerMast), MAX_SAILS);
+    const counts = new Array(n).fill(Math.floor(total / n));
+    const tallestFirst = heights.map((h, i) => i).sort((a, b) => heights[b] - heights[a]);
+    for (let k = 0; k < total - Math.floor(total / n) * n; k++) counts[tallestFirst[k]]++;
+    for (let i = 0; i < n; i++) {
+      const foot = -0.10, top = heights[i];
+      const per = Math.max(1, counts[i]);
+      masts.push({ x: xs[i], foot, top, damage: 0, breakY: foot - 1, breakTime: -1 });
+      for (let j = 0; j < per && sails.length < MAX_SAILS; j++) {
+        // Sails stack up the mast, each a little smaller than the one below.
+        const span = top - HULL.deck - 0.12;
+        const h = span / (per + 0.6) * 0.5;
+        const cy = HULL.deck + 0.18 + span * ((j + 0.55) / per);
+        const w = (0.30 - 0.035 * j) * (n === 1 ? 1.35 : 1.0);
+        sails.push({ mast: i, x: xs[i] + 0.02, y: cy, halfW: w, halfH: h * 0.9,
+                     damage: 0, burnStart: -1, burnAt: [0, -0.9], cell: (i + j) % 4,
+                     seed: i * 3.7 + j * 1.9 });
+      }
+    }
+    uploadRig();
+  }
+  function uploadRig() {
+    mastBuf.fill(0); mastFallBuf.fill(0); sailBuf.fill(0); sailInfoBuf.fill(0); sailBurnBuf.fill(0);
+    masts.forEach((m, i) => {
+      mastBuf.set([m.x, m.foot, m.top, m.breakY], i * 4);
+      mastFallBuf.set([m.breakTime, m.fallAngle || 0, m.fade || 0, 0], i * 4);
+    });
+    sails.forEach((sl, i) => {
+      sailBuf.set([sl.x, sl.y, sl.halfW, sl.halfH], i * 4);
+      sailInfoBuf.set([sl.mast, sl.damage, sl.burnStart, sl.seed], i * 4);
+      sailBurnBuf.set([sl.burnAt[0], sl.burnAt[1], sl.cell, 0], i * 4);
+    });
+  }
+  // How much of the ship's driving power is left. Broken and burnt sails count 0.
+  function sailPower() {
+    let have = 0, total = 0;
+    for (const sl of sails) {
+      const area = sl.halfW * sl.halfH;
+      total += area;
+      const m = masts[sl.mast];
+      const lost = (m.breakTime >= 0 && sl.y > m.breakY) ? 1 : Math.min(1, sl.damage);
+      have += area * (1 - lost);
+    }
+    return total > 0 ? have / total : 0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // WebGL setup
+  // ---------------------------------------------------------------------------
+  const canvas = document.getElementById('ship');
+  const statsEl = document.getElementById('stats');
+  const gl = canvas.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
+  function fatal(msg) {
+    const d = document.createElement('div');
+    d.className = 'fatal';
+    d.textContent = msg;
+    document.body.appendChild(d);
+    statsEl.textContent = '';
+  }
+  if (!gl) { fatal('This prototype needs WebGL2. Open it in a current Chrome, Safari, Firefox or Edge.'); return; }
+
+
+const gameSurface=new Float32Array(32).fill(-.29),gameFoam=new Float32Array(32).fill(.3);
+let gameFoamLook=1;
+let lastMaterialBits=null;
+const gameMaterialTexture=gl.createTexture();
+function uploadMaterial(f){
+ const pixels=maskPixels(f);if(lastMaterialBits===f.hullMask.bits)return;
+ gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,gameMaterialTexture);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+ gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);gl.texImage2D(gl.TEXTURE_2D,0,gl.R8,HULL_MASK.width,HULL_MASK.height,0,gl.RED,gl.UNSIGNED_BYTE,pixels);
+ lastMaterialBits=f.hullMask.bits;gl.activeTexture(gl.TEXTURE0);
+}
+uploadMaterial({});
+
+const COMMON_GLSL = document.getElementById('common').textContent.trim();
+  function compile(type, id) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, document.getElementById(id).textContent.trim().replace('// #include common', COMMON_GLSL));
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(id + ': ' + gl.getShaderInfoLog(sh));
+    return sh;
+  }
+  function program(vsId, fsId) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsId));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsId));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(p));
+    const loc = {};
+    const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) {
+      const info = gl.getActiveUniform(p, i);
+      loc[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name);
+    }
+    return { p, loc };
+  }
+
+  let stampProg, innerProg, hullProg, rigProg, crewProg, fxProg, scopeProg, maskViewProg;
+  try {
+    stampProg = program('vs-fullscreen', 'fs-stamp');
+    innerProg = program('vs-quad', 'fs-inner');
+    hullProg = program('vs-quad', 'fs-hull');
+    rigProg = program('vs-quad', 'fs-rig');
+    crewProg = program('vs-quad', 'fs-crew');
+    scopeProg = program('vs-fullscreen', 'fs-scope');
+    fxProg = program('vs-fx', 'fs-fx');
+    maskViewProg = program('vs-fullscreen', 'fs-maskview');
+  } catch (e) {
+    fatal('A shader failed to compile on this device: ' + e.message);
+    return;
+  }
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+
+  // Damage mask: two float targets, ping-ponged. Never cleared during a match.
+  let mask = null;
+  (function createMask() {
+    const tries = [];
+    if (gl.getExtension('EXT_color_buffer_float')) tries.push({ fmt: gl.RGBA32F, label: '32-bit float' });
+    if (gl.getExtension('EXT_color_buffer_half_float') || tries.length) tries.push({ fmt: gl.RGBA16F, label: '16-bit float' });
+    for (const t of tries) {
+      const tex = [0, 1].map(() => {
+        const x = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, x);
+        gl.texImage2D(gl.TEXTURE_2D, 0, t.fmt, MASK_W, MASK_H, 0, gl.RGBA, gl.FLOAT, null);
+        // NEAREST, always. The shader filters the mask itself (see sampleMask).
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        return x;
+      });
+      let ok = true;
+      const fbo = tex.map((x) => {
+        const f = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, x, 0);
+        ok = ok && gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+        return f;
+      });
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (ok) { mask = { tex, fbo, cur: 0, label: t.label }; return; }
+      tex.forEach((x) => gl.deleteTexture(x));
+      fbo.forEach((f) => gl.deleteFramebuffer(f));
+    }
+  })();
+  if (!mask) { fatal('This device cannot render to float textures, which the damage mask needs.'); return; }
+
+  // ---------------------------------------------------------------------------
+  // Sail sprites.
+  // Sails are sprites, so the shader samples a texture and the masks eat it away.
+  // Real art drops straight in here: this atlas is a stand-in that exercises the
+  // exact same path, so nothing about the shader changes when art arrives.
+  // ---------------------------------------------------------------------------
+  // Sail sprite atlas, generated so the shader path is identical to real art:
+  // four cells in a 2x2 sheet, RGBA8, alpha carries the sail's shape.
+  function buildSailAtlas(CELL) {
+    const W = CELL * 2, H = CELL * 2;
+    const px = new Uint8Array(W * H * 4);
+    const fract = (x) => x - Math.floor(x);
+    const hash = (x, y) => {
+      let a = fract(x * 0.1031), b = fract(y * 0.1031), c = fract(x * 0.1031);
+      const d = a * (b + 33.33) + b * (c + 33.33) + c * (a + 33.33);
+      a += d; b += d; c += d;
+      return fract((a + b) * c);
+    };
+    const vn = (x, y) => {
+      const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+      const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+      const a = hash(ix, iy), b = hash(ix + 1, iy), c = hash(ix, iy + 1), d = hash(ix + 1, iy + 1);
+      const t = a + (b - a) * ux, q = c + (d - c) * ux;
+      return t + (q - t) * uy;
+    };
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    for (let cell = 0; cell < 4; cell++) {
+      const cx = (cell % 2) * CELL, cy = Math.floor(cell / 2) * CELL;
+      const taper = [0.16, 0.10, 0.24, 0.06][cell];   // how much the foot narrows
+      const panels = [4, 5, 3, 6][cell];
+      const reef = cell % 2 === 0;
+      for (let y = 0; y < CELL; y++) {
+        for (let x = 0; x < CELL; x++) {
+          const u = (x + 0.5) / CELL * 2 - 1;          // -1..1 across
+          const v = (y + 0.5) / CELL * 2 - 1;          // -1..1 up
+          // Shape: head full width, foot tapered, with a bellied leech and roach.
+          const halfW = 1 - taper * (0.5 - v * 0.5) * 2 * 0.5 - 0.02;
+          const belly = 0.05 * Math.cos(v * 1.5);
+          const inShape = Math.abs(u - belly) < halfW && Math.abs(v) < 0.97;
+          let a = inShape ? 1 : 0;
+          if (a > 0) {
+            const edge = Math.min(halfW - Math.abs(u - belly), 0.97 - Math.abs(v));
+            a = clamp(edge / 0.02, 0, 1);              // soft 1px edge
+          }
+          // Cloth: weave, panel seams across the sail, shading toward the leech.
+          const weave = 0.5 + 0.5 * Math.sin(x * 2.4) * Math.sin(y * 2.1);
+          const seam = Math.abs(fract(v * panels * 0.5 + 0.5) - 0.5) < 0.035 ? 1 : 0;
+          const grime = vn(x * 0.06 + cell * 9.1, y * 0.06);
+          let shade = 0.90 + 0.06 * weave - 0.10 * seam - 0.12 * grime;
+          shade *= 0.86 + 0.20 * clamp(1 - Math.abs(u - belly) * 0.8, 0, 1);
+          if (reef && Math.abs(v + 0.55) < 0.02 && Math.abs(u) < halfW * 0.9) shade *= 0.72;
+          const r = clamp(shade * 0.98, 0, 1), g = clamp(shade * 0.95, 0, 1), b = clamp(shade * 0.87, 0, 1);
+          const o = ((cy + y) * W + (cx + x)) * 4;
+          px[o] = (r * 255) | 0; px[o + 1] = (g * 255) | 0; px[o + 2] = (b * 255) | 0; px[o + 3] = (a * 255) | 0;
+        }
+      }
+    }
+    return { px, W, H };
+  }
+
+  const SAIL_CELL = 128;
+  const sailAtlasTex = (() => {
+    const { px, W, H } = buildSailAtlas(SAIL_CELL);
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    // 8-bit textures are filterable everywhere, so hardware filtering is fine here
+    // (unlike the float damage mask, which the shaders sample themselves).
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  })();
+
+  // ---------------------------------------------------------------------------
+  // Camera
+  // ---------------------------------------------------------------------------
+  let dpr = 1, lastW = 0, lastH = 0;
+  const cam = { x: 0, y: 0, ppu: 1, unit: 1, shakeX: 0, shakeY: 0 };
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+    if (w !== lastW || h !== lastH) { canvas.width = w; canvas.height = h; lastW = w; lastH = h; }
+    // Fit the ship with room around it, the same on any screen shape.
+    cam.ppu = document.body.dataset.preview==='true'?Math.min(canvas.width/3.1,canvas.height/(document.body.dataset.previewClose==='true'?1.45:2.3)):Math.min(canvas.width/3.5,canvas.height/3.3);
+    cam.y = document.body.dataset.preview==='true'?(document.body.dataset.previewClose==='true'?-.06:.39):.85; cam.unit = 1 / cam.ppu;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------------------------------------------------------------------------
+  // Hits: scatter points, the stamp pass, and the effects that follow
+  // ---------------------------------------------------------------------------
+  const pointBuf = new Float32Array(MAX_POINTS * 4);
+  const hitBuf = new Float32Array(FX_SLOTS * 4);
+  const hitPtBuf = new Float32Array(FX_SLOTS * 4 * 4);
+  for (let i = 0; i < FX_SLOTS; i++) hitBuf[i * 4 + 2] = -1;
+  let fxSlot = 0, now = 0, shake = 0, hitCount = 0, lastDamage = 0, power = 0, hullGone = 0, mastsDown = 0, crewDown = 0;
+
+  // Mirror of the hull silhouette from the shared shader code. The picture never
+  // depends on this copy: the shader does its own test for clipping and for debris.
+  // This one only estimates damage and shake, so any drift would be cosmetic.
+  function hullFieldJS(x, y) {
+    const deck = HULL.deck * (1 + 0.42 * x * x);
+    const ax = Math.min(Math.abs(x), 1);
+    const keel = -HULL.keel * Math.sqrt(Math.max(0, 1 - Math.pow(ax, x > 0 ? 1.8 : 3.0)));
+    const up = Math.min(1.6, Math.max(0, y / HULL.deck));
+    return Math.min(Math.min(deck - y, y - keel), Math.min(1 + 0.22 * up - x, x + 1 + 0.04 * up));
+  }
+
+  // Step 2 of the process: turn one hit location into that weapon's scatter points.
+  function scatterPoints(hx, hy, a) {
+    const n = Math.min(a.points, MAX_POINTS);
+    const lineAngle = a.lineAngle !== undefined ? a.lineAngle : (Math.random() - 0.5) * 1.2;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      let ox = 0, oy = 0;
+      if (n > 1) {
+        if (a.alongLine) {
+          const t = (i / (n - 1) - 0.5) * 2 * a.spread;
+          ox = Math.cos(lineAngle) * t + (Math.random() - 0.5) * a.spread * 0.16;
+          oy = Math.sin(lineAngle) * t + (Math.random() - 0.5) * a.spread * 0.16;
+        } else {
+          const ang = Math.random() * Math.PI * 2;
+          const rad = Math.sqrt(Math.random()) * a.spread;
+          ox = Math.cos(ang) * rad;
+          oy = Math.sin(ang) * rad * 0.75;   // shots spread wider than they do tall
+        }
+      }
+      const r = a.radius * (1 + (Math.random() * 2 - 1) * a.radiusVar);
+      pts.push([hx + ox, hy + oy, Math.max(r, 0.012), Math.random() * Math.PI * 2]);
+    }
+    return pts;
+  }
+
+  // Step 3: stamp every scatter point into the mask in one pass. Step 4 is free,
+  // because the mask is only ever combined with max and never cleared.
+  function stampPass(pts, clear) {
+    const L = stampProg.loc;
+    const src = mask.cur, dst = 1 - mask.cur;
+    gl.useProgram(stampProg.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, mask.fbo[dst]);
+    gl.viewport(0, 0, MASK_W, MASK_H);
+    gl.disable(gl.BLEND);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, mask.tex[src]);
+    gl.uniform1i(L.uMask, 0);
+    gl.uniform1i(L.uClear, clear ? 1 : 0);
+    gl.uniform1f(L.uNow, now);
+    if (!clear) {
+      pointBuf.fill(0);
+      pts.forEach((p, i) => { pointBuf.set(p, i * 4); });
+      gl.uniform4fv(L.uPoints, pointBuf);
+      gl.uniform1i(L.uCount, pts.length);
+      gl.uniform1f(L.uRagged, archetype.ragged);
+      gl.uniform1f(L.uGrain, archetype.grain);
+      gl.uniform1f(L.uSpikes, archetype.spikes);
+      gl.uniform1f(L.uSpikeDepth, archetype.spikeDepth);
+      gl.uniform1f(L.uSoft, archetype.soft);
+    } else {
+      gl.uniform1i(L.uCount, 0);
+      gl.uniform1f(L.uRagged, 0); gl.uniform1f(L.uGrain, 1); gl.uniform1f(L.uSpikes, 1);
+      gl.uniform1f(L.uSpikeDepth, 0); gl.uniform1f(L.uSoft, 0.3);
+    }
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    mask.cur = dst;
+  }
+
+  function fire(hx, hy) {
+    const a = archetype;
+    const pts = scatterPoints(hx, hy, a);
+    stampPass(pts, false);
+
+    // How hard this shot landed. Measuring the hull area actually removed would
+    // mean reading the mask back off the GPU and stalling the frame, so this is
+    // estimated from the scatter points instead. Calibrated against a headless
+    // run of the same removal maths: hull removed is about 70x the summed r².
+    // Only the scatter points that landed on the hull do damage. A shell that goes
+    // off in the air still flashes and smokes, but costs the ship nothing.
+    // Rig health comes from game model.
+    // Crew health comes from game model.
+    const onHull = pts.filter((p) => hullFieldJS(p[0], p[1]) > 0);
+    const area = onHull.reduce((s, p) => s + p[2] * p[2], 0);
+    power = Math.min(1.5, area / 0.05);           // round shot ~0.5, shell ~1.5
+    lastDamage = Math.min(1, area * 0.70);        // estimated fraction of the hull
+    hullGone = Math.min(1, hullGone + lastDamage * (1 - hullGone) * 0.85);
+    hitCount++;
+    if (P.shake > 0) shake = Math.min(1.4, shake + a.shake * P.shake * (0.35 + power));
+
+    const s = fxSlot; fxSlot = (fxSlot + 1) % FX_SLOTS;
+    hitBuf.set([hx, hy, now, Math.min(1.5, a.debris * (0.35 + power))], s * 4);
+    for (let i = 0; i < 4; i++) {
+      const p = pts[Math.floor(i * pts.length / 4)] || pts[0];
+      hitPtBuf.set(p, (s * 4 + i) * 4);
+    }
+    fxDirty = true;
+  }
+  let fxDirty = true;
+
+  // Exposure decides who gets hurt. A gunner standing on deck is in the open. A
+  // port gunner is behind planking: shot only while leaning out to fire, and even
+  // then the port itself takes most of it.
+  function applyCrewDamage(pts) {
+    for (const st of stations) {
+      if (st.gunner < 0 || st.out) continue;
+      const exposed = !st.port ? 1 : (now - st.firedAt < P.leanTime ? 0.35 : 0.0);
+      if (exposed <= 0) continue;
+      for (const p of pts) {
+        const reach = p[2] + (st.port ? 0.05 : 0.10);
+        if (Math.abs(p[0] - st.x) < reach && Math.abs(p[1] - st.y) < reach) {
+          if (Math.random() < exposed) { st.out = true; crewDown++; break; }
+        }
+      }
+    }
+    uploadStations();
+  }
+
+  // Shots that pass through the rigging tear canvas; shots into the hull near a
+  // mast foot shake the mast step. Either can eventually bring a mast down.
+  function applyRigDamage(pts, a) {
+    for (const p of pts) {
+      const r = p[2];
+      for (const sl of sails) {
+        const m = masts[sl.mast];
+        if (m.breakTime >= 0 && sl.y > m.breakY) continue;      // already going
+        if (Math.abs(p[0] - sl.x) < sl.halfW + r && Math.abs(p[1] - sl.y) < sl.halfH + r) {
+          sl.damage = Math.min(1, sl.damage + (r * r) / (sl.halfW * sl.halfH) * 1.6);
+          // An incendiary round sets the canvas alight where it struck, and the
+          // burn spreads outward from that point rather than up from the foot.
+          if (a.id === 'fire' && sl.burnStart < 0) {
+            sl.burnStart = now;
+            sl.burnAt = [Math.max(-1, Math.min(1, (p[0] - sl.x) / sl.halfW)),
+                         Math.max(-1, Math.min(1, (p[1] - sl.y) / sl.halfH))];
+          }
+        }
+      }
+      for (const m of masts) {
+        if (m.breakTime >= 0) continue;
+        const dx = Math.abs(p[0] - m.x);
+        if (dx > 0.28 + r) continue;
+        // Near the foot counts most: that is where a mast is stepped.
+        // A mast is stepped on the keel, so hits low down shake it hardest.
+        const near = Math.max(0, 1 - Math.abs(p[1] - (m.foot + 0.25)) / 0.9);
+        m.damage += (r * r) * 7 * near / Math.max(P.mastToughness, 0.1);
+      }
+    }
+    for (const m of masts) if (m.breakTime < 0 && m.damage >= 1) breakMast(m);
+    uploadRig();
+  }
+
+  function breakMast(m) {
+    // Snap somewhere in the lower-middle of the standing mast.
+    m.breakY = m.foot + (m.top - m.foot) * (0.28 + Math.random() * 0.30);
+    m.breakTime = now;
+    m.fallAngle = 0; m.fade = 0;
+    m.fallDir = Math.random() < 0.5 ? -1 : 1;
+    // Every sail above the break starts burning away as the piece goes over.
+    for (const sl of sails) {
+      if (sl.mast !== masts.indexOf(m) || sl.y <= m.breakY) continue;
+      sl.burnStart = now;
+      sl.burnAt = [0, -0.95];            // catches at the foot, nearest the break
+    }
+    // Debris shatters out of the break itself.
+    const s = fxSlot; fxSlot = (fxSlot + 1) % FX_SLOTS;
+    hitBuf.set([m.x, m.breakY, now, 1.4], s * 4);
+    for (let i = 0; i < 4; i++) hitPtBuf.set([m.x + (Math.random() - 0.5) * 0.1, m.breakY + (Math.random() - 0.5) * 0.1, 0.11, Math.random() * 6.28], (s * 4 + i) * 4);
+    fxDirty = true;
+    if (P.shake > 0) shake = Math.min(1.6, shake + 1.1 * P.shake);
+    mastsDown++;
+  }
+
+  // The falling piece turns about the break under gravity, then fades out.
+  function updateMasts(dt) {
+    let changed = false;
+    for (const m of masts) {
+      if (m.breakTime < 0) continue;
+      const t = now - m.breakTime;
+      if (m.fade >= 1) continue;
+      const k = Math.min(1, t / Math.max(P.fallTime, 0.2));
+      m.fallAngle = m.fallDir * 1.75 * k * k;            // accelerating topple
+      m.fade = Math.max(0, (k - 0.62) / 0.38);           // gone by the end of the fall
+      changed = true;
+    }
+    if (changed) uploadRig();
+  }
+
+  function repair() {
+    stampPass([], true);
+    for (let i = 0; i < FX_SLOTS; i++) hitBuf[i * 4 + 2] = -1;
+    hitCount = 0; lastDamage = 0; power = 0; hullGone = 0; shake = 0; mastsDown = 0; crewDown = 0; fxDirty = true;
+    buildRig(); buildStations();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Drawing
+  // ---------------------------------------------------------------------------
+  let showMask = false, showInner = true, showRig = true, scopeOn = false;
+  function setCam(loc, half) {
+    gl.uniform4f(loc.uCam, cam.x + cam.shakeX, cam.y + cam.shakeY, cam.ppu, 0);
+    gl.uniform2f(loc.uRes, canvas.width, canvas.height);
+    if (loc.uQuadHalf) gl.uniform2f(loc.uQuadHalf, half[0], half[1]);
+  }
+  // Masts and sails. Phase 0 is everything still attached, drawn behind the hull so
+  // the hull covers the mast feet. Phase 1 is the falling piece, drawn after the
+  // hull so a topple reads in front of the ship.
+  function drawRig(phase) {
+    const L = rigProg.loc;
+    gl.useProgram(rigProg.p);
+    setCam(L, QUAD_RIG);
+    gl.uniform4fv(L.uMasts, mastBuf);
+    gl.uniform4fv(L.uMastFall, mastFallBuf);
+    gl.uniform4fv(L.uSails, sailBuf);
+    gl.uniform4fv(L.uSailInfo, sailInfoBuf);
+    gl.uniform4fv(L.uSailBurn, sailBurnBuf);
+    gl.uniform1i(L.uSailAtlas, 1);
+    gl.uniform1i(L.uMastCount, masts.length);
+    gl.uniform1i(L.uSailCount, sails.length);
+    gl.uniform1i(L.uPhase, phase);
+    gl.uniform1f(L.uUnit, cam.unit);
+    gl.uniform1f(L.uTime, now);
+    gl.uniform1f(L.uBurnTime, P.burnTime);
+    gl.uniform3f(L.uMastCol, 0.47, 0.31, 0.17);
+    gl.uniform3f(L.uMastDark, 0.28, 0.18, 0.10);
+    gl.uniform3f(L.uSailCol, 0.93, 0.90, 0.82);
+    gl.uniform3f(L.uSailShade, 0.68, 0.63, 0.55);
+    gl.uniform3f(L.uRopeCol, 0.35, 0.29, 0.22);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+  function render() {
+    resize();
+    artRenderer.paint(cam,canvas,now,gameSurface,gameFoam);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, sailAtlasTex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, mask.tex[mask.cur]);
+
+    if (!artRenderer.ready && showRig) drawRig(0);
+
+    if (!artRenderer.ready && showInner && !gameCutaway) {
+      const L = innerProg.loc;
+      gl.useProgram(innerProg.p);
+      setCam(L, QUAD_HULL);
+      if(L.uOceanSurface){gl.uniform1fv(L.uOceanSurface,gameSurface);gl.uniform1fv(L.uOceanFoam,gameFoam);if(L.uFoamLook)gl.uniform1f(L.uFoamLook,gameFoamLook);}if(L.uMaterial){gl.uniform1i(L.uMaterial,2);gl.uniform4f(L.uMaterialBounds,HULL_MASK.left,HULL_MASK.bottom,HULL_MASK.spanX,HULL_MASK.spanY);}
+      gl.uniform4fv(L.uStations, stationBuf);
+      gl.uniform4fv(L.uCrew, crewBuf);
+      gl.uniform1i(L.uStationCount, stations.length);
+      gl.uniform2f(L.uHullShape, HULL.deck, HULL.keel);
+      gl.uniform1f(L.uUnit, cam.unit);
+      gl.uniform1f(L.uTime, now);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    if (!artRenderer.ready && !gameCutaway) {
+      const L = hullProg.loc;
+      gl.useProgram(hullProg.p);
+      setCam(L, QUAD_HULL);
+      if(L.uOceanSurface){gl.uniform1fv(L.uOceanSurface,gameSurface);gl.uniform1fv(L.uOceanFoam,gameFoam);if(L.uFoamLook)gl.uniform1f(L.uFoamLook,gameFoamLook);}if(L.uMaterial){gl.uniform1i(L.uMaterial,2);gl.uniform4f(L.uMaterialBounds,HULL_MASK.left,HULL_MASK.bottom,HULL_MASK.spanX,HULL_MASK.spanY);}
+      gl.uniform1i(L.uMask, 0);
+      gl.uniform4fv(L.uStations, stationBuf);
+      gl.uniform1i(L.uStationCount, stations.length);
+      gl.uniform2f(L.uHullShape, HULL.deck, HULL.keel);
+      gl.uniform1f(L.uUnit, cam.unit);
+      gl.uniform1f(L.uTime, now);
+      gl.uniform1f(L.uReveal, P.reveal);
+      gl.uniform1f(L.uCharTime, P.charTime);
+      gl.uniform3f(L.uPlank, 0.52, 0.33, 0.18);
+      gl.uniform3f(L.uPlankDark, 0.33, 0.20, 0.11);
+      gl.uniform3f(L.uTrim, 0.78, 0.58, 0.25);
+      gl.uniform3f(L.uOutline, 0.15, 0.08, 0.04);
+      gl.uniform3f(L.uChar, 0.11, 0.08, 0.07);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    // Crew the enemy can actually see: deck gunners above the rail, and port
+    // gunners in the moment they lean out. Drawn after the hull, before effects.
+    // Supplied crew sprites have their own health; port crew render behind the masked hull.
+
+    if (!artRenderer.ready && showRig) drawRig(1);
+
+    {
+      const L = fxProg.loc;
+      gl.useProgram(fxProg.p);
+      setCam(L, QUAD_HULL);
+      if(L.uOceanSurface){gl.uniform1fv(L.uOceanSurface,gameSurface);gl.uniform1fv(L.uOceanFoam,gameFoam);if(L.uFoamLook)gl.uniform1f(L.uFoamLook,gameFoamLook);}if(L.uMaterial){gl.uniform1i(L.uMaterial,2);gl.uniform4f(L.uMaterialBounds,HULL_MASK.left,HULL_MASK.bottom,HULL_MASK.spanX,HULL_MASK.spanY);}
+      if (fxDirty) {
+        gl.uniform4fv(L.uHits, hitBuf);
+        gl.uniform4fv(L.uHitPts, hitPtBuf);
+        fxDirty = false;
+      }
+      gl.uniform2f(L.uHullShape, HULL.deck, HULL.keel);
+      gl.uniform1f(L.uTime, now);
+      gl.uniform1f(L.uDebrisLife, P.debrisLife);
+      gl.uniform1f(L.uSmokeLife, P.smokeLife);
+      gl.uniform1f(L.uDebrisSpeed, P.debrisSpeed);
+      gl.uniform1f(L.uDebrisSize, P.debrisSize);
+      gl.uniform1f(L.uSmokeSize, P.smokeSize);
+      gl.drawArrays(gl.TRIANGLES, 0, FX_SLOTS * FX_PER_SLOT * 6);
+    }
+
+    if (scopeOn) {
+      const L = scopeProg.loc;
+      gl.useProgram(scopeProg.p);
+      gl.uniform2f(L.uRes, canvas.width, canvas.height);
+      gl.uniform2f(L.uCentre, canvas.width * 0.5, canvas.height * 0.52);
+      gl.uniform1f(L.uRadius, Math.min(canvas.width, canvas.height) * 0.42);
+      gl.uniform1f(L.uTime, now);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    if (showMask) {
+      const L = maskViewProg.loc;
+      gl.useProgram(maskViewProg.p);
+      gl.uniform1i(L.uMask, 0);
+      gl.uniform2f(L.uRes, canvas.width, canvas.height);
+      const w = Math.min(canvas.width * 0.32, 320 * dpr);
+      gl.uniform2f(L.uViewSize, w, w * MASK_H / MASK_W);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // The telescope. Glassing the enemy deck tells you who is standing at the rail,
+  // because a deck gunner is out in the open and their hat gives them away. A port
+  // gunner is behind planking, so the scope finds nothing but a shut port until the
+  // moment they fire.
+  // ---------------------------------------------------------------------------
+  const scopeLayer = document.getElementById('scopeLabels');
+  const labels = [];
+  function shipToScreen(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    return [rect.left + (((x - cam.x - cam.shakeX) * cam.ppu) / canvas.width + 0.5) * rect.width,
+            rect.top + (0.5 - ((y - cam.y - cam.shakeY) * cam.ppu) / canvas.height) * rect.height];
+  }
+  function updateScopeLabels() {
+    if (!scopeOn) { if (labels.length) { labels.forEach((l) => l.remove()); labels.length = 0; } return; }
+    while (labels.length < stations.length) {
+      const d = document.createElement('div');
+      d.className = 'scope-label';
+      scopeLayer.appendChild(d);
+      labels.push(d);
+    }
+    stations.forEach((st, i) => {
+      const el = labels[i];
+      if (!crewVisible(st)) { el.style.display = 'none'; return; }
+      const [sx, sy] = shipToScreen(st.x, st.y + 0.16);
+      el.style.display = 'block';
+      el.style.left = sx + 'px';
+      el.style.top = sy + 'px';
+      el.textContent = (st.name||GUNNER_TYPES[st.type].name);
+      el.dataset.port = st.port ? '1' : '0';
+    });
+    for (let i = stations.length; i < labels.length; i++) labels[i].style.display = 'none';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Input
+  // ---------------------------------------------------------------------------
+  canvas.addEventListener('pointerdown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const py = (1 - (e.clientY - rect.top) / rect.height) * canvas.height;
+    parent.postMessage({type:'pirate-aim',side:new URLSearchParams(location.search).get('side'),x:(px-canvas.width/2)/cam.ppu+cam.x,y:(py-canvas.height/2)/cam.ppu+cam.y},location.origin);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Main loop
+  // ---------------------------------------------------------------------------
+  let last = performance.now(), fps = 60, statTimer = 0;
+  function frame(t) {
+    const dt = Math.min(0.1, (t - last) / 1000);
+    last = t;
+    now += dt;
+    fps += (1 / Math.max(dt, 1e-3) - fps) * 0.05;
+
+    // Screen shake, scaled by the damage the shot did, decaying fast.
+    if (shake > 0.0005) {
+      const amp = shake * 0.09;
+      cam.shakeX = Math.sin(now * 61) * amp;
+      cam.shakeY = Math.sin(now * 47 + 1.3) * amp * 0.8;
+      shake *= Math.exp(-dt * 7);
+    } else { shake = 0; cam.shakeX = cam.shakeY = 0; }
+
+    updateMasts(dt);
+    uploadStations();
+    updateScopeLabels();
+
+    render();
+
+    statTimer -= dt;
+    if (statTimer <= 0) {
+      const down = mastsDown > 0 ? ` · ${mastsDown} mast${mastsDown === 1 ? '' : 's'} down` : '';
+      const seen = stations.filter(crewVisible).length;
+      const crew = stations.filter((st) => st.gunner >= 0 && !st.out).length;
+      statsEl.textContent = `${archetype.name} · ${hitCount} hit${hitCount === 1 ? '' : 's'} · hull lost about ${(hullGone * 100).toFixed(0)}%`
+        + ` · sail power ${(sailPower() * 100).toFixed(0)}%${down}`
+        + ` · crew ${crew}${crewDown ? ` (${crewDown} down)` : ''}, ${seen} in view · ${Math.round(fps)} fps`;
+      statTimer = 0.4;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Panel
+  // ---------------------------------------------------------------------------
+  const gunsEl = document.getElementById('guns');
+  const gunBtns = ARCHETYPES.map((a) => {
+    const b = document.createElement('button');
+    b.textContent = a.name;
+    b.setAttribute('aria-pressed', String(a === archetype));
+    b.addEventListener('click', () => {
+      archetype = a;
+      gunBtns.forEach((x, i) => x.setAttribute('aria-pressed', String(ARCHETYPES[i] === archetype)));
+    });
+    gunsEl.appendChild(b);
+    return b;
+  });
+
+  const SLIDERS = [
+    { h: 'The rig' },
+    { k: 'masts', label: 'Masts', min: 1, max: 3, step: 1, rig: true },
+    { k: 'sailsPerMast', label: 'Sails per mast (capped at 8 total)', min: 1, max: 4, step: 1, rig: true },
+    { k: 'mastToughness', label: 'How much a mast takes', min: 0.2, max: 4, step: 0.05 },
+    { k: 'fallTime', label: 'Mast fall time (s)', min: 0.6, max: 5, step: 0.05 },
+    { k: 'burnTime', label: 'Sail burns away over (s)', min: 0.3, max: 5, step: 0.05 },
+    { h: 'The ship' },
+    { k: 'deckStations', label: 'Gun stations on deck', min: 2, max: 4, step: 1, ship: true },
+    { k: 'hullStations', label: 'Gun stations in the hull', min: 2, max: 4, step: 1, ship: true },
+    { k: 'gunners', label: 'Gunners assigned', min: 0, max: 8, step: 1, ship: true },
+    { k: 'leanTime', label: 'Port gunner exposed for (s)', min: 0.2, max: 3, step: 0.05 },
+    { h: 'Damage reveal' },
+    { k: 'reveal', label: 'Hole opens over (s)', min: 0.05, max: 1.5, step: 0.01 },
+    { k: 'charTime', label: 'Torn edge stays hot (s)', min: 0.1, max: 5, step: 0.05 },
+    { h: 'Effects' },
+    { k: 'debrisLife', label: 'Debris life (s)', min: 0.2, max: 3, step: 0.05 },
+    { k: 'debrisSpeed', label: 'Debris speed', min: 0.2, max: 4, step: 0.05 },
+    { k: 'debrisSize', label: 'Debris size', min: 0.01, max: 0.12, step: 0.005 },
+    { k: 'smokeLife', label: 'Smoke life (s)', min: 0.3, max: 5, step: 0.05 },
+    { k: 'smokeSize', label: 'Smoke size', min: 0.04, max: 0.5, step: 0.01 },
+    { k: 'shake', label: 'Screen shake', min: 0, max: 2, step: 0.01 },
+  ];
+  const slidersEl = document.getElementById('sliders');
+  for (const s of SLIDERS) {
+    if (s.h) { const h = document.createElement('h2'); h.textContent = s.h; slidersEl.appendChild(h); continue; }
+    const row = document.createElement('label');
+    row.className = 'row';
+    const name = document.createElement('span'); name.textContent = s.label;
+    const out = document.createElement('output');
+    const inp = document.createElement('input');
+    Object.assign(inp, { type: 'range', min: s.min, max: s.max, step: s.step, value: P[s.k] });
+    const show = () => { out.textContent = Number(inp.value).toFixed(s.step >= 1 ? 0 : 2); };
+    inp.addEventListener('input', () => {
+      P[s.k] = Number(inp.value);
+      if (s.ship) buildStations();
+      if (s.rig) buildRig();
+      show();
+    });
+    show();
+    row.append(name, out, inp);
+    slidersEl.appendChild(row);
+  }
+
+  const panel = document.getElementById('panel');
+  const toggle = document.getElementById('toggle');
+  toggle.addEventListener('click', () => {
+    const open = panel.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.textContent = open ? 'Close' : 'Tune';
+  });
+  document.getElementById('fmtNote').textContent =
+    `The damage mask is a ${MASK_W} by ${MASK_H} ${mask.label} texture. It is only ever added to, so damage lasts the whole match.`;
+  document.getElementById('showMask').addEventListener('change', (e) => { showMask = e.target.checked; });
+  document.getElementById('showInner').addEventListener('change', (e) => { showInner = e.target.checked; });
+  document.getElementById('showRig').addEventListener('change', (e) => { showRig = e.target.checked; });
+  const scopeBox = document.getElementById('scope');
+  scopeBox.addEventListener('change', (e) => { scopeOn = e.target.checked; updateScopeLabels(); });
+  const shakeBox = document.getElementById('shakeOn');
+  shakeBox.addEventListener('change', (e) => { P.shake = e.target.checked ? 1 : 0; });
+  document.getElementById('repair').addEventListener('click', repair);
+  document.getElementById('rake').addEventListener('click', () => {
+    // Chain shot into the rigging, the historical way to cripple a ship's speed.
+    const prev = archetype;
+    archetype = ARCHETYPES.find((a) => a.id === 'chain') || prev;
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        fire((Math.random() - 0.5) * 1.3, 0.7 + Math.random() * 1.2);
+        if (i === 2) archetype = prev;
+      }, i * 190);
+    }
+  });
+  document.getElementById('returnFire').addEventListener('click', () => {
+    stations.forEach((st, i) => setTimeout(() => fireStation(st), i * 220));
+  });
+  document.getElementById('scopeBtn').addEventListener('click', () => {
+    scopeBox.checked = !scopeBox.checked;
+    scopeOn = scopeBox.checked;
+    updateScopeLabels();
+  });
+  document.getElementById('snap').addEventListener('click', () => {
+    const standing = masts.filter((m) => m.breakTime < 0);
+    if (standing.length) breakMast(standing[Math.floor(Math.random() * standing.length)]);
+  });
+  document.getElementById('broadside').addEventListener('click', () => {
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        fire((Math.random() - 0.35) * 1.6, (Math.random() - 0.4) * 0.7);
+      }, i * 160);
+    }
+  });
+
+  buildRig();
+  repair();
+  requestAnimationFrame(frame);
+
+ const gameSide=new URLSearchParams(location.search).get('side');
+ const mark=document.createElement('div');mark.id='pirateMark';mark.style.cssText='position:fixed;pointer-events:none;z-index:8;color:#152d36;font:bold 38px serif;transform:translate(-50%,-50%)';document.body.append(mark);
+ const interior=document.createElement('canvas');interior.id='gameInterior';interior.setAttribute('aria-hidden','true');interior.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0';document.body.append(interior);let interiorKey='';
+ const portraits=document.createElement('div');portraits.id='gameCrew';portraits.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9';document.body.append(portraits);
+ const portPortraits=document.createElement('div');portPortraits.id='gamePorts';portPortraits.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:2';document.body.append(portPortraits);canvas.style.zIndex='4';interior.style.zIndex='1';
+ const deathEffects=document.createElement('div');deathEffects.id='deathEffects';deathEffects.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:11;overflow:visible';document.body.append(deathEffects);
+ const artRenderer=new ShipArtRenderer(interior);
+ let gameRows=[],gameSelected=null,gameLevel=1,gameCutaway=false,gameMotion=true,portraitKey='';
+ function syncCrew(rows){
+  const next=rows||[],dead=gameRows.filter(old=>old.hp>0&&next.some(g=>g.id===old.id&&g.hp<=0));
+  if(dead.length&&gameMotion)dead.forEach(g=>{
+   const source=[...document.querySelectorAll('#gameCrew img, #gamePorts img')].find(n=>Number(n.dataset.gunner)===g.id);if(!source)return;
+   const clone=source.cloneNode(true);clone.style.opacity='1';deathEffects.append(clone);const dir=(g.id%2)?1:-1;
+   clone.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:'translate('+(dir*35)+'px,-65px) rotate('+(dir*120)+'deg)',opacity:1,offset:.35},{transform:'translate('+(dir*120)+'px,185px) rotate('+(dir*420)+'deg)',opacity:0}],{duration:1050,easing:'ease-in',fill:'forwards'}).finished.then(()=>clone.remove());
+   const splash=document.createElement('i');splash.style.cssText='position:absolute;left:'+source.style.left+';top:calc('+source.style.top+' + 175px);width:34px;height:10px;border:3px solid #d9ffff;border-top-color:transparent;border-radius:50%;opacity:0';deathEffects.append(splash);splash.animate([{opacity:0,transform:'scale(.3)'},{opacity:1,transform:'scale(1.2)'},{opacity:0,transform:'scale(1.8)'}],{duration:500,delay:720,fill:'forwards'}).finished.then(()=>splash.remove());
+  });
+  gameRows=next;let d=0,h=0;
+  stations.forEach(st=>{const key=st.port?'h'+h++:'d'+d++,g=gameRows.find(g=>g.slot===key),position=stationPosition({shipLevel:gameLevel},key);st.x=position.x;st.y=position.y;st.slot=key;st.gunner=g?.id??-1;st.name=g?.name;st.type=g?.type??0;st.out=!g||g.hp<=0;});
+  uploadStations();updateScopeLabels();drawPortraits();
+ }
+ function syncParts(f){
+  if(!f)return;uploadMaterial(f);artRenderer.setParts(f);
+  f.sailParts?.forEach((p,i)=>{if(sails[i])sails[i].damage=1-p.hp/p.maxHp;});
+  f.mastParts?.forEach((p,i)=>{if(p.hp<=0&&masts[i]?.breakTime<0)breakMast(masts[i]);});uploadRig();
+ }
+ function drawPortraits(){
+  const rect=canvas.getBoundingClientRect(),ratio=rect.width/canvas.width,ppu=cam.ppu*ratio;
+  const key=[canvas.width,canvas.height,cam.ppu,cam.x,cam.y,gameLevel].join(':');
+  if(interiorKey!==key){interiorKey=key;}
+  const nextKey=key+':'+gameSelected+':'+gameRows.map(g=>g.id+':'+g.hp+':'+g.slot).join('|');if(portraitKey===nextKey)return;portraitKey=nextKey;
+  const drawRows=port=>stations.filter(st=>st.gunner>=1&&st.slot&&st.port===port).map(st=>{
+   const position=stationPosition({shipLevel:gameLevel},st.slot),foot=position.y,w=position.width*ppu,h=position.height*ppu;
+   const x=rect.width/2+(st.x-cam.x)*ppu,y=rect.height/2-(foot-cam.y)*ppu;
+   const pedestal=st.gunner===gameSelected?'<span data-pedestal style="position:absolute;left:'+(x-w*.6)+'px;top:'+(y-h*.09)+'px;width:'+w*1.2+'px;height:'+h*.15+'px;border-radius:50%;background:linear-gradient(#fff5ae,#d69922);box-shadow:0 0 12px #ffd450;pointer-events:none"></span>':'';
+   return pedestal+'<img data-gunner="'+st.gunner+'" data-alive="'+!st.out+'" alt="'+(st.name||'Gunner')+'" src="/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+st.gunner+'.png" style="position:absolute;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;left:'+(x-w/2)+'px;top:'+(y-h)+'px;width:'+w+'px;height:'+h+'px;opacity:'+(st.out?0:1)+';filter:'+(st.gunner===gameSelected?'drop-shadow(0 0 3px #fff29a)':'none')+'">';
+  }).join('');
+  portraits.innerHTML=drawRows(false);portPortraits.innerHTML=drawRows(true);
+  parent.postMessage({type:'pirate-stations',side:gameSide,anchors:stationAnchors(gameLevel).map(p=>({...p,left:50+(p.x-cam.x)*ppu/rect.width*100,top:50-(p.y+p.height/2-cam.y)*ppu/rect.height*100}))},location.origin);
+  mark.style.left=rect.width/2+(.02-cam.x)*ppu+'px';mark.style.top=rect.height/2-(1.13-cam.y)*ppu+'px';mark.style.fontSize=Math.max(14,ppu*.22)+'px';
+ }
+ function animateCrew(kind,level=2){
+  document.body.dataset.reaction=kind;
+  if(!gameMotion)return;
+  if(kind==='defeat')[...artRenderer.canvases,canvas,mark].forEach(n=>n.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(90px) rotate(9deg)'}],{duration:1100,fill:'forwards',easing:'ease-in'}));
+  [...document.querySelectorAll('#gameCrew img, #gamePorts img')].filter(n=>n.dataset.alive==='true').forEach((n,i)=>{
+   n.getAnimations().forEach(a=>a.cancel());
+   const victory=kind==='victory',laugh=kind==='laugh',defeat=kind==='defeat',cringe=kind==='cringe';
+   const frames=defeat?[{transform:'translate(0,0) rotate(0)',opacity:1},{transform:'translate('+(i%2?150:-150)+'px,-170px) rotate('+(i%2?460:-460)+'deg)',opacity:0}]:cringe?[{transform:'scale(1)'},{transform:'scale(1.12,.75) rotate(-8deg)'},{transform:'scale(1)'}]:[{transform:'scale(1)'},{transform:'translateY('+(-(victory?26:laugh?8:level*3))+'px) scale(.94,'+(level===0?.88:1.08+level*.025)+')'},{transform:'scale(1.04,.94)'},{transform:'scale(1)'}];
+   n.animate(frames,{duration:defeat?1250:victory?420:laugh?250:450,delay:i*45,iterations:victory?5:laugh?4:1,fill:defeat?'forwards':'none',easing:'ease-out'});
+   if(victory)for(let j=0;j<3;j++)setTimeout(()=>{const st=stations.find(s=>s.gunner===Number(n.dataset.gunner));if(st)fireStation(st);const spark=document.createElement('span');spark.style.cssText='position:absolute;left:'+n.style.left+';top:'+n.style.top+';width:5px;height:5px;background:#fff4a8;box-shadow:0 0 7px #ffd664;border-radius:50%';portraits.append(spark);spark.animate([{transform:'translate(15px,0)',opacity:1},{transform:'translate('+(i%2?55:-35)+'px,-140px)',opacity:0}],{duration:700,easing:'ease-out'}).finished.then(()=>spark.remove());},j*420+i*60);
+  });
+ }
+ window.addEventListener('message',e=>{
+  if(e.origin!==location.origin||e.source!==parent||e.data?.type!=='pirate-render')return;const d=e.data;
+  if(d.action==='configure'){
+   document.body.dataset.preview=String(!!d.preview);document.body.dataset.previewClose=String(!!d.preview&&!!d.hideRig);
+   const ladder=SHIP_LADDER;
+   interiorKey='';portraitKey='';gameMotion=d.motion!==false;gameCutaway=!!d.cutaway;showRig=!d.hideRig;gameLevel=d.level||1;[P.deckStations,P.hullStations]=ladder[gameLevel]||ladder[1];P.shake=0;repair();
+   artRenderer.configure(d,gameSide);gameSelected=d.selected;syncCrew(d.crew);syncParts(d.parts);mark.textContent='';
+  }
+  if(d.action==='sync'){gameSelected=d.selected;gameCutaway=!!d.cutaway;artRenderer.setView(d);syncCrew(d.crew);syncParts(d.parts);}
+  if(d.action==='view'){gameCutaway=!!d.cutaway;showRig=!d.hideRig;artRenderer.setView(d);}
+  if(d.action==='reaction')animateCrew(d.kind||'hit',d.level??2);
+  if(d.action==='hit'){archetype=ARCHETYPES.find(a=>a.id===d.weapon)||ARCHETYPES[0];fire(d.x??0,d.y??0);}
+  if(d.action==='fire')stations.filter(st=>st.gunner===d.gunner).forEach(st=>fireStation(st));
+  if(d.action==='ocean'&&d.surface?.length===32&&d.foam?.length===32&&d.surface.every(Number.isFinite)&&d.foam.every(Number.isFinite)){gameSurface.set(d.surface);gameFoam.set(d.foam);if(Number.isFinite(d.look))gameFoamLook=Math.max(0,Math.min(2.5,d.look));}
+  if(d.action==='scope'){scopeOn=!!d.on;updateScopeLabels();}
+ });
+ setInterval(drawPortraits,100);
+ parent.postMessage({type:'pirate-ready',side:gameSide},location.origin);
+
+})();
+</script>
+</body>
+</html>

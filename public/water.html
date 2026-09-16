@@ -1,0 +1,1839 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wheel water (shader only): PIRATE BASH water prototype</title>
+<style>
+  :root {
+    --sky-top: #1F98E4;
+    --sky-mid: #74CBF1;
+    --sky-horizon: #D6F4F2;
+    --ink: #0C2D4C;
+    --card: rgba(248, 252, 247, 0.93);
+    --rope: #E9A23B;
+  }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 26%, var(--sky-horizon) 39%, var(--sky-horizon) 100%);
+    font-family: "Avenir Next", "Nunito", "Trebuchet MS", system-ui, sans-serif;
+    color: var(--ink);
+  }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .title {
+    position: fixed; left: max(16px, env(safe-area-inset-left)); top: max(12px, env(safe-area-inset-top));
+    pointer-events: none; text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+  .title p { margin: 2px 0 0; font-size: 14px; font-weight: 600; opacity: 0.8; }
+  .stats { margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; opacity: 0.75; }
+  .toggle {
+    position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom));
+    font: inherit; font-weight: 800; font-size: 15px; color: var(--ink);
+    background: var(--card); border: 2px solid var(--rope); border-radius: 999px; padding: 9px 18px; cursor: pointer;
+  }
+  .toggle:focus-visible, .panel button:focus-visible, .panel input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .panel {
+    position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: calc(max(14px, env(safe-area-inset-bottom)) + 52px);
+    width: min(330px, calc(100vw - 28px)); max-height: 58vh; overflow-y: auto;
+    background: var(--card); border: 2px solid var(--rope); border-radius: 14px; padding: 12px 14px 14px;
+    box-sizing: border-box; display: none;
+  }
+  .panel.open { display: block; }
+  .panel h2 { font-size: 13px; font-weight: 800; margin: 12px 0 4px; opacity: 0.7; }
+  .panel h2:first-child { margin-top: 0; }
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; margin: 6px 0; font-size: 14px; }
+  .row input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--rope); }
+  .row output { font-variant-numeric: tabular-nums; opacity: 0.7; font-size: 13px; }
+  .seg { display: flex; gap: 6px; margin: 6px 0; }
+  .seg button, .actions button {
+    flex: 1; font: inherit; font-weight: 700; font-size: 14px; color: var(--ink); background: #fff;
+    border: 2px solid #cfdde3; border-radius: 10px; padding: 7px 8px; cursor: pointer;
+  }
+  .seg button[aria-pressed=true] { border-color: var(--rope); background: #FFF4E0; }
+  .seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
+  .check input { width: 18px; height: 18px; accent-color: var(--rope); }
+  .note { font-size: 12.5px; line-height: 1.4; opacity: 0.75; margin: 4px 0 0; }
+  .actions { display: flex; gap: 6px; margin-top: 10px; }
+  .fatal { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-size: 17px; font-weight: 700; }
+</style>
+<style>body>*:not(canvas):not(script):not(style){display:none!important}canvas{pointer-events:none}</style></head>
+<body>
+<canvas id="sea" aria-label="Animated water made of sixteen layered wave lines. Tap to drop a cannonball."></canvas>
+<div class="title">
+  <h1>Wheel water</h1>
+  <p>Tap the sea to drop a cannonball</p>
+  <div class="stats" id="stats">Starting…</div>
+</div>
+<button class="toggle" id="toggle" aria-expanded="false" aria-controls="panel">Tune</button>
+<div class="panel" id="panel" role="region" aria-label="Water settings">
+  <p class="note" id="formatNote"></p>
+  <div id="sliders"></div>
+  <label class="check"><input type="checkbox" id="wheels"> Show the wheels on the front line</label>
+  <p class="note">Each spoke tip goes round its wheel. The point on the water copies only its height.</p>
+  <label class="check"><input type="checkbox" id="cannons" checked> Random cannonballs</label>
+  <label class="check"><input type="checkbox" id="hullOn" checked> Hull test</label>
+  <div class="actions"><button id="fireHull">Fire at the hull</button><button id="volley">Fire a volley</button></div>
+  <div class="actions"><button id="reset">Reset sea</button><button id="defaults">Restore defaults</button></div>
+</div>
+
+<!-- ============================================================================
+     SHADER-ONLY BUILD. Simulation and rendering both run on the GPU.
+     JavaScript only sets uniforms, swaps two textures and issues draw calls.
+
+     SIMULATION PASS: runs once per substep on a 64x13 float target.
+     Sea texel (rows 0..11): r = height h, g = velocity v, b = swell target
+                  (last step), a = foam
+     Row 12 holds one impact record per cannonball slot, written by the same
+     crossing test, so the splash knows exactly where and when each ball hit.
+     Model: each point is a damped oscillator ("wheel") pulled toward an analytic
+     swell target and coupled to its 4 neighbors (discrete Klein-Gordon lattice).
+     ============================================================================ -->
+<!-- Shared shader code, pasted into any shader with a "// #include common" line.
+     These four MUST agree between the simulation and the renderers: the noise
+     decides foam and line energy, and drawnHeight decides both where a cannonball
+     hits and where it is drawn. One copy is what stops them drifting apart. -->
+<script type="x-shader/x-glsl" id="common">
+// Dave Hoskins, "Hash without Sine" (MIT)
+float hash12(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = p - i;
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x),
+             mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+// World units to clip space. cam = (center x, center y, device px per world unit).
+vec2 toNdc(vec2 w, vec4 cam, vec2 res) { return (w - cam.xy) * cam.z / (0.5 * res); }
+// Height as DRAWN. shape = (peak pinch, flatten, crests start above).
+// The tone curve squashes everything below "crests start above" toward flat and
+// leaves anything crest-high untouched, so peaks keep their height and stand out
+// of smooth, shallow water. It is monotonic, so height order never changes and
+// the crest mask, the cannonball hit test and the picture all still agree.
+float drawnHeight(float h, float swellAmp, vec3 shape) {
+  float a = max(swellAmp, 0.3);
+  float u = h / a;
+  float gain = mix(shape.y, 1.0, smoothstep(shape.z, shape.z + 0.25, u));
+  u *= gain;
+  float top = clamp(u, 0.0, 1.0);
+  return a * (u + shape.x * top * top);   // peak pinch stretches wave tops
+}
+</script>
+
+<script type="x-shader/x-vertex" id="vs-fullscreen">#version 300 es
+void main() {
+  vec2 p = vec2(gl_VertexID == 1 ? 3.0 : -1.0, gl_VertexID == 2 ? 3.0 : -1.0);
+  gl_Position = vec4(p, 0.0, 1.0);
+}
+</script>
+<script type="x-shader/x-fragment" id="fs-sim">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int COLS = 64;
+const int ROWS = 12;
+uniform sampler2D uState;
+uniform float uDt, uT, uW0sq, uCx2, uCz2, uDamp, uSponge;
+uniform float uSwellAmp, uWaveScale, uZStretch, uDrag, uSpeed, uSpread, uNoise;
+uniform float uPeakK;     // peak sharpness: exp(k*(sin(x)-1)); 1 = original, higher = narrower peaks
+uniform float uSwellMean; // mean of that wave over a period, e^-k * I0(k), so the sea doesn't rise
+uniform float uSwellNorm; // 1 / (peak - mean), so raising uPeakK sharpens crests without raising them
+uniform int uOctaves;
+// Swell groups: the nearest rows share one swell, and further back each group of
+// rows gets its own, with its own phase, heading, speed and offset. Groups barely
+// pull on each other, so a swell only carries across the rows in its group.
+uniform float uNearSpan;    // rows sharing the foreground swell (e.g. 3)
+uniform float uFarSpan;     // rows per swell from mid to far (e.g. 1)
+uniform float uGroupCouple; // between-row pull across a group boundary (0..1)
+uniform int uInit;        // 1 = write the resting state (sea follows the swell exactly)
+// Cannonballs fly on analytic arcs (world units, 1 unit = 1 column). A ball hits
+// when, during this substep, it crosses the drawn water surface at its column.
+// Every texel evaluates the same test, so the whole kick lands in one substep.
+// The hit is a tall, narrow upward kick plus a wider foam zone. Inside the foam
+// zone, sideways coupling is cut and damping raised, so the impact stays vertical.
+const int MAX_BALLS = 8;
+uniform vec4 uBallA[8];   // launch x, launch y, velocity x, velocity y
+uniform vec4 uBallB[8];   // row, launch time (<0 = empty), window start, window end (s after launch)
+uniform float uGravity, uImpact, uImpactWidth;
+uniform float uRowBase[12];
+uniform float uRowAmp[12];
+uniform vec3 uShape;   // peak pinch, flatten between crests, crests start above
+uniform vec3 uSplashFoam; // foam zone radius (columns), foam amount, row radius
+uniform float uDecouple, uImpactDamp, uFoamDecay;
+// Row isolation. Scale: 1 row is about 33 ft deep, so a 50 ft splash spans about 1.5 rows.
+uniform float uFoamRowRadius; // foam radius across rows (kick uses uSplashFoam.z)
+uniform float uRowIso;        // 0..1: how much disturbances are kept from crossing into other rows
+uniform float uHullRowSpread; // how much of the hull's push reaches the rows beside it
+// Hull test: a floating hull on one row pushes water down under its curved
+// bottom, lifts it at bow and stern, and makes foam where water meets it.
+uniform vec4 uCombatHulls[2];
+uniform float uCombatDirs[2];
+uniform vec4 uHull;       // on (0/1), row, center column, half length (columns)
+uniform vec3 uHullShape;  // draft (wave units), push stiffness, foam rate
+uniform vec4 uHullMotion; // rock amount, max rock angle (rad), damping at the hull base, bow wave strength
+out vec4 outState;        // r height, g velocity, b swell target, a foam
+
+// Swell: exp(k*(sin-1)) waves with derivative drag, after afl_ext's
+// "Very fast procedural ocean" (MIT). Evaluated per lattice point, not per pixel.
+int swellGroup(int r) {
+  int nearSpan = max(int(uNearSpan + 0.5), 1);
+  int farSpan = max(int(uFarSpan + 0.5), 1);
+  return r < nearSpan ? 0 : 1 + (r - nearSpan) / farSpan;
+}
+float swellLocalRow(int r) {
+  int nearSpan = max(int(uNearSpan + 0.5), 1);
+  int farSpan = max(int(uFarSpan + 0.5), 1);
+  return float(r < nearSpan ? r : (r - nearSpan) - ((r - nearSpan) / farSpan) * farSpan);
+}
+float swell(vec2 cell, float t) {
+  int r = int(cell.y + 0.5);
+  float g = float(swellGroup(r));
+  float gPhase = hash12(vec2(g, 3.1)) * 6.2831853;
+  float gAng = (hash12(vec2(g, 7.7)) - 0.5) * 0.5;
+  float gSpeed = mix(0.9, 1.1, hash12(vec2(g, 11.3)));
+  float gShift = hash12(vec2(g, 19.1)) * 40.0;
+  vec2 p = vec2(cell.x + gShift, swellLocalRow(r) * uZStretch) * uWaveScale;
+  float iter = 0.0, freq = 1.0, tm = 1.0, w = 1.0, sv = 0.0, sw = 0.0;
+  for (int i = 0; i < 6; i++) {
+    if (i >= uOctaves) break;
+    float ang = sin(iter) * uSpread + gAng;
+    vec2 d = vec2(cos(ang), sin(ang));
+    float x = dot(d, p) * freq - t * uSpeed * gSpeed * tm + gPhase * float(i + 1);
+    float wave = exp(uPeakK * (sin(x) - 1.0));
+    float dwave = -wave * cos(x);
+    p += d * dwave * w * uDrag;
+    sv += (wave - uSwellMean) * uSwellNorm * w;
+    sw += w;
+    w *= 0.8; freq *= 1.18; tm *= 1.07; iter += 1232.399963;
+  }
+  return sv / sw;
+}
+float targetAt(vec2 cell, float t) {
+  int r = int(cell.y + 0.5);
+  float g = float(swellGroup(r));
+  float gShift = hash12(vec2(g, 19.1)) * 40.0;
+  float n = vnoise(vec2((cell.x + gShift) * 0.35 + t * 0.9, g * 5.3 + swellLocalRow(r) * 0.5 - t * 0.6)) - 0.5;
+  return uSwellAmp * (swell(cell, t) + uNoise * n);
+}
+// Hull levels: ride the swell plus half the local disturbance (so impacts nudge the
+// hull). The known draft dip is added back so the hull can't sink into its own
+// hollow. Measured over the whole hull, its bow half (+x) and its stern half.
+void hullLevels(vec4 hull, out float mid, out float bow, out float stern) {
+  int hr = int(hull.y + 0.5);
+  float halfS = hull.w;
+  int c0 = int(floor(hull.z - halfS));
+  float draft = uHullShape.x;
+  vec4 all4 = vec4(0.0), bow4 = vec4(0.0), stern4 = vec4(0.0); // sumT, sumH, sumM, n
+  for (int i = 0; i < 40; i++) {
+    int cc = c0 + i;
+    if (float(cc) > hull.z + halfS) break;
+    if (cc < 0 || cc >= COLS) continue;
+    float xx = (float(cc) - hull.z) / halfS;
+    float mm = sqrt(max(0.0, 1.0 - xx * xx));
+    if (mm <= 0.0) continue;
+    vec4 t4 = texelFetch(uState, ivec2(cc, hr), 0);
+    vec4 add = vec4(t4.b, t4.r, mm, 1.0);
+    all4 += add;
+    if (xx > 0.25) bow4 += add;
+    if (xx < -0.25) stern4 += add;
+  }
+  all4.w = max(all4.w, 1.0); bow4.w = max(bow4.w, 1.0); stern4.w = max(stern4.w, 1.0);
+  mid = all4.x / all4.w + 0.5 * ((all4.y - all4.x) / all4.w + draft * all4.z / all4.w);
+  bow = bow4.x / bow4.w + 0.5 * ((bow4.y - bow4.x) / bow4.w + draft * bow4.z / bow4.w);
+  stern = stern4.x / stern4.w + 0.5 * ((stern4.y - stern4.x) / stern4.w + draft * stern4.z / stern4.w);
+}
+// One impact record per ball slot, kept in the texture's extra row (row ROWS).
+// Record: x, drawn water height at the hit, age in seconds, row.
+vec4 impactRecord(int b) {
+  vec4 rec = texelFetch(uState, ivec2(b, ROWS), 0);
+  rec.z = min(rec.z + uDt, 99.0);
+  vec4 A = uBallA[b];
+  vec4 B = uBallB[b];
+  float tb1 = uT - B.y;
+  if (B.y >= 0.0 && tb1 >= B.z && tb1 <= B.w) {
+    int br = int(B.x + 0.5);
+    float bx = A.x + A.z * tb1;
+    int bc = int(floor(bx + 0.5));
+    if (bc >= 0 && bc < COLS) {
+      // The same crossing test the kick below uses, so records match the impacts.
+      float tb0 = tb1 - uDt;
+      float y1 = A.y + A.w * tb1 - 0.5 * uGravity * tb1 * tb1;
+      float y0 = A.y + A.w * tb0 - 0.5 * uGravity * tb0 * tb0;
+      int bc0 = clamp(int(floor(A.x + A.z * tb0 + 0.5)), 0, COLS - 1);
+      vec4 s0 = texelFetch(uState, ivec2(bc0, br), 0);
+      float waterY = uRowBase[br] + drawnHeight(texelFetch(uState, ivec2(bc, br), 0).r, uSwellAmp, uShape) * uRowAmp[br];
+      float waterYPrev = uRowBase[br] + drawnHeight(s0.r - s0.g * uDt, uSwellAmp, uShape) * uRowAmp[br];
+      if (y0 > waterYPrev && y1 <= waterY) rec = vec4(bx, waterY, 0.0, B.x);
+    }
+  }
+  return rec;
+}
+void main() {
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  vec2 cell = vec2(c);
+  if (c.y >= ROWS) {                    // the impact-record row
+    outState = uInit == 1 ? vec4(0.0, 0.0, 99.0, 0.0) : impactRecord(c.x);
+    return;
+  }
+  if (uInit == 1) {
+    float t0 = targetAt(cell, uT);
+    float t1 = targetAt(cell, uT + uDt);
+    outState = vec4(t0, (t1 - t0) / uDt, t0, 0.0);
+    return;
+  }
+  vec4 s = texelFetch(uState, c, 0);
+  float h = s.r;
+  float v = s.g;
+  float hl = texelFetch(uState, ivec2(max(c.x - 1, 0), c.y), 0).r;
+  float hr = texelFetch(uState, ivec2(min(c.x + 1, COLS - 1), c.y), 0).r;
+  vec4 sd = texelFetch(uState, ivec2(c.x, max(c.y - 1, 0)), 0);
+  vec4 su = texelFetch(uState, ivec2(c.x, min(c.y + 1, ROWS - 1)), 0);
+  float hd = sd.r;
+  float hu = su.r;
+  float target = targetAt(cell, uT);
+  float targetVel = (target - s.b) / uDt;
+  float impact = min(s.a, 1.0);
+  float lapX = hl + hr - 2.0 * h;
+  // Rows in different swell groups barely pull on each other.
+  int gHere = swellGroup(c.y);
+  float wD = (c.y > 0 && swellGroup(c.y - 1) != gHere) ? uGroupCouple : 1.0;
+  float wU = (c.y < ROWS - 1 && swellGroup(c.y + 1) != gHere) ? uGroupCouple : 1.0;
+  float lapZ = wD * (hd - h) + wU * (hu - h);
+  // Between rows, the swell's own shape stays coupled but disturbances (splashes,
+  // hull waves) are mostly kept in their row, so impacts don't bleed across the blanket.
+  float lapZSwell = wD * (sd.b - s.b) + wU * (su.b - s.b);
+  float acc = uW0sq * (target - h) + uCx2 * (1.0 - uDecouple * impact) * lapX
+            + uCz2 * (lapZSwell + (1.0 - uRowIso) * (lapZ - lapZSwell));
+  float edge = min(cell.x, float(COLS - 1) - cell.x);
+  float damp = uDamp + uSponge * max(0.0, 1.0 - edge / 3.0) + uImpactDamp * impact;
+  float foam = s.a * uFoamDecay;
+
+  float targetVelEff = targetVel;
+  for(int boat=0;boat<2;boat++) { vec4 hull=uCombatHulls[boat];
+  if (hull.x > 0.5) {
+    int dr = abs(c.y - int(hull.y + 0.5));
+    if (dr <= 1) {
+      float rowW = dr == 0 ? 1.0 : uHullRowSpread;
+      float fdr = float(dr);
+      float halfS = hull.w;
+      float draft = uHullShape.x;
+      float xr = (cell.x - hull.z) / halfS;
+      float m = sqrt(max(0.0, 1.0 - xr * xr));                  // curved hull bottom
+      // Bow wave, as if the hull were moving toward +x: a crest just ahead of the bow,
+      // a trough along the side behind it, both swept back on the rows either side.
+      float cb = ((cell.x - hull.z)*uCombatDirs[boat] - (halfS + 0.7) + 1.2 * fdr) / 1.2;
+      float crest = exp(-cb * cb);
+      float tb = ((cell.x - hull.z)*uCombatDirs[boat] - (halfS * 0.45) + 1.0 * fdr) / 2.0;
+      float trough = exp(-tb * tb);
+      float sb = ((cell.x - hull.z)*uCombatDirs[boat] + halfS + 1.0) / 1.3;
+      float sternBump = exp(-sb * sb);
+      if (m > 0.0 || crest > 0.01 || trough > 0.01 || sternBump > 0.01) {
+        float mid, bow, stern;
+        hullLevels(hull, mid, bow, stern);
+        // The bow wave grows when the bow dips below the hull's middle.
+        float bowPower = uHullMotion.w * (1.0 + 1.5 * clamp((mid - bow) * 3.0, -0.6, 1.0));
+        float level = mid + (bow - stern) * 0.5 * xr * uHullMotion.x;   // follows the drawn rock
+        float want = level - draft * m
+                   + draft * (bowPower * crest - 0.5 * bowPower * trough * (dr == 0 ? 0.3 : 1.0) + 0.3 * sternBump);
+        float wgt = rowW * max(m, max(crest, max(0.6 * trough, sternBump)));
+        acc += uHullShape.y * wgt * (want - h);
+        // The hull calms the water at its base: extra damping, toward less motion.
+        float calm = rowW * max(m, 0.6 * crest);
+        damp += uHullMotion.z * calm;
+        targetVelEff = targetVel * (1.0 - 0.6 * rowW * m);
+        float zone = clamp(1.5 * crest + 0.5 * sternBump + 0.4 * (1.0 - m) * step(abs(xr), 1.0), 0.0, 1.0);
+        foam += uDt * uHullShape.z * rowW * zone * (0.5 + min(abs(v - targetVel), 2.0));
+      }
+    }
+  }
+
+  }
+  // Implicit damping toward the swell's own velocity: only disturbances decay.
+  v = (v + acc * uDt + damp * uDt * targetVelEff) / (1.0 + damp * uDt);
+
+  // Cannonball hits.
+  for (int b = 0; b < MAX_BALLS; b++) {
+    vec4 A = uBallA[b];
+    vec4 B = uBallB[b];
+    if (B.y < 0.0) continue;
+    float tb1 = uT - B.y;
+    if (tb1 < B.z || tb1 > B.w) continue;
+    int br = int(B.x + 0.5);
+    if (abs(c.y - br) > 3) continue;
+    float bx = A.x + A.z * tb1;
+    int bc = int(floor(bx + 0.5));
+    if (bc < 0 || bc >= COLS) continue;
+    float tb0 = tb1 - uDt;
+    float y1 = A.y + A.w * tb1 - 0.5 * uGravity * tb1 * tb1;
+    float y0 = A.y + A.w * tb0 - 0.5 * uGravity * tb0 * tb0;
+    // Crossing test between substeps: the ball's previous height against the water at
+    // its previous column a substep ago, and its current height against the water now.
+    // (Using one column for both missed balls landing on steep water, e.g. at a hull edge.)
+    int bc0 = clamp(int(floor(A.x + A.z * tb0 + 0.5)), 0, COLS - 1);
+    vec4 s0 = texelFetch(uState, ivec2(bc0, br), 0);
+    float waterY = uRowBase[br] + drawnHeight(texelFetch(uState, ivec2(bc, br), 0).r, uSwellAmp, uShape) * uRowAmp[br];
+    float waterYPrev = uRowBase[br] + drawnHeight(s0.r - s0.g * uDt, uSwellAmp, uShape) * uRowAmp[br];
+    if (y0 > waterYPrev && y1 <= waterY) {
+      vec2 kd = (cell - vec2(bx, float(br))) / vec2(uImpactWidth, uSplashFoam.z);
+      v += uImpact * exp(-dot(kd, kd));
+      vec2 fd = (cell - vec2(bx, float(br))) / vec2(uSplashFoam.x, uFoamRowRadius);
+      foam += uSplashFoam.y * exp(-dot(fd, fd));
+    }
+  }
+  h += v * uDt; // semi-implicit (symplectic) Euler
+  outState = vec4(h, v, target, min(foam, 1.5));
+}
+</script>
+
+
+<!-- ============================================================================
+     RENDER PASS. One draw call, no vertex buffers: gl_VertexID encodes
+     (row, fill-or-line, sub-segment, quad corner). Rows draw back to front.
+     The wheels move points vertically only. Wave bodies are soft gradients.
+     White crests follow a height mask: thick and continuous at peaks, tapering
+     to nothing before the troughs. Sharpness and splash disturbance only add
+     ragged edges and spray on top of crests that are already visible.
+     ============================================================================ -->
+<script type="x-shader/x-vertex" id="vs-sea">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int COLS = 64;
+const int ROWS = 12;
+uniform sampler2D uState;
+uniform int uSub;
+uniform vec2 uRes;
+uniform float uUnit, uTime; // uUnit: reference px -> device px, so sizes scale with the view, not the screen shape
+uniform float uLineW, uCover, uSwellAmp;
+uniform vec3 uShape;   // peak pinch, flatten between crests, crests start above
+uniform float uRowScale[12]; // size of everything on this row (1 = nearest)
+uniform float uRowBase[12];  // resting height of this row (world units)
+uniform float uRowAmp[12];   // vertical wave height on this row (world units per wave unit)
+uniform vec4 uCam;  // camera: world center x, world center y, device px per world unit (1 unit = 1 column)
+const float REF_PX = 26.6667; // device px per column at the 1600x900 reference view
+uniform float uCrestLo, uCrestHi, uCrestThick, uSharpSens, uJitter, uRough, uFleckUp, uKeepPoints;
+out float vDepthPx;   // fill: pixels below the waterline
+out float vAcrossPx;  // line: signed pixels from the line center (+ is up)
+out float vCoreHW;    // crest half width in pixels at this point (0 in troughs)
+out float vUpPx;      // line: how far the quad reaches above the center
+out float vRow;
+out float vScale;
+out float vC;         // crest mask 0..1: 0 in troughs, 1 at peaks
+out float vE;         // extra energy 0..1: sharpness, splash disturbance and foam
+out float vF;         // foam 0..1 (cannonball impacts and hull contact)
+flat out int vIsLine;
+
+vec4 fetchS(int c, int r) { return texelFetch(uState, ivec2(clamp(c, 0, COLS - 1), r), 0); }
+// Catmull-Rom between lattice columns so 64 points read as a smooth curve.
+// Also returns the local sharpness (neighbor Laplacian) from the same four texels.
+vec4 sampleRow(float x, int r, out float lap) {
+  float fl = floor(x);
+  int i = int(fl);
+  float f = x - fl;
+  vec4 p0 = fetchS(i - 1, r);
+  vec4 p1 = fetchS(i, r);
+  vec4 p2 = fetchS(i + 1, r);
+  vec4 p3 = fetchS(i + 2, r);
+  float f2 = f * f;
+  float f3 = f2 * f;
+  lap = mix(abs(p0.r + p2.r - 2.0 * p1.r), abs(p1.r + p3.r - 2.0 * p2.r), f);
+  vec4 rounded = 0.5 * (2.0 * p1 + (p2 - p0) * f + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * f2 + (3.0 * (p1 - p2) + p3 - p0) * f3);
+  // Catmull-Rom rounds off a sharp apex. Where the lattice bends hard, lean toward
+  // straight lines between points, which keeps the corner exactly as the sim made it.
+  float a = max(uSwellAmp, 0.3);
+  float crestHigh = smoothstep(uShape.z * 0.6, uShape.z + 0.25, max(p1.r, p2.r) / a);
+  float t = clamp(uKeepPoints * lap / (0.25 * a), 0.0, 1.0) * crestHigh;
+  return mix(rounded, mix(p1, p2, f), t);
+}
+// Surface point. X comes only from the column; the wheel state moves Y only.
+vec2 surfPoint(float x, int r, out vec4 st, out float c, out float e, out float foam) {
+  float lap;
+  st = sampleRow(x, r, lap);
+  foam = clamp(st.a, 0.0, 1.0);
+  float h = clamp(drawnHeight(st.r, uSwellAmp, uShape), -uCover + 0.2, uCover);
+  // White crests at peaks, plus white wherever there is foam. Measured on the DRAWN
+  // height, so the white follows the shape on screen as the tone curve is tuned.
+  c = max(smoothstep(uCrestLo, uCrestHi, h / max(uSwellAmp, 0.3)), smoothstep(0.15, 0.6, foam));
+  float sharp = smoothstep(0.012, 0.12, lap);
+  float disturb = smoothstep(0.12, 0.8, abs(st.r - st.b));
+  e = clamp(uSharpSens * sharp + disturb + foam, 0.0, 1.0);
+  float s = uRowScale[r];
+  vec2 ndc = toNdc(vec2(x, uRowBase[r] + h * uRowAmp[r]), uCam, uRes);
+  float xRef = x * REF_PX / max(s, 0.3); // world-anchored noise coordinate
+  float j = vnoise(vec2(xRef * 0.045 + float(r) * 13.7, uTime * 0.9 + float(r) * 3.1)) * 2.0 - 1.0;
+  float jitterPx = uJitter * c * e * j * s * uUnit;
+  return vec2(ndc.x, ndc.y + jitterPx / (0.5 * uRes.y));
+}
+void main() {
+  int segs = (COLS - 1) * uSub;
+  int perRow = segs * 12;
+  int vid = gl_VertexID;
+  int rowIdx = vid / perRow;
+  int row = ROWS - 1 - rowIdx;
+  int local = vid - rowIdx * perRow;
+  int isLine = local >= segs * 6 ? 1 : 0;
+  int q = local - isLine * segs * 6;
+  int seg = q / 6;
+  int corner = q - seg * 6;
+  int tIdx = (corner == 2 || corner == 3 || corner == 5) ? 1 : 0;
+  int side = (corner == 1 || corner == 4 || corner == 5) ? 1 : 0;
+
+  float s = uRowScale[row];
+  vRow = float(row);
+  vScale = s;
+  vIsLine = isLine;
+  float x0 = float(seg) / float(uSub);
+  float x1 = float(seg + 1) / float(uSub);
+  // Stretch the outermost segments far past the lattice so very wide screens never show a gap.
+  if (seg == 0) x0 = -60.0;
+  if (seg == segs - 1) x1 = float(COLS - 1) + 60.0;
+  float core = uLineW * mix(0.3, 1.0, s) * 0.5 * uUnit; // base half width
+  vec4 st;
+  float c, e, foam;
+  vec2 p;
+  if (isLine == 0) {
+    p = surfPoint(tIdx == 1 ? x1 : x0, row, st, c, e, foam);
+    vAcrossPx = 0.0;
+    vUpPx = 0.0;
+    if (side == 1) {
+      // Fill only down to just below the next front row's lowest possible line.
+      float bottom = row == 0 ? -1.0 : toNdc(vec2(0.0, uRowBase[row - 1] - uRowAmp[row - 1] * uCover), uCam, uRes).y;
+      vDepthPx = (p.y - bottom) * 0.5 * uRes.y;
+      p.y = bottom;
+    } else {
+      vDepthPx = 0.0;
+    }
+  } else {
+    vec4 st1;
+    float c1, e1, foam1;
+    vec2 a = surfPoint(x0, row, st, c, e, foam);
+    vec2 b = surfPoint(x1, row, st1, c1, e1, foam1);
+    float fMax = max(foam, foam1);
+    float cMax = max(c, c1);
+    if (cMax < 0.002) {
+      // Whole segment is in a trough: collapse it so it costs no pixels.
+      gl_Position = vec4(a, 0.0, 1.0);
+      vAcrossPx = 0.0; vUpPx = 0.0; vDepthPx = 0.0; vCoreHW = 0.0; vC = 0.0; vE = 0.0; vF = 0.0;
+      return;
+    }
+    p = tIdx == 1 ? b : a;
+    if (tIdx == 1) { st = st1; c = c1; e = e1; foam = foam1; }
+    vec2 d = (b - a) * 0.5 * uRes;
+    vec2 dir = d / max(length(d), 1e-4);
+    vec2 nrm = vec2(-dir.y, dir.x); // points up because x always increases along a row
+    // One reach for both ends so the across coordinate stays exact in pixels.
+    float reach = core * uCrestThick * cMax * (1.0 + 0.6 * uRough) + 1.5;
+    // Foam spray reaches 3x as high as crest spray.
+    float up = reach + uFleckUp * s * uUnit * max(cMax, 3.0 * smoothstep(0.15, 0.6, fMax));
+    float across = side == 1 ? up : -reach;
+    p += (nrm * across + dir * (tIdx == 1 ? 0.5 : -0.5) * reach) / (0.5 * uRes);
+    vAcrossPx = across;
+    vUpPx = up;
+    vDepthPx = 0.0;
+  }
+  vCoreHW = core * uCrestThick * c; // tapers to nothing toward the troughs
+  vC = c;
+  vE = e;
+  vF = foam;
+  gl_Position = vec4(p, 0.0, 1.0);
+}
+</script>
+<script type="x-shader/x-fragment" id="fs-sea">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+in float vDepthPx;
+in float vAcrossPx;
+in float vCoreHW;
+in float vUpPx;
+in float vRow;
+in float vScale;
+in float vC;
+in float vE;
+in float vF;
+flat in int vIsLine;
+uniform vec3 uNearBase, uNearLight, uMidBase, uMidLight, uFarBase, uFarLight, uInkCol, uLineCol, uFoamCol;
+uniform float uUnit, uTime, uRough, uFlecks, uBlur, uShadow, uFarScale;
+const int LAST_ROW = 11;
+uniform vec2 uRes;
+uniform vec4 uCam;
+const float REF_PX = 26.6667;
+out vec4 outColor;
+
+vec3 rowMix(vec3 nearC, vec3 midC, vec3 farC, float z) {
+  return z < 0.4 ? mix(nearC, midC, z / 0.4) : mix(midC, farC, (z - 0.4) / 0.6);
+}
+void main() {
+  float s = vScale;
+  float c = vC;
+  // Haze follows the row's scale so color depth matches the depth controls.
+  float z = uFarScale < 0.95 ? clamp((1.0 - s) / (1.0 - uFarScale), 0.0, 1.0) : vRow / float(LAST_ROW);
+  z = pow(z, 0.85);
+  float unit = s * uUnit; // one reference pixel at this row's depth
+  float worldX = (gl_FragCoord.x - 0.5 * uRes.x) / uCam.z + uCam.x; // noise is anchored to the world, not the screen
+
+  if (vIsLine == 0) {
+    // ---- Wave body: soft gradients only, no hard bands ----
+    vec3 base = rowMix(uNearBase, uMidBase, uFarBase, z);
+    vec3 light = rowMix(uNearLight, uMidLight, uFarLight, z);
+    float d = max(vDepthPx - vCoreHW, 0.0);   // distance below the crest foam
+    float soft = 0.5 + uBlur;
+    float lightPx = (10.0 + 16.0 * c) * soft * unit;
+    float deepPx = lightPx * 3.0;
+    float tLight = exp(-d / lightPx);                               // bright just under the surface
+    float tDeep = smoothstep(lightPx * 0.4, deepPx, d);             // darkening lower down the face
+    vec3 col = mix(base, base * 0.78, tDeep);
+    col = mix(col, light, tLight * mix(0.35, 0.95, c));             // crests glow more than troughs
+    // Soft navy shadow tucked under the white crest.
+    float shW = (2.0 + 4.0 * uBlur) * unit;
+    float shD = (d - shW * 0.6) / shW;
+    col = mix(col, mix(uInkCol, base * 0.6, 0.3), exp(-shD * shD) * uShadow * c * 0.55);
+    outColor = vec4(col, 1.0);
+    return;
+  }
+
+  // ---- White crest: thick and continuous at peaks, gone in troughs ----
+  float a = vAcrossPx;
+  float xs = worldX * REF_PX / max(s, 0.3);
+  float seed = vRow * 7.31;
+  float n = vnoise(vec2(xs * 0.2 + seed * (a > 0.0 ? 11.3 : 5.1), uTime * 1.2 + seed));
+  float halfW = vCoreHW * (1.0 + uRough * vE * (n - 0.4)) * (1.0 + 0.6 * vF); // ragged where energetic, fatter in foam
+  float cov = clamp(halfW - abs(a) + 0.5, 0.0, 1.0) * smoothstep(0.0, 0.2, c);
+  vec3 col = mix(uLineCol, uFoamCol, smoothstep(0.3, 0.8, c));
+  float alpha = cov;
+
+  // Spray flecks above the crest. One cell lookup, dots kept inside cells.
+  if (uFlecks > 0.0 && a > vCoreHW && vUpPx > vCoreHW + 1.0) {
+    float cell = max(3.0, 5.0 * unit);
+    vec2 q = vec2(worldX * uCam.z, a) / cell;
+    vec2 id = floor(q);
+    vec2 f = q - id;
+    float tick = floor(uTime * 5.0 + hash12(id + seed) * 7.0);
+    vec2 key = id + vec2(seed * 17.0, tick * 3.1);
+    vec2 ctr = 0.25 + 0.5 * vec2(hash12(key + 3.1), hash12(key + 7.7));
+    float rad = (0.12 + 0.16 * hash12(key + 11.3)) * cell;
+    float fall = 1.0 - clamp((a - vCoreHW) / (vUpPx - vCoreHW), 0.0, 1.0);
+    // Cannonball and hull foam throw 3x the spray of a normal crest.
+    float density = max(uFlecks * c * (0.4 + 0.6 * vE), min(1.0, 3.0 * uFlecks * smoothstep(0.15, 0.6, vF)));
+    float on = step(hash12(key), density * fall);
+    float dotCov = clamp(rad - length(f - ctr) * cell + 0.5, 0.0, 1.0) * on;
+    col = mix(col, uFoamCol, dotCov);
+    alpha = max(alpha, dotCov);
+  }
+  alpha *= mix(1.0, 0.8, z);
+  outColor = vec4(col * alpha, alpha);
+}
+</script>
+
+<!-- ============================================================================
+     HULL TEST. A simple cartoon hull floating on one row. It reads the water
+     state itself (no CPU readback): it bobs and tilts with the swell, and paints
+     white foam that climbs its curved bow and stern where water meets it.
+     It draws between the rows behind it and its own row, so water covers the
+     submerged part naturally.
+     ============================================================================ -->
+<script type="x-shader/x-vertex" id="vs-hull">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int COLS = 64;
+uniform sampler2D uState;
+uniform vec2 uRes;
+uniform vec4 uCam;  // camera: world center x, world center y, device px per world unit (1 unit = 1 column)
+const float REF_PX = 26.6667; // device px per column at the 1600x900 reference view
+uniform float uRowBase[12];
+uniform float uRowAmp[12];
+uniform vec4 uHull;       // on, row, center column, half length (columns)
+uniform vec3 uHullShape;  // draft, push, foam rate
+uniform vec4 uHullMotion; // rock amount, max rock angle (rad), base damping, bow wave
+uniform float uTime;
+uniform float uHullAbove, uHullBelow, uSprayPx;
+out vec2 vLocal;          // pixels in the hull's frame: x along the hull, y up from the waterline
+out float vHalfLen;
+
+// Same level rule as the simulation, measured over the whole hull, its bow half and its stern half.
+void hullLevels(out float mid, out float bow, out float stern) {
+  int hr = int(uHull.y + 0.5);
+  float halfS = uHull.w;
+  int c0 = int(floor(uHull.z - halfS));
+  float draft = uHullShape.x;
+  vec4 all4 = vec4(0.0), bow4 = vec4(0.0), stern4 = vec4(0.0); // sumT, sumH, sumM, n
+  for (int i = 0; i < 40; i++) {
+    int cc = c0 + i;
+    if (float(cc) > uHull.z + halfS) break;
+    if (cc < 0 || cc >= COLS) continue;
+    float xx = (float(cc) - uHull.z) / halfS;
+    float mm = sqrt(max(0.0, 1.0 - xx * xx));
+    if (mm <= 0.0) continue;
+    vec4 t4 = texelFetch(uState, ivec2(cc, hr), 0);
+    vec4 add = vec4(t4.b, t4.r, mm, 1.0);
+    all4 += add;
+    if (xx > 0.25) bow4 += add;
+    if (xx < -0.25) stern4 += add;
+  }
+  all4.w = max(all4.w, 1.0); bow4.w = max(bow4.w, 1.0); stern4.w = max(stern4.w, 1.0);
+  mid = all4.x / all4.w + 0.5 * ((all4.y - all4.x) / all4.w + draft * all4.z / all4.w);
+  bow = bow4.x / bow4.w + 0.5 * ((bow4.y - bow4.x) / bow4.w + draft * bow4.z / bow4.w);
+  stern = stern4.x / stern4.w + 0.5 * ((stern4.y - stern4.x) / stern4.w + draft * stern4.z / stern4.w);
+}
+void main() {
+  int hr = int(uHull.y + 0.5);
+  float mid, bow, stern;
+  hullLevels(mid, bow, stern);
+  float halfLenPx = uHull.w * uCam.z;
+  vec2 pivot = toNdc(vec2(uHull.z, uRowBase[hr] + mid * uRowAmp[hr]), uCam, uRes);
+  float riseBowPx = (bow - stern) * uRowAmp[hr] * uCam.z;
+  // Rock fore and aft a small amount: follow the water's bow-to-stern slope, scaled
+  // and clamped, plus a gentle idle sway so it never sits dead still.
+  float follow = clamp(atan(riseBowPx, 1.3 * halfLenPx) * uHullMotion.x, -uHullMotion.y, uHullMotion.y);
+  float angle = follow + sin(uTime * 1.1) * uHullMotion.y * 0.2;
+  // Quad corners in hull pixels: room for the raked bow, the keel, and spray above the deck.
+  float x0 = -1.15 * halfLenPx, x1 = 1.3 * halfLenPx;
+  float y0 = -(uHullBelow * halfLenPx + 6.0), y1 = uHullAbove * halfLenPx * 1.5 + uSprayPx;
+  int k = gl_VertexID;
+  vec2 local = vec2(k == 0 || k == 2 ? x0 : x1, k < 2 ? y0 : y1);
+  float ca = cos(angle), sa = sin(angle);
+  vec2 rotated = vec2(ca * local.x - sa * local.y, sa * local.x + ca * local.y);
+  vLocal = local;
+  vHalfLen = halfLenPx;
+  gl_Position = vec4(pivot + rotated / (0.5 * uRes), 0.0, 1.0);
+}
+</script>
+<script type="x-shader/x-fragment" id="fs-hull">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int COLS = 64;
+in vec2 vLocal;
+in float vHalfLen;
+uniform sampler2D uState;
+uniform vec2 uRes;
+uniform float uUnit, uTime, uSwellAmp, uCover;
+uniform vec3 uShape;   // peak pinch, flatten between crests, crests start above
+uniform vec4 uCam;
+const float REF_PX = 26.6667;
+uniform float uRowBase[12];
+uniform float uRowAmp[12];
+uniform vec4 uHull;
+uniform float uHullAbove, uHullBelow, uSprayPx, uHullFoamLook;
+uniform vec3 uWoodCol, uWoodDark, uRailCol, uOutlineCol, uFoamCol, uFoamShade;
+out vec4 outColor;
+
+vec4 fetchS(int c, int r) { return texelFetch(uState, ivec2(clamp(c, 0, COLS - 1), r), 0); }
+vec4 sampleRow(float x, int r) {
+  float fl = floor(x);
+  int i = int(fl);
+  float f = x - fl;
+  vec4 p0 = fetchS(i - 1, r), p1 = fetchS(i, r), p2 = fetchS(i + 1, r), p3 = fetchS(i + 2, r);
+  float f2 = f * f, f3 = f2 * f;
+  return 0.5 * (2.0 * p1 + (p2 - p0) * f + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * f2 + (3.0 * (p1 - p2) + p3 - p0) * f3);
+}
+// Spray dot field: one cell lookup, dots kept inside their cells.
+float sprayDot(vec2 q, float cell, float density, float seed) {
+  vec2 g = q / cell;
+  vec2 id = floor(g);
+  vec2 f = g - id;
+  float tick = floor(uTime * 5.0 + hash12(id + seed) * 7.0);
+  vec2 key = id + vec2(seed, tick * 3.1);
+  vec2 ctr = 0.25 + 0.5 * vec2(hash12(key + 3.1), hash12(key + 7.7));
+  float rad = (0.14 + 0.18 * hash12(key + 11.3)) * cell;
+  float on = step(hash12(key), density);
+  return clamp(rad - length(f - ctr) * cell + 0.5, 0.0, 1.0) * on;
+}
+void main() {
+  int hr = int(uHull.y + 0.5);
+  float L = vHalfLen;
+  float x = vLocal.x / L;
+  float y = vLocal.y / L;
+
+  // ---- Hull silhouette (side view): swept-up deck, rounded bottom, raked bow at +x ----
+  float deck = uHullAbove * (1.0 + 0.45 * x * x);
+  float ax = abs(x);
+  float keel = -uHullBelow * sqrt(max(0.0, 1.0 - pow(min(ax, 1.0), x > 0.0 ? 1.7 : 3.2)));
+  float up01 = clamp(y / max(uHullAbove, 0.01), 0.0, 1.6);
+  float bowEnd = 1.0 + 0.2 * up01;
+  float sternEnd = -1.0 - 0.05 * up01;
+  float fPx = min(min(deck - y, y - keel), min(bowEnd - x, x - sternEnd)) * L;
+  float aa = max(fwidth(fPx), 0.75);
+  float hullA = smoothstep(-aa, aa, fPx);
+
+  float plankPitch = max(5.0 * uUnit, L * 0.075);
+  float plank = fract(vLocal.y / plankPitch);
+  float seam = 1.0 - smoothstep(0.0, 0.14, plank) * (1.0 - smoothstep(0.86, 1.0, plank)); // 1 at plank seams
+  vec3 wood = mix(uWoodCol, uWoodDark, seam * 0.6);
+  wood = mix(wood, uRailCol, smoothstep(deck - 0.09, deck - 0.07, y));
+  for (int i = 0; i < 3; i++) {
+    vec2 port = vec2(-0.45 + 0.45 * float(i), uHullAbove * 0.5);
+    float dp = length(vec2(x, y) - port) * L;
+    float r = L * 0.06;
+    wood = mix(wood, uOutlineCol, clamp(r - dp + 0.5, 0.0, 1.0));
+    wood = mix(wood, uRailCol, clamp(1.5 * uUnit - abs(dp - r), 0.0, 1.0));
+  }
+  wood = mix(uOutlineCol, wood, smoothstep(max(1.2, 2.2 * uUnit) - aa, max(1.2, 2.2 * uUnit) + aa, fPx));
+
+  // ---- Water at this screen column (same curve the sea draws) ----
+  float col = (gl_FragCoord.x - 0.5 * uRes.x) / uCam.z + uCam.x; // world x is the column
+  vec4 st = sampleRow(col, hr);
+  float hgt = clamp(drawnHeight(st.r, uSwellAmp, uShape), -uCover + 0.2, uCover);
+  float waterPx = (uRowBase[hr] + hgt * uRowAmp[hr] - uCam.y) * uCam.z + 0.5 * uRes.y;
+  float dy = gl_FragCoord.y - waterPx;                 // pixels above the water surface
+  float foamHere = clamp(st.a, 0.0, 1.0);
+
+  // ---- Foam climbing the hull: higher on the curved bow and stern ----
+  float climb = smoothstep(0.35, 1.0, ax) * (x > 0.0 ? 1.4 : 0.6); // bow throws more foam than stern
+  float torn = 0.65 + 0.7 * vnoise(vec2(col * REF_PX * 0.12, uTime * 1.4));
+  float foamH = uUnit * (3.0 + uHullFoamLook * (5.0 + 16.0 * foamHere) * (0.6 + 1.6 * climb)) * torn;
+  float onHull = smoothstep(-aa - 3.0 * uUnit, aa - 3.0 * uUnit, fPx);   // foam wraps a little past the outline
+  float band = clamp(foamH - dy + 0.5, 0.0, 1.0) * clamp(dy + 4.0 * uUnit, 0.0, 1.0);
+  float foamA = band * onHull * step(0.01, uHullFoamLook);
+  vec3 foamCol = mix(uFoamCol, uFoamShade, clamp(1.0 - dy / max(foamH, 1.0), 0.0, 1.0) * 0.45);
+  float bubble = sprayDot(vec2(col * uCam.z, dy), max(3.0, 4.0 * uUnit), 0.3, 5.0);
+  foamCol = mix(foamCol, uFoamShade, bubble * 0.7);
+
+  // Wet, darker wood just above the foam line.
+  float wet = clamp(foamH + 6.0 * uUnit - dy, 0.0, 1.0) * step(0.0, dy);
+  vec3 colOut = mix(wood, wood * 0.72, wet * 0.8);
+  float alpha = hullA;
+  colOut = mix(colOut, foamCol, foamA);
+  alpha = max(alpha, foamA);
+
+  // ---- Spray above the foam, thrown off the ends ----
+  float sprayH = uSprayPx * (0.35 + foamHere) * (0.4 + climb);
+  float above = dy - foamH;
+  if (above > 0.0 && above < sprayH && uHullFoamLook > 0.0) {
+    float fall = 1.0 - above / sprayH;
+    float nearHull = smoothstep(-L * 0.25, 0.0, fPx);
+    float dotA = sprayDot(vec2(col * uCam.z, above), max(3.0, 5.0 * uUnit), 0.45 * (foamHere + climb) * fall * nearHull, 13.0);
+    colOut = mix(colOut, uFoamCol, dotA);
+    alpha = max(alpha, dotA);
+  }
+  outColor = vec4(colOut * alpha, alpha);
+}
+</script>
+
+<!-- ============================================================================
+     PARTICLES: white splash droplets and cannonballs in ONE program, ONE draw.
+     Both are camera-facing quads built from gl_VertexID, so they share a program.
+     Splash quads come first in the vertex order, cannonballs second, which is also
+     the order they must paint in. Impact records live in the simulation texture's
+     extra row: where a ball hit, the drawn water height there, how long ago, and
+     on which row. Nothing is read back to the CPU.
+     ============================================================================ -->
+<script type="x-shader/x-vertex" id="vs-particles">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int COLS = 64;
+const int ROWS = 12;
+const int SLOTS = 8;
+const int DROPS = 64;   // droplets per impact
+const int GHOSTS = 4;   // ball plus its smoke trail
+const int SPLASH_VERTS = SLOTS * DROPS * 6;
+uniform sampler2D uState;
+uniform vec2 uRes;
+uniform vec4 uCam;
+uniform vec4 uBallA[8];
+uniform vec4 uBallB[8];
+uniform float uGravity, uSimT, uBallRadius, uSwellAmp;
+uniform vec3 uShape;   // peak pinch, flatten between crests, crests start above
+uniform float uSplashCount, uSplashSpeed, uSplashSize, uSplashLife;
+uniform float uRowBase[12];
+uniform float uRowAmp[12];
+uniform float uRowScale[12];
+out vec2 vUV;
+out float vAlpha;
+out float vKind;        // 0 droplet, 1 chunky blob, 2 ball, 3 trail
+vec2 cornerUV(int corner) {
+  return vec2(corner == 1 || corner == 4 || corner == 5 ? 1.0 : -1.0,
+              corner == 2 || corner == 3 || corner == 5 ? 1.0 : -1.0);
+}
+void main() {
+  int vid = gl_VertexID;
+  bool isBall = vid >= SPLASH_VERTS;
+  int quad = (isBall ? vid - SPLASH_VERTS : vid) / 6;
+  vec2 uv = cornerUV(vid - quad * 6 - (isBall ? SPLASH_VERTS : 0));
+  vUV = uv;
+  vAlpha = 0.0;
+  vKind = 0.0;
+  gl_Position = vec4(2.0, 2.0, 0.0, 1.0); // off screen unless alive
+
+  if (isBall) {
+    int b = quad / GHOSTS;
+    int g = quad - b * GHOSTS;
+    vec4 A = uBallA[b];
+    vec4 B = uBallB[b];
+    float t = uSimT - B.y - float(g) * 0.04;
+    vKind = g == 0 ? 2.0 : 3.0;
+    vAlpha = g == 0 ? 1.0 : 0.4 / float(g);
+    if (B.y < 0.0 || t < 0.0 || t > B.w) return;
+    int br = int(B.x + 0.5);
+    vec2 p = vec2(A.x + A.z * t, A.y + A.w * t - 0.5 * uGravity * t * t);
+    int bc = clamp(int(floor(p.x + 0.5)), 0, COLS - 1);
+    float waterY = uRowBase[br] + drawnHeight(texelFetch(uState, ivec2(bc, br), 0).r, uSwellAmp, uShape) * uRowAmp[br];
+    if (t > B.z && p.y < waterY) return;      // under water: hidden
+    float r = uBallRadius * mix(1.0, uRowScale[br], 0.6) * (g == 0 ? 1.0 : 0.8);
+    gl_Position = vec4(toNdc(p + uv * r, uCam, uRes), 0.0, 1.0);
+    return;
+  }
+
+  int slot = quad / DROPS;
+  int pi = quad - slot * DROPS;
+  vec4 rec = texelFetch(uState, ivec2(slot, ROWS), 0); // x, water y, age, row
+  float age = rec.z;
+  if (age > uSplashLife || float(pi) >= uSplashCount) return;
+  float s = uRowScale[int(rec.w + 0.5)];
+
+  // Per-droplet randomness, unique per impact (seeded by where it hit).
+  vec2 seed = vec2(float(slot) * 13.1 + rec.x * 7.31 + rec.y * 3.7, float(pi) * 1.73);
+  float h1 = hash12(seed), h2 = hash12(seed + 3.7), h3 = hash12(seed + 9.1), h4 = hash12(seed + 17.3);
+  bool blob = h4 < 0.3;                                        // 30% chunky column, 70% droplets
+  float ang = (h1 - 0.5) * (blob ? 0.5 : 1.9) - 0.12;          // from vertical, leaning with the ball
+  float speed = uSplashSpeed * s * (blob ? mix(0.55, 0.95, h2) : mix(0.45, 1.25, h2));
+  vec2 vel = vec2(sin(ang), cos(ang)) * speed;
+  float g = 30.0 * s;
+  float life = uSplashLife * mix(0.55, 1.0, h3);
+  float k = age / life;
+  if (k >= 1.0) return;
+  float rise = vel.y * age - 0.5 * g * age * age;
+  if (rise < -0.5 * s) return;                                  // fell back into the sea
+  vec2 p = vec2(rec.x + (h3 - 0.5) * 0.9 * s + vel.x * age, rec.y + rise);
+  float size = uSplashSize * s * (blob ? mix(0.5, 0.85, h2) : mix(0.16, 0.36, h3)) * (1.0 - 0.55 * k);
+  // Droplets stretch a little along their motion.
+  vec2 dir = normalize(vec2(vel.x, vel.y - g * age) + 1e-4);
+  vec2 side = vec2(-dir.y, dir.x);
+  float stretch = blob ? 1.0 : 1.0 + 0.6 * clamp(length(vec2(vel.x, vel.y - g * age)) / max(uSplashSpeed * s, 1e-3), 0.0, 1.0);
+  vAlpha = 1.0 - smoothstep(0.55, 1.0, k);
+  vKind = blob ? 1.0 : 0.0;
+  gl_Position = vec4(toNdc(p + side * uv.x * size + dir * uv.y * size * stretch, uCam, uRes), 0.0, 1.0);
+}
+</script>
+<script type="x-shader/x-fragment" id="fs-particles">#version 300 es
+precision highp float;
+in vec2 vUV;
+in float vAlpha;
+in float vKind;   // 0 droplet, 1 chunky blob, 2 ball, 3 trail
+out vec4 outColor;
+void main() {
+  float d = length(vUV);
+  float aa = max(fwidth(d), 1e-3);
+  float cov = 1.0 - smoothstep(1.0 - aa, 1.0 + aa, d);
+  vec3 col;
+  if (vKind < 1.5) {
+    // Water: white with a thin pale-blue rim so it reads against sky and foam.
+    col = mix(vec3(1.0), vec3(0.70, 0.89, 0.97), smoothstep(0.6, 0.95, d) * mix(0.9, 0.6, vKind));
+  } else if (vKind < 2.5) {
+    col = vec3(0.07, 0.07, 0.09);                    // iron ball
+    float hi = 1.0 - smoothstep(0.18, 0.32, length(vUV - vec2(-0.35, 0.38)));
+    col = mix(col, vec3(0.55, 0.58, 0.62), hi * 0.8);
+  } else {
+    col = vec3(0.35, 0.36, 0.4);                     // smoky trail
+  }
+  float a = cov * vAlpha;
+  outColor = vec4(col * a, a);
+}
+</script>
+
+<!-- Debug overlay: the wheel behind each front-row point, drawn like a crank.
+     The spoke tip goes round the wheel; its height is the point's height. -->
+<script type="x-shader/x-vertex" id="vs-wheels">#version 300 es
+precision highp float;
+precision highp int;
+// #include common
+const int COLS = 64;
+const int ROWS = 12;
+const int SEG = 24;
+uniform sampler2D uState;
+uniform vec2 uRes;
+uniform vec4 uCam;  // camera: world center x, world center y, device px per world unit (1 unit = 1 column)
+const float REF_PX = 26.6667; // device px per column at the 1600x900 reference view
+uniform float uOmegaRef;
+uniform float uRowBase[12];
+uniform float uRowAmp[12];
+out float vA;
+void main() {
+  int per = SEG * 2 + 4;
+  int w = gl_VertexID / per;
+  int k = gl_VertexID - w * per;
+  int col = 2 + w * 4;
+  vec4 st = texelFetch(uState, ivec2(col, 0), 0);
+  vec2 toPx = 0.5 * uRes;
+  float ampPx = uRowAmp[0] * uCam.z;
+  vec2 center = toNdc(vec2(float(col), uRowBase[0]), uCam, uRes);
+  vec2 tipPx = vec2(-st.g / uOmegaRef, st.r) * ampPx;   // phase-space point (height, velocity)
+  vec2 tip = center + tipPx / toPx;
+  vec2 surface = vec2(center.x, tip.y);                 // the rendered point: height only
+  float radius = length(tipPx);
+  vec2 outp;
+  if (k < SEG * 2) {
+    int si = k / 2;
+    int ed = k - si * 2;
+    float ang = float(si + ed) / float(SEG) * 6.2831853;
+    outp = center + vec2(cos(ang), sin(ang)) * radius / toPx;
+    vA = 0.45;
+  } else if (k < SEG * 2 + 2) {
+    outp = k == SEG * 2 ? center : tip;
+    vA = 1.0;
+  } else {
+    outp = k == SEG * 2 + 2 ? tip : surface;
+    vA = 0.8;
+  }
+  gl_Position = vec4(outp, 0.0, 1.0);
+}
+</script>
+<script type="x-shader/x-fragment" id="fs-wheels">#version 300 es
+precision highp float;
+in float vA;
+out vec4 outColor;
+void main() {
+  vec3 c = vec3(0.95, 0.55, 0.12);
+  outColor = vec4(c * vA, vA);
+}
+</script>
+
+<script type="module">
+import {waterValues,WATER_DEFAULTS} from "/pirate-bash/src/ocean-settings.js";
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Constants and tunables
+  // ---------------------------------------------------------------------------
+  const COLS = 64, ROWS = 12;
+  const STEP = 1 / 60;       // fixed simulation tick
+  const SUBSTEPS = 2;        // 120 Hz integration
+  const MAX_TICKS = 4;       // catch-up limit per frame
+
+  const DEFAULTS = {
+    w0: 3.5,        // wheel stiffness (rad/s): how tightly each point follows the swell
+    cx: 6.0,        // neighbor pull across (columns/s): how fast energy travels sideways
+    cz: 2.5,        // neighbor pull between rows
+    damp: 0.35,     // disturbance damping (1/s)
+    sponge: 6.0,    // extra damping in the 3 edge columns so rings don't bounce back
+    swellAmp: 0.73, // crest height (wave units); the swell is peak-normalised, so this IS the crest height
+    swellLen: 24,   // swell wavelength in columns
+    speed: 1.8,     // swell angular speed (rad/s)
+    octaves: 4,     // number of exp(sin) waves in the swell
+    peakK: 4,       // peak sharpness: narrows crests without raising them (1 = afl_ext original)
+    pinch: 0.4,     // extra vertical stretch of wave tops, render only (this one DOES raise them)
+    flatten: 0.45,  // how much the water between crests is squashed toward flat (1 = off)
+    flatFrom: 0.3,  // drawn height (fraction of crest height) above which a point counts as crest and keeps its full height
+    keepPoints: 1.0,// keep the apex a point instead of letting the drawn curve round it off
+    horizon: 0.22,  // screen height of the farthest row (NDC, 0 = middle)
+    front: -0.62,   // screen height of the nearest row (NDC)
+    farScale: 0.22, // size of the farthest row relative to the nearest
+    scaleCurve: 0.5,// 0 = linear falloff from near to far, 1 = perspective falloff
+    vertNear: 1.6,  // wave height multiplier on the nearest rows
+    vertFar: 0.5,   // wave height multiplier on the farthest rows
+    vertCurve: 1.0, // how quickly height falls off with depth (1 = linear in row)
+    drag: 0.42,     // derivative drag between swell waves
+    spread: 0.45,   // direction cone of the swell waves (radians)
+    zStretch: 1.6,  // row spacing relative to column spacing for the swell
+    noise: 0.5,     // noise added to the swell target
+    nearSpan: 3,    // rows a swell carries across in the foreground
+    farSpan: 1,     // rows a swell carries across from mid to far
+    groupCouple: 0.05, // pull between rows that belong to different swells
+    impact: 16,     // cannonball upward kick (velocity); about 4x the old splash height
+    impactWidth: 0.8, // kick radius in columns: narrow, so the impact is vertical
+    impactFt: 50,   // impact width across rows in feet (50 ft is about 1.5 rows)
+    foamFt: 50,     // foam width across rows in feet
+    rowIso: 0.8,    // keep disturbances in their own row (the swell still flows between rows)
+    hullBeamFt: 35, // hull width across rows in feet (about 1 row)
+    foamZone: 4,    // foam radius in columns around the impact
+    decouple: 0.95, // how much foam cuts sideways neighbor pull (keeps impacts vertical)
+    impactDamp: 3,  // extra damping inside foam
+    foamLife: 1.2,  // foam decay time (s)
+    hullOn: false,
+    hullRow: 2,     // which row the hull floats on (0 = nearest)
+    hullX: 30,      // hull center column
+    hullHalf: 9,    // hull half length in columns
+    hullDraft: 0.6, // how deep the hull pushes the water down (wave units)
+    hullPush: 25,   // how firmly the hull shapes the water
+    hullFoam: 0.6,  // foam made where water meets the hull (averages ~0.5 foam at the bow)
+    hullFoamLook: 1.0, // how high foam climbs the hull
+    rock: 0.5,      // how much the hull follows the water's bow-to-stern slope
+    rockMax: 5,     // max rock angle (degrees)
+    hullCalm: 3,    // extra damping of the water at the hull's base (1/s)
+    bowWave: 0.8,   // crest ahead of the bow, as if the hull were moving
+    ballSize: 0.45, // cannonball radius (columns, nearest row)
+    splashCount: 48,  // white droplets per impact (max 64)
+    splashSpeed: 16,  // launch speed of droplets (world units/s at the nearest row)
+    splashSize: 0.6,  // droplet size (columns at the nearest row)
+    splashLife: 1.0,  // how long droplets last (s)
+    crestLo: 0.10,  // DRAWN height (fraction of crest height) where white begins; ~top 22% of the sea
+    crestHi: 0.73,  // drawn height where crests reach full thickness; ~top 6%
+    crestThick: 2.2,// crest thickness multiplier at full height
+    sharpSens: 1.0, // how much neighbor sharpness roughens crests
+    rough: 0.5,     // ragged crest edges where energetic
+    jitter: 0.8,    // vertical crest wobble where energetic (CSS px)
+    flecks: 0.5,    // spray dots above crests
+    fleckUp: 9,     // how high spray reaches (CSS px at the front row)
+    blur: 0.8,      // softness of the blue gradients in the wave body
+    shadow: 0.7,    // soft navy shadow under crests
+    lineW: 3.0,     // front crest base width (CSS px)
+    sub: 3,         // curve points per column
+  };
+  const P = Object.assign({}, DEFAULTS);
+
+  // Screen layout (NDC)
+  const LAYOUT = { amp: 0.085, cover: 3.2 };
+
+  // ---------------------------------------------------------------------------
+  // Camera. The sea lives in world units (1 unit = 1 lattice column) and the
+  // screen only chooses ONE scale factor for both axes, so wave shape, line
+  // width, noise and spray keep their proportions on any aspect ratio.
+  // Fit rule: show 60 columns across; if the screen is wider than 2.4:1, fit
+  // height instead and let the flat outer segments fill the sides. The seabed
+  // edge stays anchored to the bottom of the screen; extra height becomes sky.
+  // Layout sliders (horizon, nearest row) keep their meaning as positions on
+  // the 16:9 reference view.
+  // ---------------------------------------------------------------------------
+  const VIEW = { cols: 60, centerCol: 32, refAspect: 16 / 9, maxAspect: 2.4, refPxPerCol: 1600 / 60 };
+  const REF_HALF_H = VIEW.cols / VIEW.refAspect / 2; // world units from screen center to edge on 16:9
+  const cam = { x: VIEW.centerCol, y: 0, ppu: 1, unit: 1 };
+  function updateCamera() {
+    if(gameCamera())return;
+    cam.ppu = Math.min(canvas.width / VIEW.cols, canvas.height / (VIEW.cols / VIEW.maxAspect));
+    const visibleH = canvas.height / cam.ppu;
+    cam.x = VIEW.centerCol;
+    cam.y = -REF_HALF_H + visibleH / 2;
+    cam.unit = cam.ppu / VIEW.refPxPerCol;
+  }
+
+  // Palette (sRGB 0..1)
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  // Sampled by eye from the reference: deep cobalt in front, turquoise in the
+  // middle, pale aqua at the horizon, navy undersides, near-white crests.
+  const COLORS = {
+    nearBase: hex('#0A6DB2'), nearLight: hex('#2A9AD6'),
+    midBase: hex('#17A9CC'), midLight: hex('#5ACFE3'),
+    farBase: hex('#8ADCE4'), farLight: hex('#CBF5F1'),
+    ink: hex('#083E77'), line: hex('#D9FAFF'), foam: hex('#FFFFFF'),
+    wood: hex('#7A4424'), woodDark: hex('#4E2A15'), rail: hex('#C9953F'), outline: hex('#2B160B'), foamShade: hex('#BDEFF7'),
+  };
+
+  // ---------------------------------------------------------------------------
+  // WebGL setup
+  // ---------------------------------------------------------------------------
+  const canvas = document.getElementById('sea');
+  const statsEl = document.getElementById('stats');
+  const gl = canvas.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
+  function fatal(msg) {
+    const d = document.createElement('div');
+    d.className = 'fatal';
+    d.textContent = msg;
+    document.body.appendChild(d);
+    statsEl.textContent = '';
+  }
+  if (!gl) { fatal('This prototype needs WebGL2. Open it in a current Chrome, Safari, Firefox or Edge.'); return; }
+
+  // Shaders opt into the shared helpers with a "// #include common" line, so the
+  // noise and drawn-height maths exist in exactly one place.
+  const COMMON_GLSL = document.getElementById('common').textContent.trim();
+  function compile(type, id) {
+    const sh = gl.createShader(type);
+    const src = document.getElementById(id).textContent.trim().replace('// #include common', COMMON_GLSL);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(id + ': ' + gl.getShaderInfoLog(sh));
+    return sh;
+  }
+  function program(vsId, fsId) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsId));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsId));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(p));
+    const loc = {};
+    const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) {
+      const info = gl.getActiveUniform(p, i);
+      loc[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name);
+    }
+    return { p, loc };
+  }
+
+  let simProg, seaProg, wheelProg, hullProg, particleProg;
+  try {
+    simProg = program('vs-fullscreen', 'fs-sim');
+    seaProg = program('vs-sea', 'fs-sea');
+    wheelProg = program('vs-wheels', 'fs-wheels');
+    hullProg = program('vs-hull', 'fs-hull');
+    particleProg = program('vs-particles', 'fs-particles');
+  } catch (e) {
+    fatal('A shader failed to compile on this device: ' + e.message);
+    return;
+  }
+  const vao = gl.createVertexArray(); // attribute-less drawing still needs a bound VAO
+  gl.bindVertexArray(vao);
+
+  const STATE_ROWS = ROWS + 1; // one extra row holds the cannonball impact records
+  function makeStateTex(internalFormat, w = COLS, h = STATE_ROWS) {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, w, h, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  }
+
+  // Two float render targets for ping-pong. Prefer 32-bit, accept 16-bit.
+  let state = null;
+  (function createState() {
+    const candidates = [];
+    if (gl.getExtension('EXT_color_buffer_float')) candidates.push({ fmt: gl.RGBA32F, label: '32-bit float' });
+    if (gl.getExtension('EXT_color_buffer_half_float') || candidates.length) candidates.push({ fmt: gl.RGBA16F, label: '16-bit float' });
+    for (const c of candidates) {
+      const tex = [makeStateTex(c.fmt), makeStateTex(c.fmt)];
+      let ok = true;
+      const fbo = tex.map((t) => {
+        const f = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+        ok = ok && gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+        return f;
+      });
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (ok) { state = { tex, fbo, cur: 0, label: c.label, fmt: c.fmt }; return; }
+      tex.forEach((t) => gl.deleteTexture(t));
+      fbo.forEach((f) => gl.deleteFramebuffer(f));
+    }
+  })();
+  if (!state) { fatal('This device cannot render to float textures, which the shader-only simulation needs.'); return; }
+
+  const IMPACT_SLOTS = 8; // cannonball slots; their records live in the state texture's extra row
+
+  // ---------------------------------------------------------------------------
+  // Uniform upload. Static values go up only when a slider changes; per-substep
+  // work is just time, splash and a texture swap.
+  // ---------------------------------------------------------------------------
+  // Row tables: scale, resting height and wave height for each of the 12 rows.
+  const rowScale = new Float32Array(ROWS);
+  const rowBase = new Float32Array(ROWS);
+  const rowAmp = new Float32Array(ROWS);
+  function computeRows() {
+    updateCamera();
+    const far = Math.max(P.farScale, 0.02);
+    const k = 1 / far - 1;
+    for (let r = 0; r < ROWS; r++) {
+      const t = r / (ROWS - 1);
+      const linear = 1 + (far - 1) * t;
+      const persp = 1 / (1 + k * t);
+      rowScale[r] = linear + (persp - linear) * P.scaleCurve;
+    }
+    // Gaps between rows shrink with scale, like rows laid out on a receding plane.
+    let total = 0;
+    const cum = new Float32Array(ROWS);
+    for (let r = 1; r < ROWS; r++) { total += (rowScale[r - 1] + rowScale[r]) * 0.5; cum[r] = total; }
+    for (let r = 0; r < ROWS; r++) {
+      const t = r / (ROWS - 1);
+      rowBase[r] = (P.front + (P.horizon - P.front) * (total > 0 ? cum[r] / total : t)) * REF_HALF_H;
+      const vert = P.vertNear + (P.vertFar - P.vertNear) * Math.pow(t, P.vertCurve);
+      rowAmp[r] = LAYOUT.amp * REF_HALF_H * rowScale[r] * vert;
+    }
+    gameRows();
+    const horizonNdc = ((P.horizon * REF_HALF_H) - cam.y) * cam.ppu / (0.5 * canvas.height);
+    const pct = Math.min(Math.max(((1 - horizonNdc) / 2) * 100, 1), 99);
+    document.body.style.background =
+      `linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) ${Math.max(pct * 0.66, 1).toFixed(1)}%, var(--sky-horizon) ${pct.toFixed(1)}%, var(--sky-horizon) 100%)`;
+  }
+  // Modified Bessel I0 by series, for the mean of exp(k*(sin x - 1)).
+  function besselI0(x) {
+    let sum = 1, term = 1;
+    for (let n = 1; n < 30; n++) { term *= (x / 2) * (x / 2) / (n * n); sum += term; }
+    return sum;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cannonballs. JavaScript only records each launch (position, velocity, time,
+  // row). The flight is analytic, and the simulation shader detects the moment a
+  // ball crosses the drawn water surface, so nothing is read back from the GPU.
+  // ---------------------------------------------------------------------------
+  const MAX_BALLS = 8, GRAVITY = 22;
+  // World scale across rows: 50 ft is about 1.5 rows.
+  const FT_PER_ROW = 50 / 1.5;
+  // Gaussian radius (in rows) whose width at half strength equals the given feet.
+  const rowRadiusFromFeet = (ft) => (ft / FT_PER_ROW / 2) / Math.sqrt(Math.LN2);
+  const ballA = new Float32Array(MAX_BALLS * 4); // x0, y0, vx, vy
+  const ballB = new Float32Array(MAX_BALLS * 4); // row, launch time, window start, window end
+  let ballsDirtySim = true, ballsDirtyDraw = true;
+  function clearBalls() {
+    for (let i = 0; i < MAX_BALLS; i++) ballB[i * 4 + 1] = -1;
+    ballsDirtySim = ballsDirtyDraw = true;
+  }
+  clearBalls();
+  function launchBall(targetCol, row) {
+    row = Math.max(0, Math.min(ROWS - 1, Math.round(row)));
+    targetCol = Math.max(2, Math.min(COLS - 3, targetCol));
+    let slot = -1;
+    for (let i = 0; i < MAX_BALLS; i++) {
+      const t0 = ballB[i * 4 + 1];
+      if (t0 < 0 || simT - t0 > ballB[i * 4 + 3] + 0.1) { slot = i; break; }
+    }
+    if (slot < 0) return;
+    const rightEdge = cam.x + canvas.width / cam.ppu / 2;
+    const x0 = Math.max(rightEdge + 2, targetCol + 10);
+    const y0 = rowBase[row] + 7 + Math.random() * 5;
+    const flight = 0.9 + Math.random() * 0.4 + (x0 - targetCol) * 0.008;
+    const yT = rowBase[row];
+    const vx = (targetCol - x0) / flight;
+    const vy = (yT - y0 + 0.5 * GRAVITY * flight * flight) / flight;
+    // Only test for hits while the ball is inside this row's possible wave band.
+    const band = LAYOUT.cover * rowAmp[row];
+    const timeAt = (Y) => { const d = vy * vy - 2 * GRAVITY * (Y - y0); return d < 0 ? 0 : (vy + Math.sqrt(d)) / GRAVITY; };
+    ballA.set([x0, y0, vx, vy], slot * 4);
+    ballB.set([row, simT, timeAt(yT + band), timeAt(yT - band)], slot * 4);
+    ballsDirtySim = ballsDirtyDraw = true;
+  }
+
+  let simDirty = true;
+  function uploadSimParams() {
+    const L = simProg.loc;
+    gl.useProgram(simProg.p);
+    gl.uniform1i(L.uState, 0);
+    gl.uniform1f(L.uDt, STEP / SUBSTEPS);
+    gl.uniform1f(L.uW0sq, P.w0 * P.w0);
+    gl.uniform1f(L.uCx2, P.cx * P.cx);
+    gl.uniform1f(L.uCz2, P.cz * P.cz);
+    gl.uniform1f(L.uDamp, P.damp);
+    gl.uniform1f(L.uSponge, P.sponge);
+    gl.uniform1f(L.uSwellAmp, P.swellAmp);
+    gl.uniform1f(L.uWaveScale, (Math.PI * 2) / P.swellLen);
+    gl.uniform1f(L.uZStretch, P.zStretch);
+    gl.uniform1f(L.uDrag, P.drag);
+    gl.uniform1f(L.uSpeed, P.speed);
+    gl.uniform1f(L.uSpread, P.spread);
+    gl.uniform1f(L.uNoise, P.noise);
+    gl.uniform1i(L.uOctaves, P.octaves);
+    gl.uniform1f(L.uNearSpan, P.nearSpan);
+    gl.uniform1f(L.uFarSpan, P.farSpan);
+    gl.uniform1f(L.uGroupCouple, P.groupCouple);
+    gl.uniform1f(L.uPeakK, P.peakK);
+    const swellMean = Math.exp(-P.peakK) * besselI0(P.peakK);
+    gl.uniform1f(L.uSwellMean, swellMean);
+    // Divide by (peak - mean) so peak sharpness changes the SHAPE of a crest, not its height.
+    gl.uniform1f(L.uSwellNorm, 1 / Math.max(1 - swellMean, 1e-3));
+    gl.uniform3f(L.uSplashFoam, P.foamZone, 1.0, rowRadiusFromFeet(P.impactFt));
+    gl.uniform1f(L.uFoamRowRadius, rowRadiusFromFeet(P.foamFt));
+    gl.uniform1f(L.uRowIso, P.rowIso);
+    const beamR = rowRadiusFromFeet(P.hullBeamFt);
+    gl.uniform1f(L.uHullRowSpread, Math.exp(-1 / (beamR * beamR)));
+    computeRows();
+    gl.uniform1fv(L.uRowBase, rowBase);
+    gl.uniform1fv(L.uRowAmp, rowAmp);
+    gl.uniform3f(L.uShape, P.pinch, P.flatten, P.flatFrom);
+    gl.uniform1f(L.uGravity, GRAVITY);
+    gl.uniform1f(L.uImpact, P.impact);
+    gl.uniform1f(L.uImpactWidth, P.impactWidth);
+    gl.uniform4f(L.uHullMotion, P.rock, P.rockMax * Math.PI / 180, P.hullCalm, P.bowWave);
+    gl.uniform1f(L.uDecouple, P.decouple);
+    gl.uniform1f(L.uImpactDamp, P.impactDamp);
+    gl.uniform1f(L.uFoamDecay, Math.exp(-(STEP / SUBSTEPS) / P.foamLife));
+    gl.uniform4f(L.uHull, P.hullOn ? 1 : 0, P.hullRow, P.hullX, P.hullHalf);
+    gl.uniform3f(L.uHullShape, P.hullDraft, P.hullPush, P.hullFoam);
+    gl.uniform4fv(L.uCombatHulls,gameHulls);gl.uniform1fv(L.uCombatDirs,gameDirections);
+    ballsDirtySim = true;
+    simDirty = false;
+  }
+
+  let seaDirty = true;
+  let lastW = 0, lastH = 0;
+  function uploadSeaParams() {
+    const L = seaProg.loc;
+    gl.useProgram(seaProg.p);
+    gl.uniform1i(L.uState, 0);
+    gl.uniform1i(L.uSub, P.sub);
+    gl.uniform2f(L.uRes, canvas.width, canvas.height);
+    gl.uniform1f(L.uUnit, cam.unit);
+    computeRows();
+    gl.uniform4f(L.uCam, cam.x, cam.y, cam.ppu, 0);
+    gl.uniform1fv(L.uRowScale, rowScale);
+    gl.uniform1fv(L.uRowBase, rowBase);
+    gl.uniform1fv(L.uRowAmp, rowAmp);
+    gl.uniform1f(L.uFarScale, P.farScale);
+    gl.uniform3f(L.uShape, P.pinch, P.flatten, P.flatFrom);
+    gl.uniform1f(L.uLineW, P.lineW);
+    gl.uniform1f(L.uCover, LAYOUT.cover);
+    gl.uniform1f(L.uSwellAmp, P.swellAmp);
+    gl.uniform1f(L.uCrestLo, P.crestLo);
+    gl.uniform1f(L.uCrestHi, Math.max(P.crestHi, P.crestLo + 0.01));
+    gl.uniform1f(L.uCrestThick, P.crestThick);
+    gl.uniform1f(L.uKeepPoints, P.keepPoints);
+    gl.uniform1f(L.uSharpSens, P.sharpSens);
+    gl.uniform1f(L.uJitter, P.jitter);
+    gl.uniform1f(L.uRough, P.rough);
+    gl.uniform1f(L.uFleckUp, P.fleckUp);
+    gl.uniform1f(L.uFlecks, P.flecks);
+    gl.uniform1f(L.uBlur, P.blur);
+    gl.uniform1f(L.uShadow, P.shadow);
+    gl.uniform3fv(L.uNearBase, COLORS.nearBase);
+    gl.uniform3fv(L.uNearLight, COLORS.nearLight);
+    gl.uniform3fv(L.uMidBase, COLORS.midBase);
+    gl.uniform3fv(L.uMidLight, COLORS.midLight);
+    gl.uniform3fv(L.uFarBase, COLORS.farBase);
+    gl.uniform3fv(L.uFarLight, COLORS.farLight);
+    gl.uniform3fv(L.uInkCol, COLORS.ink);
+    gl.uniform3fv(L.uLineCol, COLORS.line);
+    gl.uniform3fv(L.uFoamCol, COLORS.foam);
+
+    const Hl = hullProg.loc;
+    gl.useProgram(hullProg.p);
+    gl.uniform1i(Hl.uState, 0);
+    gl.uniform2f(Hl.uRes, canvas.width, canvas.height);
+    gl.uniform1f(Hl.uUnit, cam.unit);
+    gl.uniform4f(Hl.uCam, cam.x, cam.y, cam.ppu, 0);
+    gl.uniform3f(Hl.uShape, P.pinch, P.flatten, P.flatFrom);
+    gl.uniform1f(Hl.uSwellAmp, P.swellAmp);
+    gl.uniform1f(Hl.uCover, LAYOUT.cover);
+    gl.uniform1fv(Hl.uRowBase, rowBase);
+    gl.uniform1fv(Hl.uRowAmp, rowAmp);
+    gl.uniform4f(Hl.uHull, P.hullOn ? 1 : 0, P.hullRow, P.hullX, P.hullHalf);
+    gl.uniform3f(Hl.uHullShape, P.hullDraft, P.hullPush, P.hullFoam);
+    gl.uniform4f(Hl.uHullMotion, P.rock, P.rockMax * Math.PI / 180, P.hullCalm, P.bowWave);
+    gl.uniform1f(Hl.uHullAbove, 0.3);
+    gl.uniform1f(Hl.uHullBelow, 0.24);
+    gl.uniform1f(Hl.uSprayPx, 30 * cam.unit);
+    gl.uniform1f(Hl.uHullFoamLook, P.hullFoamLook);
+    gl.uniform3fv(Hl.uWoodCol, COLORS.wood);
+    gl.uniform3fv(Hl.uWoodDark, COLORS.woodDark);
+    gl.uniform3fv(Hl.uRailCol, COLORS.rail);
+    gl.uniform3fv(Hl.uOutlineCol, COLORS.outline);
+    gl.uniform3fv(Hl.uFoamCol, COLORS.foam);
+    gl.uniform3fv(Hl.uFoamShade, COLORS.foamShade);
+
+    // Splash droplets and cannonballs share one program and one draw call.
+    const Pa = particleProg.loc;
+    gl.useProgram(particleProg.p);
+    gl.uniform1i(Pa.uState, 0);
+    gl.uniform2f(Pa.uRes, canvas.width, canvas.height);
+    gl.uniform4f(Pa.uCam, cam.x, cam.y, cam.ppu, 0);
+    gl.uniform1f(Pa.uGravity, GRAVITY);
+    gl.uniform1f(Pa.uBallRadius, P.ballSize);
+    gl.uniform3f(Pa.uShape, P.pinch, P.flatten, P.flatFrom);
+    gl.uniform1f(Pa.uSwellAmp, P.swellAmp);
+    gl.uniform1f(Pa.uSplashCount, P.splashCount);
+    gl.uniform1f(Pa.uSplashSpeed, P.splashSpeed);
+    gl.uniform1f(Pa.uSplashSize, P.splashSize);
+    gl.uniform1f(Pa.uSplashLife, P.splashLife);
+    gl.uniform1fv(Pa.uRowBase, rowBase);
+    gl.uniform1fv(Pa.uRowAmp, rowAmp);
+    gl.uniform1fv(Pa.uRowScale, rowScale);
+    ballsDirtyDraw = true;
+
+    const W = wheelProg.loc;
+    gl.useProgram(wheelProg.p);
+    gl.uniform1i(W.uState, 0);
+    gl.uniform2f(W.uRes, canvas.width, canvas.height);
+    gl.uniform4f(W.uCam, cam.x, cam.y, cam.ppu, 0);
+    gl.uniform1f(W.uOmegaRef, P.speed);
+    gl.uniform1fv(W.uRowBase, rowBase);
+    gl.uniform1fv(W.uRowAmp, rowAmp);
+    seaDirty = false;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Simulation step (one fragment pass over 64x12 texels)
+  // ---------------------------------------------------------------------------
+  let simT = 0;
+
+  // Sea rows and the impact-record row are written by the same pass, from the same
+  // pre-step water, so a hit's kick and its record can never disagree.
+  function simPass(t, init) {
+    const L = simProg.loc;
+    const src = state.cur, dst = 1 - state.cur;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, state.fbo[dst]);
+    gl.bindTexture(gl.TEXTURE_2D, state.tex[src]);
+    gl.uniform1f(L.uT, t);
+    gl.uniform1i(L.uInit, init ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    state.cur = dst;
+  }
+  function beginSim() {
+    if (simDirty) uploadSimParams(); else gl.useProgram(simProg.p);
+    if (ballsDirtySim) {
+      gl.uniform4fv(simProg.loc.uBallA, ballA);
+      gl.uniform4fv(simProg.loc.uBallB, ballB);
+      ballsDirtySim = false;
+    }
+    gl.disable(gl.BLEND);
+    gl.viewport(0, 0, COLS, STATE_ROWS);
+    gl.activeTexture(gl.TEXTURE0);
+  }
+
+  function resetSea() {
+    simT = 0;
+    clearBalls();
+    beginSim();
+    simPass(0, true); // also clears the impact-record row
+    simPass(STEP / SUBSTEPS, true);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------------
+  let dpr = 1;
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+    if (w !== lastW || h !== lastH) {
+      canvas.width = w; canvas.height = h; lastW = w; lastH = h;
+      seaDirty = true;
+    }
+  }
+
+  let showWheels = false;
+  const timeOrigin = performance.now();
+  function render() {
+    resize();
+    if (seaDirty) uploadSeaParams();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, state.tex[state.cur]);
+
+    const t = (performance.now() - timeOrigin) / 1000;
+    const perRow = (COLS - 1) * P.sub * 12;
+    gl.useProgram(seaProg.p);
+    gl.uniform1f(seaProg.loc.uTime, t);
+    if (P.hullOn) {
+      // Rows behind the hull, then the hull, then its own row and everything in front.
+      const behind = ROWS - 1 - P.hullRow;
+      if (behind > 0) gl.drawArrays(gl.TRIANGLES, 0, behind * perRow);
+      gl.useProgram(hullProg.p);
+      gl.uniform1f(hullProg.loc.uTime, t);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.useProgram(seaProg.p);
+      gl.drawArrays(gl.TRIANGLES, behind * perRow, (P.hullRow + 1) * perRow);
+    } else {
+      gl.drawArrays(gl.TRIANGLES, 0, ROWS * perRow);
+    }
+
+    // Splash droplets first, then the cannonballs over them: one draw for both.
+    gl.useProgram(particleProg.p);
+    gl.uniform1f(particleProg.loc.uSimT, simT);
+    if (ballsDirtyDraw) {
+      gl.uniform4fv(particleProg.loc.uBallA, ballA);
+      gl.uniform4fv(particleProg.loc.uBallB, ballB);
+      ballsDirtyDraw = false;
+    }
+    gl.drawArrays(gl.TRIANGLES, 0, (IMPACT_SLOTS * 64 + MAX_BALLS * 4) * 6);
+
+    if (showWheels) {
+      gl.useProgram(wheelProg.p);
+      gl.drawArrays(gl.LINES, 0, 16 * (24 * 2 + 4));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Input: taps fire a cannonball from the right at that spot on the water
+  // ---------------------------------------------------------------------------
+  canvas.addEventListener('pointerdown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const py = (1 - (e.clientY - rect.top) / rect.height) * canvas.height;
+    const wx = (px - canvas.width / 2) / cam.ppu + cam.x;
+    const wy = (py - canvas.height / 2) / cam.ppu + cam.y;
+    if (wy > rowBase[ROWS - 1] + 1) return;
+    let best = 0, bestD = Infinity;
+    for (let r = 0; r < ROWS; r++) { const d = Math.abs(wy - rowBase[r]); if (d < bestD) { bestD = d; best = r; } }
+    launchBall(wx, best);
+  });
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let autoCannons = false;
+  let nextCannon = 1.2;
+
+  // ---------------------------------------------------------------------------
+  // Main loop with a fixed timestep
+  // ---------------------------------------------------------------------------
+  let last = performance.now(), acc = 0, fps = 60, statTimer = 0;
+  function frame(now) {
+    const dtF = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    fps += (1 / Math.max(dtF, 1e-3) - fps) * 0.05;
+
+    if (autoCannons) {
+      nextCannon -= dtF;
+      if (nextCannon <= 0) {
+        launchBall(8 + Math.random() * 48, Math.floor(Math.random() * 6));
+        nextCannon = 1.6 + Math.random() * 1.8;
+      }
+    }
+
+    applyGameImpacts();
+    acc += dtF;
+    if (acc >= STEP) {
+      beginSim();
+      const dt = STEP / SUBSTEPS;
+      let ticks = 0;
+      while (acc >= STEP && ticks < MAX_TICKS) {
+        for (let s = 0; s < SUBSTEPS; s++) {
+          simT += dt;
+          simPass(simT, false);
+        }
+        acc -= STEP;
+        ticks++;
+      }
+      if (ticks === MAX_TICKS) acc = 0;
+    }
+
+    render();
+    sampleGameContacts(now);
+
+    statTimer -= dtF;
+    if (statTimer <= 0) {
+      statsEl.textContent = `${Math.round(fps)} fps, GPU simulation`;
+      statTimer = 0.5;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Panel
+  // ---------------------------------------------------------------------------
+  const SLIDERS = [
+    { h: 'The wheels' },
+    { k: 'w0', label: 'Wheel stiffness', min: 0.6, max: 5, step: 0.1, sim: true },
+    { k: 'cx', label: 'Neighbor pull, across', min: 0, max: 14, step: 0.1, sim: true },
+    { k: 'cz', label: 'Neighbor pull, between rows', min: 0, max: 6, step: 0.1, sim: true },
+    { k: 'damp', label: 'Damping', min: 0.05, max: 2, step: 0.01, sim: true },
+    { h: 'The swell' },
+    { k: 'swellAmp', label: 'Crest height', min: 0, max: 2, step: 0.01, sim: true, sea: true },
+    { k: 'swellLen', label: 'Swell length (columns)', min: 10, max: 60, step: 1, sim: true },
+    { k: 'speed', label: 'Swell speed', min: 0.3, max: 4, step: 0.05, sim: true, sea: true },
+    { k: 'octaves', label: 'Swell layers', min: 1, max: 6, step: 1, sim: true },
+    { k: 'drag', label: 'Wave drag', min: 0, max: 0.8, step: 0.01, sim: true },
+    { k: 'noise', label: 'Noise', min: 0, max: 1.2, step: 0.01, sim: true },
+    { k: 'nearSpan', label: 'Rows a swell spans, foreground', min: 1, max: 6, step: 1, sim: true },
+    { k: 'farSpan', label: 'Rows a swell spans, mid to far', min: 1, max: 4, step: 1, sim: true },
+    { k: 'groupCouple', label: 'Pull between separate swells', min: 0, max: 1, step: 0.01, sim: true },
+    { h: 'Peak shape' },
+    { k: 'peakK', label: 'Peak sharpness', min: 1, max: 8, step: 0.05, sim: true },
+    { k: 'pinch', label: 'Peak pinch (raises tops)', min: 0, max: 2, step: 0.01, sim: true, sea: true },
+    { k: 'keepPoints', label: 'Keep peaks pointed', min: 0, max: 2, step: 0.01, sea: true },
+    { k: 'flatten', label: 'Flatten between crests', min: 0.05, max: 1, step: 0.01, sim: true, sea: true },
+    { k: 'flatFrom', label: 'Crests start above', min: 0.05, max: 0.9, step: 0.01, sim: true, sea: true },
+    { h: 'Depth' },
+    { k: 'farScale', label: 'Farthest row scale', min: 0.05, max: 1, step: 0.01, sim: true, sea: true },
+    { k: 'scaleCurve', label: 'Scale falloff: linear to perspective', min: 0, max: 1, step: 0.01, sim: true, sea: true },
+    { k: 'horizon', label: 'Horizon height', min: -0.2, max: 0.6, step: 0.01, sim: true, sea: true },
+    { k: 'front', label: 'Nearest row height', min: -0.9, max: -0.2, step: 0.01, sim: true, sea: true },
+    { h: 'Verticality' },
+    { k: 'vertNear', label: 'Wave height, nearest rows', min: 0.2, max: 3, step: 0.01, sim: true, sea: true },
+    { k: 'vertFar', label: 'Wave height, farthest rows', min: 0, max: 2, step: 0.01, sim: true, sea: true },
+    { k: 'vertCurve', label: 'Height falloff curve', min: 0.3, max: 3, step: 0.01, sim: true, sea: true },
+    { h: 'Cannonballs' },
+    { k: 'impact', label: 'Vertical impact', min: 0, max: 30, step: 0.5, sim: true },
+    { k: 'impactWidth', label: 'Impact width (columns)', min: 0.4, max: 3, step: 0.05, sim: true },
+    { k: 'impactFt', label: 'Impact width across rows (ft, 33 ft per row)', min: 10, max: 150, step: 1, sim: true },
+    { k: 'foamFt', label: 'Foam width across rows (ft)', min: 10, max: 150, step: 1, sim: true },
+    { k: 'rowIso', label: 'Keep impacts in their row', min: 0, max: 1, step: 0.01, sim: true },
+    { k: 'foamZone', label: 'Foam zone width (columns)', min: 1, max: 8, step: 0.1, sim: true },
+    { k: 'decouple', label: 'Limit sideways spread', min: 0, max: 1, step: 0.01, sim: true },
+    { k: 'impactDamp', label: 'Damping inside foam', min: 0, max: 6, step: 0.1, sim: true },
+    { k: 'foamLife', label: 'Foam life (s)', min: 0.3, max: 4, step: 0.05, sim: true },
+    { k: 'ballSize', label: 'Ball size', min: 0.15, max: 1.2, step: 0.01, sea: true },
+    { k: 'splashCount', label: 'Splash droplets', min: 0, max: 64, step: 1, sea: true },
+    { k: 'splashSpeed', label: 'Splash height', min: 4, max: 32, step: 0.5, sea: true },
+    { k: 'splashSize', label: 'Droplet size', min: 0.2, max: 1.6, step: 0.01, sea: true },
+    { k: 'splashLife', label: 'Splash life (s)', min: 0.3, max: 2.5, step: 0.05, sea: true },
+    { h: 'Hull test' },
+    { k: 'hullRow', label: 'Hull row (0 is nearest)', min: 0, max: 8, step: 1, sim: true, sea: true },
+    { k: 'hullX', label: 'Hull position (column)', min: 12, max: 52, step: 0.5, sim: true, sea: true },
+    { k: 'hullHalf', label: 'Hull half length (columns)', min: 4, max: 16, step: 0.5, sim: true, sea: true },
+    { k: 'hullBeamFt', label: 'Hull beam across rows (ft)', min: 10, max: 100, step: 1, sim: true },
+    { k: 'hullDraft', label: 'Hull draft', min: 0, max: 1.5, step: 0.01, sim: true, sea: true },
+    { k: 'hullPush', label: 'How firmly the hull shapes water', min: 5, max: 60, step: 1, sim: true },
+    { k: 'hullFoam', label: 'Foam made at the hull', min: 0, max: 3, step: 0.05, sim: true },
+    { k: 'hullFoamLook', label: 'Foam climbing the hull', min: 0, max: 2.5, step: 0.05, sea: true },
+    { k: 'rock', label: 'Rock with the water', min: 0, max: 1.5, step: 0.01, sim: true, sea: true },
+    { k: 'rockMax', label: 'Max rock angle (degrees)', min: 0, max: 15, step: 0.5, sim: true, sea: true },
+    { k: 'hullCalm', label: 'Calm water at the hull base', min: 0, max: 8, step: 0.1, sim: true },
+    { k: 'bowWave', label: 'Bow wave', min: 0, max: 2.5, step: 0.01, sim: true },
+    { h: 'White crests' },
+    { k: 'crestLo', label: 'White starts at drawn height', min: -0.3, max: 0.8, step: 0.01, sea: true },
+    { k: 'crestHi', label: 'Full white at drawn height', min: -0.2, max: 1.5, step: 0.01, sea: true },
+    { k: 'crestThick', label: 'Crest thickness', min: 0.5, max: 4, step: 0.05, sea: true },
+    { k: 'lineW', label: 'Crest base width (px)', min: 1, max: 8, step: 0.1, sea: true },
+    { k: 'rough', label: 'Ragged edges at sharp spots', min: 0, max: 1.5, step: 0.01, sea: true },
+    { k: 'sharpSens', label: 'Sharpness sensitivity', min: 0, max: 2, step: 0.01, sea: true },
+    { k: 'jitter', label: 'Crest wobble (px)', min: 0, max: 4, step: 0.1, sea: true },
+    { k: 'flecks', label: 'Spray flecks', min: 0, max: 1, step: 0.01, sea: true },
+    { k: 'fleckUp', label: 'Spray height (px)', min: 0, max: 24, step: 0.5, sea: true },
+    { h: 'Wave body' },
+    { k: 'blur', label: 'Gradient softness', min: 0, max: 2, step: 0.01, sea: true },
+    { k: 'shadow', label: 'Shadow under crests', min: 0, max: 1.5, step: 0.01, sea: true },
+    { h: 'The look' },
+    { k: 'sub', label: 'Curve detail', min: 1, max: 6, step: 1, sea: true },
+  ];
+  const slidersEl = document.getElementById('sliders');
+  const inputs = {};
+  for (const s of SLIDERS) {
+    if (s.h) { const h = document.createElement('h2'); h.textContent = s.h; slidersEl.appendChild(h); continue; }
+    const row = document.createElement('label');
+    row.className = 'row';
+    const name = document.createElement('span'); name.textContent = s.label;
+    const out = document.createElement('output');
+    const inp = document.createElement('input');
+    Object.assign(inp, { type: 'range', min: s.min, max: s.max, step: s.step, value: P[s.k] });
+    const show = () => { out.textContent = Number(inp.value).toFixed(s.step >= 1 ? 0 : 2); };
+    inp.addEventListener('input', () => {
+      P[s.k] = Number(inp.value);
+      if (s.sim) simDirty = true;
+      if (s.sea) seaDirty = true;
+      show();
+    });
+    show();
+    row.append(name, out, inp);
+    slidersEl.appendChild(row);
+    inputs[s.k] = { inp, show };
+  }
+
+  const panel = document.getElementById('panel');
+  const toggle = document.getElementById('toggle');
+  toggle.addEventListener('click', () => {
+    const open = panel.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.textContent = open ? 'Close' : 'Tune';
+  });
+  document.getElementById('formatNote').textContent =
+    `Simulation and drawing both run in shaders. State is stored as ${state.label} textures.`;
+  document.getElementById('wheels').addEventListener('change', (e) => { showWheels = e.target.checked; });
+  const cannonBox = document.getElementById('cannons');
+  cannonBox.checked = autoCannons;
+  cannonBox.addEventListener('change', (e) => { autoCannons = e.target.checked; });
+  const hullBox = document.getElementById('hullOn');
+  hullBox.checked = P.hullOn;
+  hullBox.addEventListener('change', (e) => { P.hullOn = e.target.checked; simDirty = true; seaDirty = true; });
+  document.getElementById('fireHull').addEventListener('click', () => {
+    launchBall(P.hullX + P.hullHalf + 2 + Math.random() * 4, P.hullRow);
+  });
+  document.getElementById('volley').addEventListener('click', () => {
+    for (let i = 0; i < 5; i++) launchBall(10 + Math.random() * 44, Math.floor(Math.random() * 7));
+  });
+  document.getElementById('reset').addEventListener('click', resetSea);
+  document.getElementById('defaults').addEventListener('click', () => {
+    Object.assign(P, DEFAULTS);
+    for (const k in inputs) { inputs[k].inp.value = P[k]; inputs[k].show(); }
+    hullBox.checked = P.hullOn;
+    simDirty = true; seaDirty = true;
+    resetSea();
+  });
+
+  autoCannons=false; P.hullOn=false;
+
+ // Battle adapter: retain the prototype GPU wheels, foam, spray and impact records.
+ const gameScale=5,gameOffset=4,gameRow=4,gameHulls=new Float32Array(8),gameDirections=new Float32Array([1,-1]);
+ let gameScene=null,gameLayoutKey='',gameSampleAt=0,gameSplashSlot=0,gameSplashCount=0,gameLastContacts=[],gameSettingsKey='';
+ const gameImpacts=[],gameSeenImpacts=new Set(),gameReadback=new Float32Array(COLS*STATE_ROWS*4);
+ const clampGame=(v,a,b)=>Math.max(a,Math.min(b,v));
+ function gameCamera(){
+  if(!gameScene)return false;
+  cam.ppu=gameScene.ppu*dpr/gameScale;cam.x=gameOffset+(canvas.width/2-gameScene.ox*dpr)/cam.ppu;
+  cam.y=(gameScene.oy*dpr-canvas.height/2)/cam.ppu;cam.unit=cam.ppu/VIEW.refPxPerCol;return true;
+ }
+ function gameRows(){
+  if(!gameScene)return;
+  for(let r=0;r<ROWS;r++){
+   const t=r/(ROWS-1),vert=P.vertNear+(P.vertFar-P.vertNear)*Math.pow(t,P.vertCurve),baseline=1.6+(.5-1.6)*t;
+   const spread=(P.horizon-P.front)/(.22+.62);
+   rowBase[r]=(r<=gameRow?-.95+r*.165:-.29+1.1*(1-Math.pow(.78,r-gameRow))/(1-Math.pow(.78,7)))*gameScale;
+   rowBase[r]=-.29*gameScale+(rowBase[r]+.29*gameScale)*spread;
+   rowAmp[r]=gameScale*(.34-.022*r)*vert/baseline;
+  }
+ }
+ function readGameWater(){
+  const old=gl.getParameter(gl.FRAMEBUFFER_BINDING);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,state.fbo[state.cur]);gl.readPixels(0,0,COLS,STATE_ROWS,gl.RGBA,gl.FLOAT,gameReadback);gl.bindFramebuffer(gl.FRAMEBUFFER,old);
+  return gameReadback;
+ }
+ function gameSample(data,x,row,k){
+  const c=clampGame(x,0,COLS-1),a=Math.floor(c),b=Math.min(COLS-1,a+1),r=c-a;
+  return data[(row*COLS+a)*4+k]*(1-r)+data[(row*COLS+b)*4+k]*r;
+ }
+ function gameHeight(h){
+  const a=Math.max(P.swellAmp,.3),u=h/a,t=clampGame((u-P.flatFrom)/.25,0,1),v=u*(P.flatten+(1-P.flatten)*t*t*(3-2*t)),top=clampGame(v,0,1);
+  return a*(v+P.pinch*top*top);
+ }
+ function sampleGameContacts(now){
+  if(!gameScene||now<gameSampleAt)return;gameSampleAt=now+100;
+  const data=readGameWater();
+  gameLastContacts=gameScene.ships.map((ship,index)=>{
+   const center=gameOffset+ship.x*gameScale,half=5.4,all=[0,0],bow=[0,0],stern=[0,0];
+   for(let c=Math.floor(center-half);c<=center+half;c++){
+    if(c<0||c>=COLS)continue;const xr=(c-center)/half,m=Math.sqrt(Math.max(0,1-xr*xr));if(!m)continue;
+    const h=gameSample(data,c,gameRow,0),target=gameSample(data,c,gameRow,2),level=target+.5*(h-target+P.hullDraft*m);
+    all[0]+=level;all[1]++;if(xr>.25){bow[0]+=level;bow[1]++;}if(xr<-.25){stern[0]+=level;stern[1]++;}
+   }
+   const amp=rowAmp[gameRow],mid=all[0]/Math.max(1,all[1]),rise=(bow[0]/Math.max(1,bow[1])-stern[0]/Math.max(1,stern[1]))*amp;
+   const angle=clampGame(Math.atan2(rise,1.3*half)*P.rock,-P.rockMax*Math.PI/180,P.rockMax*Math.PI/180)+Math.sin(simT*1.1+index*1.7)*P.rockMax*Math.PI/180*.2*Math.min(1,P.rock/.75);
+   const pose=gameScene.motion?{heave:clampGame(mid*amp/gameScale,-.2,.2),roll:clampGame(angle,-P.rockMax*Math.PI/180,P.rockMax*Math.PI/180)}:{heave:0,roll:0};
+   const samples=Array.from({length:32},(_,i)=>{
+    const lx=-1.35+i/31*2.7,worldX=ship.x+ship.dir*lx,c=gameOffset+worldX*gameScale;
+    return {x:worldX,y:(rowBase[gameRow]+gameHeight(gameSample(data,c,gameRow,0))*amp)/gameScale,foam:clampGame(gameSample(data,c,gameRow,3),0,1.5)};
+   });
+   return {side:ship.side,pose,samples,foamLook:P.hullFoamLook};
+  });
+  parent.postMessage({type:'pirate-ocean-frame',contacts:gameLastContacts},location.origin);
+ }
+ function applyGameImpacts(){
+  if(!gameImpacts.length)return;
+  const data=readGameWater().slice();
+  for(const hit of gameImpacts.splice(0)){
+   const x=gameOffset+hit.x*gameScale,y=hit.y*gameScale;
+   if(x<0||x>COLS-1)continue;
+   let row=0;for(let r=1;r<ROWS;r++)if(Math.abs(rowBase[r]-y)<Math.abs(rowBase[row]-y))row=r;
+   // Use the game's exact analytic landing point, then reuse the prototype's droplet draw.
+   data.set([x,y,0,row],(ROWS*COLS+gameSplashSlot)*4);gameSplashSlot=(gameSplashSlot+1)%8;
+   const kickR=rowRadiusFromFeet(P.impactFt),foamR=rowRadiusFromFeet(P.foamFt),radius=3*Math.max(P.impactWidth,P.foamZone);
+   for(let r=0;r<ROWS;r++)for(let c=Math.max(0,Math.floor(x-radius));c<=Math.min(COLS-1,Math.ceil(x+radius));c++){
+    const k=(r*COLS+c)*4,dx=c-x,dr=r-row,weight=Math.exp(-dx*dx/(P.impactWidth*P.impactWidth)-dr*dr/(kickR*kickR));
+    data[k+1]+=P.impact*weight*hit.energy;data[k+3]=Math.min(1.5,data[k+3]+Math.exp(-dx*dx/(P.foamZone*P.foamZone)-dr*dr/(foamR*foamR))*hit.energy);
+   }
+   gameSplashCount++;
+  }
+  const active=gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0);
+  for(const tex of state.tex){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,COLS,STATE_ROWS,gl.RGBA,gl.FLOAT,data);}
+  gl.activeTexture(active);
+ }
+ window.addEventListener('message',e=>{
+  if(e.origin!==location.origin||e.source!==parent||e.data?.type!=='pirate-ocean')return;
+  const d=e.data;
+  if(d.action==='scene'&&Number.isFinite(d.ppu)&&d.ppu>0&&Number.isFinite(d.ox)&&Number.isFinite(d.oy)&&Array.isArray(d.ships)&&d.ships.length===2&&d.ships.every(s=>Number.isFinite(s.x)&&s.x>=0&&s.x<=12)){
+   const settingsKey=JSON.stringify(d.settings);
+   if(d.settings&&settingsKey!==gameSettingsKey){try{Object.assign(P,waterValues(d.settings),{hullOn:false});gameSettingsKey=settingsKey;simDirty=seaDirty=true;}catch{return;}}
+   gameScene=d;
+   const key=[d.ppu,d.ox,d.oy,...d.ships.map(s=>s.x),d.motion].join(':');
+   if(key!==gameLayoutKey){
+    gameLayoutKey=key;gameHulls.fill(0);
+    d.ships.forEach((s,i)=>{gameHulls.set([1,gameRow,gameOffset+s.x*gameScale,5.4],i*4);gameDirections[i]=s.dir===-1?-1:1;});
+    simDirty=seaDirty=true;
+   }
+  }
+  if(d.action==='splash'&&typeof d.id==='string'&&!gameSeenImpacts.has(d.id)&&Number.isFinite(d.x)&&Number.isFinite(d.y)){
+   gameSeenImpacts.add(d.id);if(gameSeenImpacts.size>128)gameSeenImpacts.delete(gameSeenImpacts.values().next().value);
+   gameImpacts.push({x:d.x,y:d.y,energy:clampGame(d.energy||1,.2,1)});
+  }
+ });
+ window.pirateOceanSnapshot=()=>({splashes:gameSplashCount,contacts:gameLastContacts,settings:{...P},hulls:Array.from(gameHulls),records:Array.from(readGameWater().slice(ROWS*COLS*4,(ROWS*COLS+8)*4))});
+ parent.postMessage({type:'pirate-ocean-ready'},location.origin);
+
+  Object.assign(P,WATER_DEFAULTS,{hullOn:false});
+  resize();
+  resetSea();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

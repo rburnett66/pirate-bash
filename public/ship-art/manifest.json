@@ -1,0 +1,3788 @@
+{
+  "method": "Deterministic masking; exact horizontal flips; no AI artwork.",
+  "canvas": [
+    1792,
+    1008
+  ],
+  "sources": [
+    {
+      "name": "IMG_7284.JPG",
+      "category": "flags",
+      "drive": "https://drive.google.com/file/d/1DSxhHkt7I48mPHm6JTJJ3_Q9Eqr_bxKX/view?usp=drivesdk",
+      "sha256": "d0620c61aabfce8185496ff6e9a07615a23890d27511702943aca5a4ed623c25",
+      "opaquePixelsPreserved": 728582
+    },
+    {
+      "name": "IMG_7253.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1DobsVNJSs5EJhvDvkF14kP0OBfysE82P/view?usp=drivesdk",
+      "sha256": "0fa9c30e1ede5bbdb342cb1a683852687bb57f732fc67dcbb6de2a5c99597daf",
+      "opaquePixelsPreserved": 578552
+    },
+    {
+      "name": "IMG_7254.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1jqPJyoac8AJ09PtO4p3pFhCc2S1YuyVf/view?usp=drivesdk",
+      "sha256": "4eea5072faf32d5f7b28d06f86384b4f67fd8a8907bb84ce4561eea44704e852",
+      "opaquePixelsPreserved": 476056
+    },
+    {
+      "name": "IMG_7255.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1c_rxhmDbfyqQu5ZBPIvAEIrjVNlwbv7e/view?usp=drivesdk",
+      "sha256": "bcca6afb55594207e3be0849aae2e2b2de736c92d5686165b40ba7ce68215aee",
+      "opaquePixelsPreserved": 473469
+    },
+    {
+      "name": "IMG_7256.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1mn4KaRAmA_tTgFmBGi8HgMUP6mTD1vLW/view?usp=drivesdk",
+      "sha256": "6f91f0cdafef3a63a659266558cf37ac787f9f5d4e7116a0709122aae80fcedc",
+      "opaquePixelsPreserved": 475958
+    },
+    {
+      "name": "IMG_7257.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1ml6I-oS79M4i1RP8-OzmxLQw8JPMERgR/view?usp=drivesdk",
+      "sha256": "bc961046dc9830926d148b5830b2fae571121b2f68b53465d824638b5ddd8684",
+      "opaquePixelsPreserved": 477544
+    },
+    {
+      "name": "IMG_7258.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1LUpsLu3b8_LhYLm2I_m7KMQpCesLuPQo/view?usp=drivesdk",
+      "sha256": "ae21681149c7280a9a02034cf533f92d5fb682af0487069414dca97fa23eef00",
+      "opaquePixelsPreserved": 476564
+    },
+    {
+      "name": "IMG_7259.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1Y4bXgnhGDRCnougAvOwMAp1sk1RYlcKI/view?usp=drivesdk",
+      "sha256": "e344278b6cb934ba86578f3f1d4f723ab96164a1e2cb3a743dbc2bc2c8804a2b",
+      "opaquePixelsPreserved": 478983
+    },
+    {
+      "name": "IMG_7260.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1bp4pr0kFOHTwetLAUzHTFv8hTMnqqn7F/view?usp=drivesdk",
+      "sha256": "2551df6497551558d4420ea21ce66ea4060f88741cdffb68b20e9242c138f0f5",
+      "opaquePixelsPreserved": 479185
+    },
+    {
+      "name": "IMG_7261.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1MjnZKxqpYfgWmuwvjwy3EFxkBV6645j-/view?usp=drivesdk",
+      "sha256": "b2c4c3130676d38d6b65aa1ba0f0409764a2d3eb91de306164d7976eed3d0800",
+      "opaquePixelsPreserved": 480223
+    },
+    {
+      "name": "IMG_7262.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1BEdJ96SlUN6EoeTtxKXZwcrgXjNf7YaB/view?usp=drivesdk",
+      "sha256": "4b94fda6234443a620377c2bcd8befd67c1eee3289362d3aabca67a8b0511844",
+      "opaquePixelsPreserved": 482378
+    },
+    {
+      "name": "IMG_7263.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1Nom7cBW72zm8bHCBAE8Gcp06T8Mi6RZ0/view?usp=drivesdk",
+      "sha256": "58f154a83d0276288a47b443aaecd90f131d942a8aa397305f2df399c7ddafd3",
+      "opaquePixelsPreserved": 480361
+    },
+    {
+      "name": "IMG_7264.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1hulzNUL2siH_Ojw_ArbxyBDjOk8YLujY/view?usp=drivesdk",
+      "sha256": "5dc008319d74b8f49eefa95a9bf986a8bc222fb9e36e2819df373c8c5ebd6f45",
+      "opaquePixelsPreserved": 481086
+    },
+    {
+      "name": "IMG_7265.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1G2YmOTRo8TskFvFCXB_HjxUCsUsgDYho/view?usp=drivesdk",
+      "sha256": "9f663e7f578376810ce8facebac0d2e0015955795a4c5bf6fb6ba4a153f0d125",
+      "opaquePixelsPreserved": 504361
+    },
+    {
+      "name": "IMG_7266.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1o7QY2zQGBktcAAMRbkQyEDiw0zwHFGuG/view?usp=drivesdk",
+      "sha256": "72dfede2421973deff78439b19c601eb66224d75d78a639cf2776a78841067d7",
+      "opaquePixelsPreserved": 489966
+    },
+    {
+      "name": "IMG_7267.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1swia9_Hi5ExCA5C9qkr2DEKu7Afa0Ssi/view?usp=drivesdk",
+      "sha256": "ec27e39bee5894883df4da5e2d4979c986a36cfc94e0a3b6ec76d02cf82e5550",
+      "opaquePixelsPreserved": 484770
+    },
+    {
+      "name": "IMG_7268.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/113qRCLVj9LGEhk0Sp0ZNK-mAg-TPgadC/view?usp=drivesdk",
+      "sha256": "109630bd9384fc8d2b669c48d5cc1b599c1283d8205e2c2e3951930cbf8554e5",
+      "opaquePixelsPreserved": 483182
+    },
+    {
+      "name": "IMG_7269.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/14SOIZ8M0bpY4MW952qYK3NZhTGsJd4ed/view?usp=drivesdk",
+      "sha256": "65e993843ec3f17eb01940ea580cd44fde1a79f3f594466da1e042941a6c3e90",
+      "opaquePixelsPreserved": 484676
+    },
+    {
+      "name": "IMG_7270.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1ZOpcDSO-VYeNuIVqkgYbH-CScGkySujW/view?usp=drivesdk",
+      "sha256": "90a4d355e3895d75a2693cddcad8fc6678b478c0d976632e93ea91d180935ce6",
+      "opaquePixelsPreserved": 513430
+    },
+    {
+      "name": "IMG_7271.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1jDbMIGc2Kfol3d9w3Ffc5uYvVBIRpJKK/view?usp=drivesdk",
+      "sha256": "28560742e20c3fc58f49bcc6e76b968f34b4dd312ef5ccf00f0b9909aaecc98e",
+      "opaquePixelsPreserved": 492422
+    },
+    {
+      "name": "IMG_7272.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1qtG9wJzHz89xgcDo6gDm9SoJzsH2344F/view?usp=drivesdk",
+      "sha256": "fa7f1b72e9d752cf69fe9b8715eae96de1edc2e4581a4befd41784c1ec795b65",
+      "opaquePixelsPreserved": 494128
+    },
+    {
+      "name": "IMG_7273.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1LoPzI0UMGx6U11xAHpbeU9RKz6wAuB3A/view?usp=drivesdk",
+      "sha256": "f98d6da64d234e4b7092a90a94945c6c26a79e53c3602d496bae482bb480c427",
+      "opaquePixelsPreserved": 495648
+    },
+    {
+      "name": "IMG_7274.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1Losy9L2trjcXylq-uhk8BZhLLvFKs-AW/view?usp=drivesdk",
+      "sha256": "ae756a127d2bb1bad6ef0b23c39f6540a293760cd2a60ea2126c298fcd95002a",
+      "opaquePixelsPreserved": 493627
+    },
+    {
+      "name": "IMG_7275.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1oJdt2L-K1-vtHhmPEOfrhYj4FFbNwpvb/view?usp=drivesdk",
+      "sha256": "c399859fd15fa3ef1a07e173a7b4d22d5a85ae1baae6d8509beb5f32d9a27a1a",
+      "opaquePixelsPreserved": 493251
+    },
+    {
+      "name": "IMG_7276.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1ag-TE87uSuCVzGy-anEK4TB56xNSGxEx/view?usp=drivesdk",
+      "sha256": "a69e094924014aaf7427fa8b8c6cd2fe022926881230c735bbf6e07fa039d7d9",
+      "opaquePixelsPreserved": 493182
+    },
+    {
+      "name": "IMG_7277.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1JrpxZntuc5Bjd2V0LJkYgSYmy1nhn9OO/view?usp=drivesdk",
+      "sha256": "ec30e11c7a7ea7e5a60686418f7a2f83b2e3fb0ab85656568f20d57cc6eceffb",
+      "opaquePixelsPreserved": 493883
+    },
+    {
+      "name": "IMG_7278.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1WKAAVdmnWHyTbfaf99ipBoJ6bZpFVM3W/view?usp=drivesdk",
+      "sha256": "44ba98b24fdfdcbf7e845f2bdbdc30ff4eec0c9b115fedf1d5d49ab052de492d",
+      "opaquePixelsPreserved": 495380
+    },
+    {
+      "name": "IMG_7279.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1bw4V_85T6kD-mrZbdos-Y3T0YYG9NC7f/view?usp=drivesdk",
+      "sha256": "37c9ec6691b7ea098da916c3dc5c8a6f138e13c5ed5eb82191040def11efef3d",
+      "opaquePixelsPreserved": 495603
+    },
+    {
+      "name": "IMG_7280.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1y-5DoMLwYFc4GENrB4Wvf8JxFFR1uNWT/view?usp=drivesdk",
+      "sha256": "ff8025e176b26d2fbcdddb48b57f26f147629ab1800dc26daebb897151487eca",
+      "opaquePixelsPreserved": 493845
+    },
+    {
+      "name": "IMG_7281.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/19EKJIPCIym2O2_JAwrltzw3HII9mT9zK/view?usp=drivesdk",
+      "sha256": "6af8bb710c33bdc8fec141cba499941445b43d3e8944ac6cfe04ba574101e333",
+      "opaquePixelsPreserved": 493999
+    },
+    {
+      "name": "IMG_7282.JPG",
+      "category": "sails",
+      "drive": "https://drive.google.com/file/d/1bvLmS-HvvZnGGZeoneDjOYt5CFoHedKe/view?usp=drivesdk",
+      "sha256": "804c1306b9a606c530b64c95f14cd4c93707db69f74d49cf3cd076c9937eef0b",
+      "opaquePixelsPreserved": 493902
+    },
+    {
+      "name": "IMG_7285.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1zzEwhEo90zMy7nI9yVD9l1AhtuXPb50t/view?usp=drivesdk",
+      "sha256": "368491723312252a7f2e5969fa179ae9eb5e427b43482b2e6b3209c90ffed675",
+      "opaquePixelsPreserved": 310697
+    },
+    {
+      "name": "IMG_7286.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1WFSSaUdMJkKeUDnxzl64UoIWh_F58o_I/view?usp=drivesdk",
+      "sha256": "57e3daac038cbc5e6754eb5fd10b38019a3cff4489e5298cf1b05ee005f6bbbf",
+      "opaquePixelsPreserved": 380522
+    },
+    {
+      "name": "IMG_7287.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1rE-ZlZttH30YAsQ7sOBihuUDK5fMJ4kj/view?usp=drivesdk",
+      "sha256": "4c9580d035a57b3492dced0ba863baf5af95225dc7ca20cb105fa42dec3526fa",
+      "opaquePixelsPreserved": 410613
+    },
+    {
+      "name": "IMG_7288.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1c79TH77V5HtD46L_cJSp63-x7keM9gd8/view?usp=drivesdk",
+      "sha256": "47226e7dbe4880a7bf3b3034f0c902bcf4b973499f3cc21df34c5b174873501b",
+      "opaquePixelsPreserved": 341270
+    },
+    {
+      "name": "IMG_7289.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1X8WIX-yYKvglMI2-aHMGiVDKBtXZvoym/view?usp=drivesdk",
+      "sha256": "9f17fa7666662532ec83a97d30f63513ff7e2cd9f90ac776dfab716470ee9a04",
+      "opaquePixelsPreserved": 330621
+    },
+    {
+      "name": "IMG_7290.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1ZRkZn2BN0fQEMjSbU481yvS57CMX6V40/view?usp=drivesdk",
+      "sha256": "eff8d7a006be3156d944026b124e7612f0571cdb81eff10db689a8c5f26715aa",
+      "opaquePixelsPreserved": 332575
+    },
+    {
+      "name": "IMG_7291.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1IEp8myt8VdSk8lqS_n0-UNuX-TZ4EMSt/view?usp=drivesdk",
+      "sha256": "cf1048a1126f00c2dcff79dac67489f7d12d741e4c7f5907a418705941c3762c",
+      "opaquePixelsPreserved": 331790
+    },
+    {
+      "name": "IMG_7292.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1kj05nBiahq96zefH0V3e0oI7SitykMro/view?usp=drivesdk",
+      "sha256": "7d372759f4f7170e08448f79c48d93fab7c148339a616b5228cf44f07922b2e8",
+      "opaquePixelsPreserved": 331248
+    },
+    {
+      "name": "IMG_7293.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1Vmw5r7DIHpX6mayli5rdpvTo0n3PGzfH/view?usp=drivesdk",
+      "sha256": "d91749f89b4ddbf63c94e628a5de634b0a2f9a2a86ff0888cce0c0b68c53137d",
+      "opaquePixelsPreserved": 331832
+    },
+    {
+      "name": "IMG_7294.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1USAcTsUrNwo3_rrJLcQBgB5sO65bzva3/view?usp=drivesdk",
+      "sha256": "d49098a8ced3846cf640d89329e32cb292148387d81ccbf102d2a03e461772da",
+      "opaquePixelsPreserved": 323766
+    },
+    {
+      "name": "IMG_7295.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1Llr7y39udva702t-72BHyXoowQMd3Jpb/view?usp=drivesdk",
+      "sha256": "ac1c8d9b6f02596939703fc3e260a31a335cd4027014fcf461d4c7949ecda16e",
+      "opaquePixelsPreserved": 331430
+    },
+    {
+      "name": "IMG_7296.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1iBA7hKEzyQuNeVjgTkoJBfDSAi-lzy3Z/view?usp=drivesdk",
+      "sha256": "d7ab9f6f928246ce660ff46879569b743da99c918ac2018000d9206b69d64829",
+      "opaquePixelsPreserved": 333626
+    },
+    {
+      "name": "IMG_7297.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1jdO3rOvEYFG2yyktdtJH13uFee-oYVOT/view?usp=drivesdk",
+      "sha256": "63a7740babfd6a435aedd05aad144ef68850de592551f7eb6b69a5229bfea571",
+      "opaquePixelsPreserved": 315803
+    },
+    {
+      "name": "IMG_7298.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/17zcAugucOpXcnEdOP9jL3PB6yMiOwXmC/view?usp=drivesdk",
+      "sha256": "b416625b9249dd16bb226c9a160f6a856230324bb9ea690b393298e2b38ed5d2",
+      "opaquePixelsPreserved": 332091
+    },
+    {
+      "name": "IMG_7299.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1xZ1ffaQg-Vlk_aDfrA0ri35qB9XH9o8O/view?usp=drivesdk",
+      "sha256": "66e5bfef2bcc60df3d615e07003875a0b54f91a36fdf240b12cd1f87c2b2f6b6",
+      "opaquePixelsPreserved": 336495
+    },
+    {
+      "name": "IMG_7300.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1vSFByNzz2OB4UKUGEDeNZFhzbjKozUKk/view?usp=drivesdk",
+      "sha256": "79923f53b86848a61b618baf4a43c3fcfaebf218c391ab2805b69b806b59f3ee",
+      "opaquePixelsPreserved": 379445
+    },
+    {
+      "name": "xray-hull.JPG",
+      "category": "hulls",
+      "drive": "https://drive.google.com/file/d/1wb6u-dDquLbbSsod3MXqFv9wK0bIuJCU/view?usp=drivesdk",
+      "sha256": "e21d928a4f7fc9e068c57290486eff48a78368372a38a25719aecc72f7a38809",
+      "opaquePixelsPreserved": 375909
+    },
+    {
+      "name": "only-mast.png",
+      "category": "replacement",
+      "drive": "https://drive.google.com/file/d/1GYMe-ty3TXpVAfxNDO34_A8tsqwArShn/view?usp=drivesdk",
+      "sha256": "1d23f4723ede433a8e62e61a067e390beaf239a56db66c60e137f49fc3b3d32e",
+      "opaquePixelsPreserved": 62286
+    },
+    {
+      "name": "xray-hull-nomast.png",
+      "category": "replacement",
+      "drive": "https://drive.google.com/file/d/1O43U1MwuWOtnzX44IoBWqcaIHwfeAqHK/view?usp=drivesdk",
+      "sha256": "bd01e083ef014e4c01f5f1f2a06301dddd5814c9ebfeb1d6e07655511eecfdc9",
+      "opaquePixelsPreserved": 318307
+    }
+  ],
+  "hulls": [
+    {
+      "id": "IMG_7285",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7285-right.png",
+        "left": "hulls/IMG_7285-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7285-right.png",
+        "left": "bodies/IMG_7285-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7286",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7286-right.png",
+        "left": "hulls/IMG_7286-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7286-right.png",
+        "left": "bodies/IMG_7286-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7287",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7287-right.png",
+        "left": "hulls/IMG_7287-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7287-right.png",
+        "left": "bodies/IMG_7287-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7288",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7288-right.png",
+        "left": "hulls/IMG_7288-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7288-right.png",
+        "left": "bodies/IMG_7288-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7289",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7289-right.png",
+        "left": "hulls/IMG_7289-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7289-right.png",
+        "left": "bodies/IMG_7289-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7290",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7290-right.png",
+        "left": "hulls/IMG_7290-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7290-right.png",
+        "left": "bodies/IMG_7290-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7291",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7291-right.png",
+        "left": "hulls/IMG_7291-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7291-right.png",
+        "left": "bodies/IMG_7291-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7292",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7292-right.png",
+        "left": "hulls/IMG_7292-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7292-right.png",
+        "left": "bodies/IMG_7292-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7293",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7293-right.png",
+        "left": "hulls/IMG_7293-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7293-right.png",
+        "left": "bodies/IMG_7293-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7294",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7294-right.png",
+        "left": "hulls/IMG_7294-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7294-right.png",
+        "left": "bodies/IMG_7294-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7295",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7295-right.png",
+        "left": "hulls/IMG_7295-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7295-right.png",
+        "left": "bodies/IMG_7295-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7296",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7296-right.png",
+        "left": "hulls/IMG_7296-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7296-right.png",
+        "left": "bodies/IMG_7296-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7297",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7297-right.png",
+        "left": "hulls/IMG_7297-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7297-right.png",
+        "left": "bodies/IMG_7297-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7298",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7298-right.png",
+        "left": "hulls/IMG_7298-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7298-right.png",
+        "left": "bodies/IMG_7298-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7299",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7299-right.png",
+        "left": "hulls/IMG_7299-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7299-right.png",
+        "left": "bodies/IMG_7299-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "IMG_7300",
+      "interior": false,
+      "full": {
+        "right": "hulls/IMG_7300-right.png",
+        "left": "hulls/IMG_7300-left.png"
+      },
+      "body": {
+        "right": "bodies/IMG_7300-right.png",
+        "left": "bodies/IMG_7300-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    },
+    {
+      "id": "xray-hull",
+      "interior": true,
+      "full": {
+        "right": "hulls/xray-hull-right.png",
+        "left": "hulls/xray-hull-left.png"
+      },
+      "body": {
+        "right": "bodies/xray-hull-nomast-right.png",
+        "left": "bodies/xray-hull-nomast-left.png"
+      },
+      "mastMounts": [
+        [
+          562,
+          675
+        ],
+        [
+          804,
+          742
+        ],
+        [
+          1134,
+          682
+        ]
+      ]
+    }
+  ],
+  "sailSets": [
+    {
+      "id": "IMG_7254",
+      "sheet": "sails/IMG_7254.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7254-sails-1.png",
+          "sourceBox": [
+            265,
+            301,
+            658,
+            726
+          ],
+          "cloth": "sails/cloth/IMG_7254-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              362,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7254-sails-2.png",
+          "sourceBox": [
+            608,
+            222,
+            1184,
+            818
+          ],
+          "cloth": "sails/cloth/IMG_7254-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              527,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7254-sails-3.png",
+          "sourceBox": [
+            1178,
+            370,
+            1557,
+            790
+          ],
+          "cloth": "sails/cloth/IMG_7254-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7254-flags-1.png",
+          "sourceBox": [
+            681,
+            55,
+            898,
+            196
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7254-flags-2.png",
+          "sourceBox": [
+            1244,
+            159,
+            1434,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7255",
+      "sheet": "sails/IMG_7255.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7255-sails-1.png",
+          "sourceBox": [
+            264,
+            302,
+            659,
+            726
+          ],
+          "cloth": "sails/cloth/IMG_7255-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7255-sails-2.png",
+          "sourceBox": [
+            608,
+            224,
+            1184,
+            817
+          ],
+          "cloth": "sails/cloth/IMG_7255-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              527,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7255-sails-3.png",
+          "sourceBox": [
+            1178,
+            370,
+            1559,
+            788
+          ],
+          "cloth": "sails/cloth/IMG_7255-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              350,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7255-flags-1.png",
+          "sourceBox": [
+            679,
+            56,
+            898,
+            197
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7255-flags-2.png",
+          "sourceBox": [
+            1246,
+            161,
+            1434,
+            303
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7256",
+      "sheet": "sails/IMG_7256.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7256-sails-1.png",
+          "sourceBox": [
+            263,
+            301,
+            658,
+            726
+          ],
+          "cloth": "sails/cloth/IMG_7256-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7256-sails-2.png",
+          "sourceBox": [
+            608,
+            222,
+            1184,
+            817
+          ],
+          "cloth": "sails/cloth/IMG_7256-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              527,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7256-sails-3.png",
+          "sourceBox": [
+            1177,
+            370,
+            1560,
+            791
+          ],
+          "cloth": "sails/cloth/IMG_7256-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              352,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7256-flags-1.png",
+          "sourceBox": [
+            679,
+            56,
+            898,
+            197
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7256-flags-2.png",
+          "sourceBox": [
+            1246,
+            161,
+            1435,
+            303
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7257",
+      "sheet": "sails/IMG_7257.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7257-sails-1.png",
+          "sourceBox": [
+            265,
+            301,
+            657,
+            728
+          ],
+          "cloth": "sails/cloth/IMG_7257-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              361,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7257-sails-2.png",
+          "sourceBox": [
+            610,
+            222,
+            1183,
+            819
+          ],
+          "cloth": "sails/cloth/IMG_7257-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              524,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7257-sails-3.png",
+          "sourceBox": [
+            1178,
+            371,
+            1558,
+            792
+          ],
+          "cloth": "sails/cloth/IMG_7257-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7257-flags-1.png",
+          "sourceBox": [
+            680,
+            55,
+            898,
+            196
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7257-flags-2.png",
+          "sourceBox": [
+            1246,
+            160,
+            1435,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7258",
+      "sheet": "sails/IMG_7258.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7258-sails-1.png",
+          "sourceBox": [
+            266,
+            301,
+            658,
+            728
+          ],
+          "cloth": "sails/cloth/IMG_7258-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              361,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7258-sails-2.png",
+          "sourceBox": [
+            608,
+            221,
+            1184,
+            819
+          ],
+          "cloth": "sails/cloth/IMG_7258-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              527,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7258-sails-3.png",
+          "sourceBox": [
+            1178,
+            370,
+            1557,
+            792
+          ],
+          "cloth": "sails/cloth/IMG_7258-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7258-flags-1.png",
+          "sourceBox": [
+            681,
+            54,
+            898,
+            195
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7258-flags-2.png",
+          "sourceBox": [
+            1244,
+            160,
+            1434,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7259",
+      "sheet": "sails/IMG_7259.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7259-sails-1.png",
+          "sourceBox": [
+            266,
+            300,
+            658,
+            731
+          ],
+          "cloth": "sails/cloth/IMG_7259-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              361,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7259-sails-2.png",
+          "sourceBox": [
+            611,
+            220,
+            1181,
+            821
+          ],
+          "cloth": "sails/cloth/IMG_7259-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              521,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7259-sails-3.png",
+          "sourceBox": [
+            1178,
+            369,
+            1556,
+            794
+          ],
+          "cloth": "sails/cloth/IMG_7259-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              347,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7259-flags-1.png",
+          "sourceBox": [
+            679,
+            52,
+            898,
+            194
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7259-flags-2.png",
+          "sourceBox": [
+            1245,
+            157,
+            1433,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7260",
+      "sheet": "sails/IMG_7260.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7260-sails-1.png",
+          "sourceBox": [
+            267,
+            300,
+            658,
+            730
+          ],
+          "cloth": "sails/cloth/IMG_7260-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              360,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7260-sails-2.png",
+          "sourceBox": [
+            609,
+            221,
+            1182,
+            821
+          ],
+          "cloth": "sails/cloth/IMG_7260-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              524,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7260-sails-3.png",
+          "sourceBox": [
+            1177,
+            369,
+            1556,
+            795
+          ],
+          "cloth": "sails/cloth/IMG_7260-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7260-flags-1.png",
+          "sourceBox": [
+            680,
+            52,
+            898,
+            194
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7260-flags-2.png",
+          "sourceBox": [
+            1244,
+            158,
+            1432,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7261",
+      "sheet": "sails/IMG_7261.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7261-sails-1.png",
+          "sourceBox": [
+            264,
+            302,
+            659,
+            731
+          ],
+          "cloth": "sails/cloth/IMG_7261-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7261-sails-2.png",
+          "sourceBox": [
+            609,
+            221,
+            1184,
+            821
+          ],
+          "cloth": "sails/cloth/IMG_7261-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              526,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7261-sails-3.png",
+          "sourceBox": [
+            1178,
+            370,
+            1559,
+            794
+          ],
+          "cloth": "sails/cloth/IMG_7261-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              350,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7261-flags-1.png",
+          "sourceBox": [
+            680,
+            53,
+            898,
+            195
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7261-flags-2.png",
+          "sourceBox": [
+            1246,
+            160,
+            1435,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7262",
+      "sheet": "sails/IMG_7262.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7262-sails-1.png",
+          "sourceBox": [
+            264,
+            301,
+            659,
+            731
+          ],
+          "cloth": "sails/cloth/IMG_7262-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7262-sails-2.png",
+          "sourceBox": [
+            610,
+            221,
+            1184,
+            823
+          ],
+          "cloth": "sails/cloth/IMG_7262-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              525,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7262-sails-3.png",
+          "sourceBox": [
+            1177,
+            370,
+            1559,
+            796
+          ],
+          "cloth": "sails/cloth/IMG_7262-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              351,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7262-flags-1.png",
+          "sourceBox": [
+            679,
+            52,
+            898,
+            193
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7262-flags-2.png",
+          "sourceBox": [
+            1244,
+            157,
+            1434,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7263",
+      "sheet": "sails/IMG_7263.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7263-sails-1.png",
+          "sourceBox": [
+            266,
+            301,
+            658,
+            731
+          ],
+          "cloth": "sails/cloth/IMG_7263-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              361,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7263-sails-2.png",
+          "sourceBox": [
+            611,
+            222,
+            1182,
+            822
+          ],
+          "cloth": "sails/cloth/IMG_7263-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              522,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7263-sails-3.png",
+          "sourceBox": [
+            1179,
+            370,
+            1557,
+            795
+          ],
+          "cloth": "sails/cloth/IMG_7263-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              347,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7263-flags-1.png",
+          "sourceBox": [
+            679,
+            53,
+            898,
+            194
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7263-flags-2.png",
+          "sourceBox": [
+            1244,
+            158,
+            1434,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7264",
+      "sheet": "sails/IMG_7264.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7264-sails-1.png",
+          "sourceBox": [
+            266,
+            300,
+            659,
+            731
+          ],
+          "cloth": "sails/cloth/IMG_7264-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              362,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7264-sails-2.png",
+          "sourceBox": [
+            609,
+            221,
+            1183,
+            824
+          ],
+          "cloth": "sails/cloth/IMG_7264-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              525,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7264-sails-3.png",
+          "sourceBox": [
+            1178,
+            371,
+            1557,
+            795
+          ],
+          "cloth": "sails/cloth/IMG_7264-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7264-flags-1.png",
+          "sourceBox": [
+            679,
+            52,
+            898,
+            194
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7264-flags-2.png",
+          "sourceBox": [
+            1244,
+            159,
+            1434,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7265",
+      "sheet": "sails/IMG_7265.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7265-sails-1.png",
+          "sourceBox": [
+            262,
+            301,
+            659,
+            761
+          ],
+          "cloth": "sails/cloth/IMG_7265-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              366,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7265-sails-2.png",
+          "sourceBox": [
+            607,
+            220,
+            1183,
+            851
+          ],
+          "cloth": "sails/cloth/IMG_7265-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              527,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7265-sails-3.png",
+          "sourceBox": [
+            1176,
+            370,
+            1556,
+            815
+          ],
+          "cloth": "sails/cloth/IMG_7265-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7265-flags-1.png",
+          "sourceBox": [
+            679,
+            50,
+            898,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7265-flags-2.png",
+          "sourceBox": [
+            1245,
+            157,
+            1433,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7266",
+      "sheet": "sails/IMG_7266.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7266-sails-1.png",
+          "sourceBox": [
+            265,
+            302,
+            659,
+            742
+          ],
+          "cloth": "sails/cloth/IMG_7266-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              363,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7266-sails-2.png",
+          "sourceBox": [
+            611,
+            221,
+            1182,
+            832
+          ],
+          "cloth": "sails/cloth/IMG_7266-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              522,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7266-sails-3.png",
+          "sourceBox": [
+            1176,
+            371,
+            1555,
+            805
+          ],
+          "cloth": "sails/cloth/IMG_7266-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7266-flags-1.png",
+          "sourceBox": [
+            681,
+            50,
+            898,
+            193
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7266-flags-2.png",
+          "sourceBox": [
+            1244,
+            158,
+            1433,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7267",
+      "sheet": "sails/IMG_7267.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7267-sails-1.png",
+          "sourceBox": [
+            266,
+            300,
+            659,
+            734
+          ],
+          "cloth": "sails/cloth/IMG_7267-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              362,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7267-sails-2.png",
+          "sourceBox": [
+            609,
+            220,
+            1183,
+            826
+          ],
+          "cloth": "sails/cloth/IMG_7267-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              525,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7267-sails-3.png",
+          "sourceBox": [
+            1176,
+            371,
+            1558,
+            799
+          ],
+          "cloth": "sails/cloth/IMG_7267-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              351,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7267-flags-1.png",
+          "sourceBox": [
+            679,
+            50,
+            898,
+            194
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7267-flags-2.png",
+          "sourceBox": [
+            1244,
+            158,
+            1434,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7268",
+      "sheet": "sails/IMG_7268.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7268-sails-1.png",
+          "sourceBox": [
+            264,
+            300,
+            659,
+            732
+          ],
+          "cloth": "sails/cloth/IMG_7268-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7268-sails-2.png",
+          "sourceBox": [
+            609,
+            220,
+            1184,
+            823
+          ],
+          "cloth": "sails/cloth/IMG_7268-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              526,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7268-sails-3.png",
+          "sourceBox": [
+            1177,
+            370,
+            1559,
+            796
+          ],
+          "cloth": "sails/cloth/IMG_7268-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              351,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7268-flags-1.png",
+          "sourceBox": [
+            679,
+            51,
+            898,
+            193
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7268-flags-2.png",
+          "sourceBox": [
+            1245,
+            157,
+            1435,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7269",
+      "sheet": "sails/IMG_7269.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7269-sails-1.png",
+          "sourceBox": [
+            266,
+            301,
+            659,
+            736
+          ],
+          "cloth": "sails/cloth/IMG_7269-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              362,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7269-sails-2.png",
+          "sourceBox": [
+            611,
+            221,
+            1183,
+            828
+          ],
+          "cloth": "sails/cloth/IMG_7269-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7269-sails-3.png",
+          "sourceBox": [
+            1178,
+            371,
+            1558,
+            799
+          ],
+          "cloth": "sails/cloth/IMG_7269-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7269-flags-1.png",
+          "sourceBox": [
+            681,
+            51,
+            898,
+            193
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7269-flags-2.png",
+          "sourceBox": [
+            1245,
+            158,
+            1434,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7270",
+      "sheet": "sails/IMG_7270.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7270-sails-1.png",
+          "sourceBox": [
+            259,
+            300,
+            663,
+            762
+          ],
+          "cloth": "sails/cloth/IMG_7270-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              373,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7270-sails-2.png",
+          "sourceBox": [
+            607,
+            221,
+            1187,
+            850
+          ],
+          "cloth": "sails/cloth/IMG_7270-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              531,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7270-sails-3.png",
+          "sourceBox": [
+            1175,
+            370,
+            1559,
+            824
+          ],
+          "cloth": "sails/cloth/IMG_7270-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              353,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7270-flags-1.png",
+          "sourceBox": [
+            679,
+            51,
+            898,
+            194
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7270-flags-2.png",
+          "sourceBox": [
+            1245,
+            158,
+            1434,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7271",
+      "sheet": "sails/IMG_7271.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7271-sails-1.png",
+          "sourceBox": [
+            264,
+            302,
+            659,
+            744
+          ],
+          "cloth": "sails/cloth/IMG_7271-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7271-sails-2.png",
+          "sourceBox": [
+            610,
+            219,
+            1182,
+            835
+          ],
+          "cloth": "sails/cloth/IMG_7271-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7271-sails-3.png",
+          "sourceBox": [
+            1176,
+            371,
+            1556,
+            808
+          ],
+          "cloth": "sails/cloth/IMG_7271-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7271-flags-1.png",
+          "sourceBox": [
+            681,
+            49,
+            898,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7271-flags-2.png",
+          "sourceBox": [
+            1245,
+            156,
+            1433,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7272",
+      "sheet": "sails/IMG_7272.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7272-sails-1.png",
+          "sourceBox": [
+            265,
+            300,
+            659,
+            745
+          ],
+          "cloth": "sails/cloth/IMG_7272-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              363,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7272-sails-2.png",
+          "sourceBox": [
+            610,
+            219,
+            1182,
+            836
+          ],
+          "cloth": "sails/cloth/IMG_7272-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7272-sails-3.png",
+          "sourceBox": [
+            1176,
+            371,
+            1555,
+            810
+          ],
+          "cloth": "sails/cloth/IMG_7272-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7272-flags-1.png",
+          "sourceBox": [
+            679,
+            47,
+            897,
+            191
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7272-flags-2.png",
+          "sourceBox": [
+            1244,
+            154,
+            1432,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7273",
+      "sheet": "sails/IMG_7273.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7273-sails-1.png",
+          "sourceBox": [
+            265,
+            301,
+            659,
+            750
+          ],
+          "cloth": "sails/cloth/IMG_7273-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              363,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7273-sails-2.png",
+          "sourceBox": [
+            610,
+            218,
+            1182,
+            836
+          ],
+          "cloth": "sails/cloth/IMG_7273-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7273-sails-3.png",
+          "sourceBox": [
+            1175,
+            370,
+            1554,
+            809
+          ],
+          "cloth": "sails/cloth/IMG_7273-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7273-flags-1.png",
+          "sourceBox": [
+            681,
+            47,
+            897,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7273-flags-2.png",
+          "sourceBox": [
+            1243,
+            155,
+            1431,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7274",
+      "sheet": "sails/IMG_7274.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7274-sails-1.png",
+          "sourceBox": [
+            264,
+            302,
+            659,
+            745
+          ],
+          "cloth": "sails/cloth/IMG_7274-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7274-sails-2.png",
+          "sourceBox": [
+            611,
+            219,
+            1183,
+            837
+          ],
+          "cloth": "sails/cloth/IMG_7274-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7274-sails-3.png",
+          "sourceBox": [
+            1176,
+            372,
+            1555,
+            809
+          ],
+          "cloth": "sails/cloth/IMG_7274-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7274-flags-1.png",
+          "sourceBox": [
+            680,
+            49,
+            897,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7274-flags-2.png",
+          "sourceBox": [
+            1243,
+            156,
+            1433,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7275",
+      "sheet": "sails/IMG_7275.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7275-sails-1.png",
+          "sourceBox": [
+            264,
+            302,
+            659,
+            747
+          ],
+          "cloth": "sails/cloth/IMG_7275-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7275-sails-2.png",
+          "sourceBox": [
+            609,
+            219,
+            1182,
+            836
+          ],
+          "cloth": "sails/cloth/IMG_7275-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              524,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7275-sails-3.png",
+          "sourceBox": [
+            1175,
+            372,
+            1555,
+            808
+          ],
+          "cloth": "sails/cloth/IMG_7275-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7275-flags-1.png",
+          "sourceBox": [
+            680,
+            48,
+            897,
+            193
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7275-flags-2.png",
+          "sourceBox": [
+            1244,
+            156,
+            1432,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7276",
+      "sheet": "sails/IMG_7276.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7276-sails-1.png",
+          "sourceBox": [
+            265,
+            301,
+            660,
+            745
+          ],
+          "cloth": "sails/cloth/IMG_7276-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7276-sails-2.png",
+          "sourceBox": [
+            610,
+            218,
+            1182,
+            834
+          ],
+          "cloth": "sails/cloth/IMG_7276-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7276-sails-3.png",
+          "sourceBox": [
+            1175,
+            370,
+            1555,
+            808
+          ],
+          "cloth": "sails/cloth/IMG_7276-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7276-flags-1.png",
+          "sourceBox": [
+            681,
+            47,
+            897,
+            191
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7276-flags-2.png",
+          "sourceBox": [
+            1244,
+            154,
+            1432,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7277",
+      "sheet": "sails/IMG_7277.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7277-sails-1.png",
+          "sourceBox": [
+            264,
+            300,
+            659,
+            744
+          ],
+          "cloth": "sails/cloth/IMG_7277-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7277-sails-2.png",
+          "sourceBox": [
+            609,
+            218,
+            1182,
+            837
+          ],
+          "cloth": "sails/cloth/IMG_7277-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              524,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7277-sails-3.png",
+          "sourceBox": [
+            1175,
+            370,
+            1555,
+            808
+          ],
+          "cloth": "sails/cloth/IMG_7277-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7277-flags-1.png",
+          "sourceBox": [
+            681,
+            47,
+            897,
+            191
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7277-flags-2.png",
+          "sourceBox": [
+            1244,
+            154,
+            1432,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7278",
+      "sheet": "sails/IMG_7278.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7278-sails-1.png",
+          "sourceBox": [
+            265,
+            300,
+            659,
+            746
+          ],
+          "cloth": "sails/cloth/IMG_7278-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              363,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7278-sails-2.png",
+          "sourceBox": [
+            610,
+            218,
+            1182,
+            837
+          ],
+          "cloth": "sails/cloth/IMG_7278-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7278-sails-3.png",
+          "sourceBox": [
+            1176,
+            370,
+            1555,
+            811
+          ],
+          "cloth": "sails/cloth/IMG_7278-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7278-flags-1.png",
+          "sourceBox": [
+            680,
+            47,
+            897,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7278-flags-2.png",
+          "sourceBox": [
+            1244,
+            154,
+            1432,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7279",
+      "sheet": "sails/IMG_7279.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7279-sails-1.png",
+          "sourceBox": [
+            264,
+            301,
+            659,
+            746
+          ],
+          "cloth": "sails/cloth/IMG_7279-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7279-sails-2.png",
+          "sourceBox": [
+            610,
+            219,
+            1182,
+            837
+          ],
+          "cloth": "sails/cloth/IMG_7279-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7279-sails-3.png",
+          "sourceBox": [
+            1176,
+            371,
+            1555,
+            811
+          ],
+          "cloth": "sails/cloth/IMG_7279-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              348,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7279-flags-1.png",
+          "sourceBox": [
+            681,
+            46,
+            897,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7279-flags-2.png",
+          "sourceBox": [
+            1244,
+            156,
+            1432,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7280",
+      "sheet": "sails/IMG_7280.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7280-sails-1.png",
+          "sourceBox": [
+            264,
+            302,
+            659,
+            745
+          ],
+          "cloth": "sails/cloth/IMG_7280-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7280-sails-2.png",
+          "sourceBox": [
+            609,
+            219,
+            1183,
+            835
+          ],
+          "cloth": "sails/cloth/IMG_7280-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              525,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7280-sails-3.png",
+          "sourceBox": [
+            1176,
+            371,
+            1557,
+            809
+          ],
+          "cloth": "sails/cloth/IMG_7280-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              350,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7280-flags-1.png",
+          "sourceBox": [
+            680,
+            49,
+            898,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7280-flags-2.png",
+          "sourceBox": [
+            1243,
+            157,
+            1433,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7281",
+      "sheet": "sails/IMG_7281.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7281-sails-1.png",
+          "sourceBox": [
+            264,
+            302,
+            659,
+            745
+          ],
+          "cloth": "sails/cloth/IMG_7281-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              364,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7281-sails-2.png",
+          "sourceBox": [
+            610,
+            220,
+            1182,
+            837
+          ],
+          "cloth": "sails/cloth/IMG_7281-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7281-sails-3.png",
+          "sourceBox": [
+            1175,
+            371,
+            1555,
+            809
+          ],
+          "cloth": "sails/cloth/IMG_7281-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              349,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7281-flags-1.png",
+          "sourceBox": [
+            681,
+            47,
+            897,
+            193
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7281-flags-2.png",
+          "sourceBox": [
+            1244,
+            155,
+            1432,
+            301
+          ]
+        }
+      ]
+    },
+    {
+      "id": "IMG_7282",
+      "sheet": "sails/IMG_7282.png",
+      "sails": [
+        {
+          "image": "sails/parts/IMG_7282-sails-1.png",
+          "sourceBox": [
+            265,
+            300,
+            658,
+            745
+          ],
+          "cloth": "sails/cloth/IMG_7282-1.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              362,
+              100
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7282-sails-2.png",
+          "sourceBox": [
+            610,
+            218,
+            1182,
+            837
+          ],
+          "cloth": "sails/cloth/IMG_7282-2.png",
+          "attachment": [
+            [
+              46,
+              43
+            ],
+            [
+              523,
+              132
+            ]
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7282-sails-3.png",
+          "sourceBox": [
+            1175,
+            370,
+            1556,
+            808
+          ],
+          "cloth": "sails/cloth/IMG_7282-3.png",
+          "attachment": [
+            [
+              43,
+              37
+            ],
+            [
+              350,
+              100
+            ]
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "image": "sails/parts/IMG_7282-flags-1.png",
+          "sourceBox": [
+            681,
+            47,
+            897,
+            192
+          ]
+        },
+        {
+          "image": "sails/parts/IMG_7282-flags-2.png",
+          "sourceBox": [
+            1244,
+            154,
+            1432,
+            300
+          ]
+        }
+      ]
+    }
+  ],
+  "flags": [
+    {
+      "id": 1,
+      "image": "flags/parts/flag-01.png",
+      "sourceBox": [
+        45,
+        39,
+        302,
+        260
+      ]
+    },
+    {
+      "id": 2,
+      "image": "flags/parts/flag-02.png",
+      "sourceBox": [
+        373,
+        44,
+        636,
+        266
+      ]
+    },
+    {
+      "id": 3,
+      "image": "flags/parts/flag-03.png",
+      "sourceBox": [
+        665,
+        25,
+        912,
+        244
+      ]
+    },
+    {
+      "id": 4,
+      "image": "flags/parts/flag-04.png",
+      "sourceBox": [
+        955,
+        24,
+        1176,
+        244
+      ]
+    },
+    {
+      "id": 5,
+      "image": "flags/parts/flag-05.png",
+      "sourceBox": [
+        1229,
+        25,
+        1475,
+        243
+      ]
+    },
+    {
+      "id": 6,
+      "image": "flags/parts/flag-06.png",
+      "sourceBox": [
+        1505,
+        40,
+        1735,
+        250
+      ]
+    },
+    {
+      "id": 7,
+      "image": "flags/parts/flag-07.png",
+      "sourceBox": [
+        35,
+        293,
+        257,
+        495
+      ]
+    },
+    {
+      "id": 8,
+      "image": "flags/parts/flag-08.png",
+      "sourceBox": [
+        251,
+        216,
+        467,
+        414
+      ]
+    },
+    {
+      "id": 9,
+      "image": "flags/parts/flag-09.png",
+      "sourceBox": [
+        494,
+        226,
+        726,
+        427
+      ]
+    },
+    {
+      "id": 10,
+      "image": "flags/parts/flag-10.png",
+      "sourceBox": [
+        761,
+        219,
+        1005,
+        427
+      ]
+    },
+    {
+      "id": 11,
+      "image": "flags/parts/flag-11.png",
+      "sourceBox": [
+        1068,
+        214,
+        1303,
+        409
+      ]
+    },
+    {
+      "id": 12,
+      "image": "flags/parts/flag-12.png",
+      "sourceBox": [
+        1330,
+        232,
+        1526,
+        404
+      ]
+    },
+    {
+      "id": 13,
+      "image": "flags/parts/flag-13.png",
+      "sourceBox": [
+        1537,
+        264,
+        1764,
+        461
+      ]
+    },
+    {
+      "id": 14,
+      "image": "flags/parts/flag-14.png",
+      "sourceBox": [
+        36,
+        491,
+        275,
+        722
+      ]
+    },
+    {
+      "id": 15,
+      "image": "flags/parts/flag-15.png",
+      "sourceBox": [
+        292,
+        402,
+        501,
+        587
+      ]
+    },
+    {
+      "id": 16,
+      "image": "flags/parts/flag-16.png",
+      "sourceBox": [
+        527,
+        409,
+        762,
+        597
+      ]
+    },
+    {
+      "id": 17,
+      "image": "flags/parts/flag-17.png",
+      "sourceBox": [
+        790,
+        418,
+        1010,
+        617
+      ]
+    },
+    {
+      "id": 18,
+      "image": "flags/parts/flag-18.png",
+      "sourceBox": [
+        1031,
+        429,
+        1290,
+        628
+      ]
+    },
+    {
+      "id": 19,
+      "image": "flags/parts/flag-19.png",
+      "sourceBox": [
+        1353,
+        407,
+        1547,
+        588
+      ]
+    },
+    {
+      "id": 20,
+      "image": "flags/parts/flag-20.png",
+      "sourceBox": [
+        1555,
+        485,
+        1771,
+        672
+      ]
+    },
+    {
+      "id": 21,
+      "image": "flags/parts/flag-21.png",
+      "sourceBox": [
+        34,
+        706,
+        289,
+        949
+      ]
+    },
+    {
+      "id": 22,
+      "image": "flags/parts/flag-22.png",
+      "sourceBox": [
+        302,
+        581,
+        502,
+        764
+      ]
+    },
+    {
+      "id": 23,
+      "image": "flags/parts/flag-23.png",
+      "sourceBox": [
+        544,
+        579,
+        762,
+        750
+      ]
+    },
+    {
+      "id": 24,
+      "image": "flags/parts/flag-24.png",
+      "sourceBox": [
+        811,
+        620,
+        1010,
+        793
+      ]
+    },
+    {
+      "id": 25,
+      "image": "flags/parts/flag-25.png",
+      "sourceBox": [
+        1117,
+        582,
+        1312,
+        747
+      ]
+    },
+    {
+      "id": 26,
+      "image": "flags/parts/flag-26.png",
+      "sourceBox": [
+        1331,
+        585,
+        1544,
+        776
+      ]
+    },
+    {
+      "id": 27,
+      "image": "flags/parts/flag-27.png",
+      "sourceBox": [
+        1583,
+        652,
+        1776,
+        829
+      ]
+    },
+    {
+      "id": 28,
+      "image": "flags/parts/flag-28.png",
+      "sourceBox": [
+        333,
+        753,
+        536,
+        949
+      ]
+    },
+    {
+      "id": 29,
+      "image": "flags/parts/flag-29.png",
+      "sourceBox": [
+        551,
+        756,
+        740,
+        956
+      ]
+    },
+    {
+      "id": 30,
+      "image": "flags/parts/flag-30.png",
+      "sourceBox": [
+        751,
+        770,
+        960,
+        973
+      ]
+    },
+    {
+      "id": 31,
+      "image": "flags/parts/flag-31.png",
+      "sourceBox": [
+        1011,
+        719,
+        1239,
+        931
+      ]
+    },
+    {
+      "id": 32,
+      "image": "flags/parts/flag-32.png",
+      "sourceBox": [
+        1268,
+        753,
+        1498,
+        959
+      ]
+    },
+    {
+      "id": 33,
+      "image": "flags/parts/flag-33.png",
+      "sourceBox": [
+        1518,
+        785,
+        1734,
+        977
+      ]
+    }
+  ],
+  "flagSheet": "flags/IMG_7284.png",
+  "assembledReference": {
+    "right": "references/IMG_7253-right.png",
+    "left": "references/IMG_7253-left.png"
+  },
+  "masts": [
+    {
+      "id": "aft",
+      "images": {
+        "right": "masts/revised-aft-right.png",
+        "left": "masts/revised-aft-left.png"
+      },
+      "pivot": [
+        562,
+        675
+      ],
+      "yard": [
+        [
+          430,
+          293
+        ],
+        [
+          663,
+          344
+        ]
+      ],
+      "flagAnchor": [
+        564,
+        139
+      ],
+      "mirrorPivot": [
+        1229,
+        675
+      ]
+    },
+    {
+      "id": "main",
+      "images": {
+        "right": "masts/revised-main-right.png",
+        "left": "masts/revised-main-left.png"
+      },
+      "pivot": [
+        804,
+        742
+      ],
+      "yard": [
+        [
+          660,
+          274
+        ],
+        [
+          989,
+          333
+        ]
+      ],
+      "flagAnchor": [
+        807,
+        10
+      ],
+      "mirrorPivot": [
+        987,
+        742
+      ]
+    },
+    {
+      "id": "fore",
+      "images": {
+        "right": "masts/revised-fore-right.png",
+        "left": "masts/revised-fore-left.png"
+      },
+      "pivot": [
+        1134,
+        682
+      ],
+      "yard": [
+        [
+          1042,
+          357
+        ],
+        [
+          1265,
+          396
+        ]
+      ],
+      "flagAnchor": [
+        1131,
+        124
+      ],
+      "mirrorPivot": [
+        657,
+        682
+      ]
+    }
+  ],
+  "registration": {
+    "canvas": [
+      1792,
+      1008
+    ],
+    "interior": {
+      "right": "bodies/xray-hull-nomast-right.png",
+      "left": "bodies/xray-hull-nomast-left.png"
+    },
+    "mastScale": 1,
+    "mastTranslation": [
+      0,
+      0
+    ],
+    "source": "owner-supplied mast-free hull and separate masts"
+  },
+  "upperSails": [
+    {
+      "id": "main",
+      "cloth": "sails/cloth/template-upper-main.png",
+      "sourceBox": [
+        725,
+        151,
+        944,
+        307
+      ],
+      "attachment": [
+        [
+          16,
+          2
+        ],
+        [
+          200,
+          42
+        ]
+      ]
+    },
+    {
+      "id": "fore",
+      "cloth": "sails/cloth/template-upper-fore.png",
+      "sourceBox": [
+        1069,
+        246,
+        1240,
+        373
+      ],
+      "attachment": [
+        [
+          16,
+          2
+        ],
+        [
+          157,
+          34
+        ]
+      ]
+    }
+  ],
+  "assemblyTemplate": {
+    "name": "full-ship-template.JPG",
+    "url": "https://drive.google.com/file/d/1DobsVNJSs5EJhvDvkF14kP0OBfysE82P/view?usp=drivesdk",
+    "sha256": "0fa9c30e1ede5bbdb342cb1a683852687bb57f732fc67dcbb6de2a5c99597daf"
+  }
+}
