@@ -68,6 +68,18 @@
  .ship-special-loadout strong{font-size:16px}.ship-special-loadout small{font-size:11px}
  .result-port-button{font-size:12px;width:34%;padding:4px;min-height:40px}
  .result-port-button span{display:none}
+
+ /* Keep the battle controls in one touch-safe rail on portrait phones. */
+ .polished-battle #finisherCharge{left:8px;bottom:calc(76px + env(safe-area-inset-bottom,0px));grid-template-columns:100px 170px;grid-template-rows:64px;gap:6px;align-items:center}
+ .polished-battle #chargeBalls{width:100px;height:52px;gap:3px}
+ .polished-battle #chargeBalls .charge-ball{flex-basis:21px;width:21px;height:21px}
+ .polished-battle #chargeLabel{grid-column:2;grid-row:1;display:flex;flex-direction:row!important;justify-content:flex-start;align-items:center;width:170px;height:64px;gap:4px;text-align:left}
+ .polished-battle #chargeAttackIcon{position:relative!important;bottom:auto!important;width:64px;height:58px;flex:0 0 64px}
+ .polished-battle #chargeAttackText{font-size:15px;line-height:1.05;max-width:102px;overflow-wrap:normal;text-align:left}
+ .polished-battle #chargeLabel .finisher{left:0;top:50%;width:110px;height:42px;padding:4px 4px 4px 56px;font-size:15px}
+ .polished-battle .aim-panel{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+ .polished-battle .ship-wheel-control{width:96px;height:96px;bottom:0}
+ .polished-battle #waterMovement{bottom:8px!important;width:238px}
 }
 @media(max-height:600px) and (min-width:650px){
  .combat-arena.polished-battle{grid-template-rows:62px minmax(55px,auto) minmax(0,1fr)}
