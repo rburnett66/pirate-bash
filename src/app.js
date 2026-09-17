@@ -293,7 +293,7 @@ async function animateShot(flight){
   if(t<flight.duration)requestAnimationFrame(tick);else{if(layer)layer.innerHTML='';resolve();}
  }requestAnimationFrame(tick);});
  flying=false;const e=event;reactCrew(e,flight.side,crewBefore-M.active(state.battle[flightTarget]).length);scope=true;
- if(readout)readout.textContent=e?.hit?Math.round(e.damage)+' DAMAGE · '+e.impacts.map(i=>i.kind+(i.bonus?' BONUS':'')).filter((v,i,a)=>a.indexOf(v)===i).join(' + '):'SPLASH — SHOT FELL SHORT OR PASSED THE SHIP';
+ if(readout)readout.textContent='';
  if(e?.hit&&state.battle.phase!=='result'){
   setBattleView('impact');updateArena();
   // The hit has resolved and the player may already have another shot.

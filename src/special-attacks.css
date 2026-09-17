@@ -7,14 +7,14 @@
 #specialAnnouncement{position:absolute;top:8px;left:8px;right:8px;z-index:30;text-align:center;pointer-events:none;color:#ffedb0;text-shadow:0 3px 0 #40200b,0 5px 12px #000}
 #specialAnnouncement strong{display:block;font:clamp(52px,10vw,116px)/1.04 'Lilita One',Impact,fantasy;letter-spacing:.025em;-webkit-text-stroke:1px #6c370e}
 #specialAnnouncement span{display:block;margin-top:6px;font:bold clamp(11px,1.5vw,17px)/1.3 'Lilita One',sans-serif;color:#fff}
-#finisherCharge{position:absolute;z-index:20;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:156px 166px;grid-template-rows:47px 44px;gap:6px 8px;align-items:center;width:max-content;pointer-events:auto}
+#finisherCharge{position:absolute;z-index:20;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:156px 206px;grid-template-rows:var(--battle-controls-height,84px);gap:6px 8px;align-items:center;width:max-content;pointer-events:auto}
 #chargeBalls{position:relative;display:flex;gap:5px;align-items:center;justify-content:center;height:47px;margin-bottom:0;isolation:isolate}
 #chargeBalls{background:#082536d9;border:1px solid #bed9e780;border-radius:9px;box-shadow:0 2px 8px #0005}
 #chargeLabel{position:relative;isolation:isolate;grid-column:2;grid-row:1;display:flex;align-items:center;gap:5px;text-align:left;font:bold 11px/1.25 sans-serif;color:#fff0c4;text-shadow:0 2px 3px #000,0 0 5px #000}
 #chargeLabel .finisher{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:0}
 #chargeAttackIcon{position:relative;z-index:1;pointer-events:none;display:block;width:92px;height:72px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 2px #000)}
 #chargeAttackIcon[hidden]{display:none}
-#chargeAttackText{min-width:0}#chargeAttackText[hidden]{display:none}
+#chargeAttackText{min-width:0;font:33px/1 'Lilita One',Impact,fantasy;overflow-wrap:anywhere}#chargeAttackText[hidden]{display:none}
 .charge-ball{position:relative;display:block;flex:0 0 33px;height:33px;background:url('/pirate-bash/public/killstreaks/ball.png') center/155% no-repeat;opacity:.8;filter:grayscale(1) brightness(2);border-radius:50%;outline:1px dashed #e1f1ff;outline-offset:-4px}
 .charge-ball.lit{background-image:url('/pirate-bash/public/killstreaks/flaming-ball.png');background-size:125%;opacity:1;filter:drop-shadow(0 0 4px #ff8529);outline:none;animation:charge-flame .7s calc(var(--i)*-.17s) ease-in-out infinite alternate}
 .charge-ball.lit::after{content:'';position:absolute;left:40%;top:25%;width:3px;height:5px;background:#ffdc74;box-shadow:9px 2px #ff972d,-6px 5px #ffef9f;border-radius:50%;animation:charge-embers .9s calc(var(--i)*-.19s) linear infinite}
@@ -31,7 +31,7 @@
 /* One streak at a time: first -> second -> third -> fourth, then repeat. */
 @keyframes charge-streak{0%{opacity:1;transform:translateX(-3px);filter:drop-shadow(0 0 5px #ffab23)}24.99%{opacity:1;transform:translateX(3px);filter:drop-shadow(0 0 8px #ffab23)}25%,100%{opacity:0;transform:translateX(0)}}
 @media(max-width:649px){
- #finisherCharge{left:8px;width:max-content;grid-template-columns:108px 130px;grid-template-rows:37px 44px;bottom:max(12px,env(safe-area-inset-bottom))}
+ #finisherCharge{left:8px;width:max-content;grid-template-columns:108px 130px;grid-template-rows:var(--battle-controls-height,75px);bottom:max(12px,env(safe-area-inset-bottom))}
  #chargeBalls{height:37px;gap:3px}.charge-ball{flex-basis:24px;height:24px}
  #chargeLabel{font-size:10px;gap:2px}#chargeAttackIcon{width:68px;height:60px}
  #finisherCharge .finisher{width:108px;height:37px;font-size:13px;padding-left:56px}
@@ -63,3 +63,11 @@
 .match-special{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:#ffe5a7}.match-special .special-loadout-icon{width:46px;height:36px;font-size:28px}
 @media(max-width:649px){.ship-special-loadout{gap:6px}.ship-special-loadout .special-loadout-icon{width:48px}.ship-special-loadout strong{font-size:13px}.match-special{flex-direction:column;gap:0;font-size:9px}}
 @media(max-height:560px){.match-special .special-loadout-icon{width:34px;height:26px}.match-special{font-size:9px}}
+
+/* Center the charge row on the same horizontal line as the aim panel. */
+.polished-battle{--battle-controls-height:84px}
+.polished-battle .aim-panel{box-sizing:border-box;height:var(--battle-controls-height)}
+@media(max-height:560px) and (min-width:650px){.polished-battle{--battle-controls-height:70px}}
+@media(max-width:649px){.polished-battle{--battle-controls-height:75px}}
+
+@media(max-width:649px){#chargeAttackText{font-size:30px}#chargeLabel:has(#chargeAttackText:not([hidden])){height:var(--battle-controls-height);justify-content:center;flex-direction:column;gap:0;text-align:center}#chargeLabel:has(#chargeAttackText:not([hidden])) #chargeAttackIcon{position:absolute;bottom:calc(50% + 30px)}}
