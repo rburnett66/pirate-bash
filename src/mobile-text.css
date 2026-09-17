@@ -184,4 +184,8 @@
  #sheet:has(.gunner-detail-art)>.gunner-detail-art+p{font-size:18px}
 }
 
-@media(orientation:landscape) and (max-height:600px){.gunner-detail-art .pirate-art{transform:translateY(-96px) scale(1.08)}}
+@media(orientation:landscape) and (max-height:600px){.gunner-detail-art .pirate-art{transform:translateY(-64px) scale(1.08)}}
+
+/* View Pirate starts beside the close control instead of below an empty row. */
+#sheet:has(.gunner-detail-art):not(.match-intro):not(.match-search):not(.battle-result-sheet){padding-top:20px}
+#sheet:has(.gunner-detail-art)>h2{padding-right:64px}
