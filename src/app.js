@@ -260,7 +260,7 @@ function updateArena(){
  document.querySelectorAll('[data-action=sail]').forEach(e=>{const unavailable=locked||b.movesLeft<=0;e.disabled=unavailable;e.hidden=b.movesLeft<=0;e.setAttribute('aria-label',e.dataset.id==='1'?'Move forward':'Move backward');});
  el('shipWheel').disabled=locked||b.movesLeft<=0;
  el('movementLabel').textContent=b.movesLeft+' MOVES';
- const unavailable=b.phase==='player'&&b.charged?M.specialUnavailable(state):'';
+ const unavailable=M.specialTargetUnavailable(state);
  const noTarget=unavailable&&(/crew|gunners/i.test(unavailable)?'No More Crew on Deck':/mast|sail/i.test(unavailable)?'No More Sails on Deck':'No More Hull');
  const fin=document.querySelector('[data-action=finisher]');fin.disabled=locked||!b.charged||!!noTarget;fin.hidden=!b.charged||!!noTarget;fin.classList.toggle('charged',b.charged&&!noTarget);fin.textContent='ATTACK';fin.title=M.FINISHERS[state.move].name;
  const count=b.charged?4:b.streak;el('chargeBalls').hidden=!!noTarget;el('chargeBalls').setAttribute('aria-label',count+' of 4 successful attacks'+(b.charged?' — big attack ready':''));el('chargeBalls').classList.toggle('ready',b.charged);const equipped=M.FINISHERS[state.move],hasArt=['shark','kraken','gull','whale','siren'].includes(equipped.art),attackIcon=el('chargeAttackIcon');attackIcon.hidden=!!noTarget||!hasArt;if(hasArt&&!noTarget){const art='/pirate-bash/public/killstreaks/'+equipped.art+'.png';if(attackIcon.getAttribute('src')!==art)attackIcon.src=art;attackIcon.alt=equipped.name;}el('chargeAttackText').textContent=noTarget||((hasArt?'':equipped.icon+' ')+equipped.name);el('chargeAttackText').hidden=b.charged&&!noTarget;el('chargeBalls').querySelectorAll('i').forEach((n,i)=>n.classList.toggle('lit',i<count));
@@ -364,7 +364,7 @@ async function finish(){
  if(b?.phase==='result'&&!b.rewarded){
   if(finishingId===b.id)return;finishingId=b.id;
   const loser=b[b.won?'enemy':'player'];
-  if(loser.hull<=0&&loser.sails<=0){
+  if(loser.hull<=0){
    busy=true;flightTarget=b.won?'enemy':'player';setBattleView('wide');updateArena();
    await sleep(state.settings.motion?480:20);
    const blast=el('powderBlast');if(blast){const p=screenPoint({x:loser.x,y:.2});blast.style.left=p.x+'px';blast.style.top=p.y+'px';blast.hidden=false;blast.innerHTML=Array.from({length:20},(_,i)=>`<i style="--a:${i*137.5}deg;--d:${70+(i%5)*28}px;--delay:${i%4*35}ms"></i>`).join('');}

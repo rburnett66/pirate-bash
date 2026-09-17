@@ -98,7 +98,7 @@ export function active(f){return f.crew.filter(g=>g.hp>0);}
 // Movement is tied to sail power: two full sail-equivalents grant one move.
 // `sails` is stored as a percentage, so a healthy rig grants two moves.
 export function sailMoves(f){return Math.max(0,Math.ceil(Math.max(0,f?.sails??100)/50));}
-export function outcome(b){if((b.enemy.hull<=0&&b.enemy.sails<=0)||!active(b.enemy).length)return true;if((b.player.hull<=0&&b.player.sails<=0)||!active(b.player).length)return false;if(b.turn>24)return b.player.hull/b.player.maxHull>=b.enemy.hull/b.enemy.maxHull;return null;}
+export function outcome(b){if((b.enemy.hull<=0)||!active(b.enemy).length)return true;if((b.player.hull<=0)||!active(b.player).length)return false;if(b.turn>24)return b.player.hull/b.player.maxHull>=b.enemy.hull/b.enemy.maxHull;return null;}
 
 export function prepareBattle(b){
  if(!b)return b;
@@ -269,9 +269,16 @@ export function specialUnavailable(s){
  if(!b||!m||!s.moves.includes(s.move))return 'Equip an unlocked big attack first.';
  if(b.phase!=='player'||b.pending||b.special)return 'Wait until your attack sequence finishes.';
  if(!b.charged)return 'Land four successful attacks to charge.';
+ return specialTargetUnavailable(s);
+}
+export function specialTargetUnavailable(s){
+ const b=s.battle,m=FINISHERS[s.move];if(!b||!m)return '';
  const f=ensureGeometry(b.enemy,'enemy');
  if(m.id===0&&!active(f).some(g=>g.slot.startsWith('d')))return 'No enemy deck gunners remain. Hull gunners are protected from the shark. Your charge is kept.';
  if([1,3].includes(m.id)&&!f.mastParts.some(p=>p.hp>0))return 'No standing mast remains. Your charge is kept.';
+ if(m.id===5&&!active(f).some(g=>g.slot.startsWith('d')))return 'No enemy deck gunners remain. Your charge is kept.';
+ if(m.id===6&&!active(f).length)return 'No enemy crew remain. Your charge is kept.';
+ if(m.id===4&&f.sails<=0)return 'No enemy sails remain. Your charge is kept.';
  if(m.id===2&&f.hull<=0)return 'No enemy hull remains. Your charge is kept.';
  return '';
 }
@@ -300,7 +307,7 @@ export function completeFinishMove(s){
  b.special=null;b.phase='player';const won=outcome(b);if(won!==null){b.phase='result';b.won=won;}return true;
 }
 
-export function settle(s,t=Date.now()){const b=s.battle;if(!b||b.phase!=='result'||b.rewarded)return null;b.rewarded=true;const looted=b.won&&!active(b.enemy).length&&!(b.enemy.hull<=0&&b.enemy.sails<=0),baseGold=Math.floor(E.MATCH.gold*(b.won?1:E.MATCH.lossShare)),lootBonus=looted?Math.floor(baseGold*.1):0,gold=baseGold+lootBonus;s.gold+=gold;s.xp+=b.won?50:20;s.quests.matches++;if(b.won){s.weeklyWins++;s.trophies++;s.lastWin=t;s.quests.wins++;}let chest=null;if(b.won&&s.chests.length<5&&s.dailyChests<5){chest={id:b.id,kind:roll(()=>random(b),E.BONUS_ODDS),seed:b.rng};s.chests.push(chest);s.dailyChests++;s.chestRun++;if(s.chestRun%5===0){s.gems+=E.GEMS.fifthChest;queueOffer(s,'chests-'+s.chestRun,1,t);}}s.durability=b.player.durability;if(b.player.plates)b.player.plates.forEach((p,i)=>s.plates[i]=clone(p));s.canvasDurability=b.player.canvasDurability??100;const result={id:b.id,won:b.won,gold,gems:chest&&s.chestRun%5===0?E.GEMS.fifthChest:0,xp:b.won?50:20,honor:b.won?1:0,lootBonus,looted,chest,seed:b.seed,enemyName:b.enemyName,rematch:b.rematch,rematchAsked:false,opponent:clone(b.opponent||b.enemy),temperament:b.temperament,log:b.log.slice(-8),turns:b.turn};s.lastResult=result;return result;}
+export function settle(s,t=Date.now()){const b=s.battle;if(!b||b.phase!=='result'||b.rewarded)return null;b.rewarded=true;const looted=b.won&&!active(b.enemy).length&&!(b.enemy.hull<=0),baseGold=Math.floor(E.MATCH.gold*(b.won?1:E.MATCH.lossShare)),lootBonus=looted?Math.floor(baseGold*.1):0,gold=baseGold+lootBonus;s.gold+=gold;s.xp+=b.won?50:20;s.quests.matches++;if(b.won){s.weeklyWins++;s.trophies++;s.lastWin=t;s.quests.wins++;}let chest=null;if(b.won&&s.chests.length<5&&s.dailyChests<5){chest={id:b.id,kind:roll(()=>random(b),E.BONUS_ODDS),seed:b.rng};s.chests.push(chest);s.dailyChests++;s.chestRun++;if(s.chestRun%5===0){s.gems+=E.GEMS.fifthChest;queueOffer(s,'chests-'+s.chestRun,1,t);}}s.durability=b.player.durability;if(b.player.plates)b.player.plates.forEach((p,i)=>s.plates[i]=clone(p));s.canvasDurability=b.player.canvasDurability??100;const result={id:b.id,won:b.won,gold,gems:chest&&s.chestRun%5===0?E.GEMS.fifthChest:0,xp:b.won?50:20,honor:b.won?1:0,lootBonus,looted,chest,seed:b.seed,enemyName:b.enemyName,rematch:b.rematch,rematchAsked:false,opponent:clone(b.opponent||b.enemy),temperament:b.temperament,log:b.log.slice(-8),turns:b.turn};s.lastResult=result;return result;}
 export function requestRematch(s,r=Math.random){const q=s.lastResult;if(!q||q.won||q.rematch||q.rematchAsked)return null;const accept=r()<.65;if(accept){const b=startBattle(s,Date.now(),true);q.rematchAsked=true;return !!b;}q.rematchAsked=true;return false;}
 
 export function migrate(s,t){

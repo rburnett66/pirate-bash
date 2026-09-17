@@ -151,3 +151,4 @@
  .polished-battle #chargeLabel .finisher{width:128px;font-size:17px}
  .polished-battle #chargeAttackText{font-size:17px}
 }
+.polished-battle #chargeBalls[hidden]{display:none}
