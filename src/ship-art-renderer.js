@@ -1,3 +1,4 @@
+import {tearSail} from './sail-damage.js';
 import {hullConfig,sailConfig,figureConfig} from './ship-config.js';
 import {HULL_MASK,maskPixels} from './hull-mask.js';
 import {SHIP_ART,shipAppearance,MAST_MOUNTS,RIG_SAILS,RIG_FLAGS,sailPanels,clothPlacement,worldToArt,artRig} from './ship-art-layout.js';
@@ -61,13 +62,10 @@ export class ShipArtRenderer{
    RIG_SAILS.forEach((spec,panel)=>{if(spec.mast!==i||!this.rigConfig.panels.includes(panel))return;
    const cloth=surface(),cc=cloth.getContext('2d'),part=this.panels[panel],place=clothPlacement(panel,part);
    cc.translate(...place.origin);cc.rotate(place.angle);cc.scale(place.scale,place.scale);cc.drawImage(this.cloth[panel],0,0);cc.setTransform(1,0,0,1,0,0);
-   rig.sails.forEach((s,j)=>{if(s.panel!==panel)return;const health=this.parts?.sailParts?.[j],damage=health?1-health.hp/health.maxHp:0;if(damage<=0)return;
-    const [x,y]=worldToArt({x:s.x-s.halfW,y:s.y+s.halfH}),w=s.halfW*960,h=s.halfH*960;
-    cc.save();cc.beginPath();cc.rect(x,y,w,h);cc.clip();
-    if(damage>=.999){cc.clearRect(x-2,y-2,w+4,h+4);}else{
-     for(let k=0;k<3;k++){const cx=x+w*(.2+.3*k),cy=y+h*(.25+((j+k)%3)*.23),r=Math.sqrt(w*h*damage/(3*Math.PI))*.9;cc.globalCompositeOperation='source-atop';cc.fillStyle='#27180be6';cc.beginPath();cc.ellipse(cx,cy,r+4,(r+4)*.7,k*.8,0,Math.PI*2);cc.fill();cc.globalCompositeOperation='destination-out';cc.beginPath();cc.ellipse(cx,cy,r,r*.7,k*.8,0,Math.PI*2);cc.fill();}
-    }cc.restore();cc.globalCompositeOperation='source-over';
-   });ctx.drawImage(cloth,0,0);
+   const zones=rig.sails.map((s,j)=>s.panel===panel?this.parts?.sailParts?.[j]:null).filter(Boolean);
+   const max=zones.reduce((n,p)=>n+p.maxHp,0),health=max?zones.reduce((n,p)=>n+p.hp,0)/max:1;
+   tearSail(cc,part.outline.map(p=>place.point(p)),health,panel);
+   ctx.drawImage(cloth,0,0);
    });
    return group;
   });this.revision++;
