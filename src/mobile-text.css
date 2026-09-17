@@ -88,3 +88,43 @@
  .polished-battle .battle-top{gap:14px}
  #sheet.match-intro .match-ship{height:85px}
 }
+
+/* Battle polish from the latest mobile review. */
+.polished-battle .health-line strong{font:900 clamp(15px,2vw,24px) 'Barlow Condensed',sans-serif;color:#fff;text-shadow:2px 2px 2px #000,-1px -1px #000;white-space:nowrap}
+.polished-battle .health-line{min-height:24px}
+.polished-battle .crew-stack{position:absolute;top:10px;bottom:auto}
+.polished-battle #waterMovement{z-index:12}
+.polished-battle .turn-summary{width:100%;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+.polished-battle .combat-message-row{display:contents}
+.polished-battle #battleLog,.polished-battle #shotReadout{display:inline;min-width:0;max-width:28%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.polished-battle .aim-actions .primary{height:30px;min-height:30px;padding-block:3px}
+.polished-battle #chargeLabel:has(#chargeAttackText:not([hidden])){white-space:normal}
+.polished-battle #chargeAttackText:empty{display:none}
+.polished-battle #chargeLabel .finisher{height:42px}
+.polished-battle .ship-wheel-control{width:210px;height:210px;bottom:-125px}
+.polished-battle .result-port-button{padding:0;border:0;background:transparent!important;box-shadow:none!important;line-height:0}
+.polished-battle .result-port-button img{display:block;width:100%;height:auto;object-fit:contain}
+.chest-reveal-modal{display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.chest-reveal-modal .dialog-banner{height:110px;object-fit:contain;margin:0 auto}
+.chest-reveal-modal h2{margin:4px 0;font-size:clamp(24px,3.2cqw,42px)}
+.chest-reveal-modal .gold{margin:0;font-size:clamp(20px,2.4cqw,34px)}
+.chest-reveal-modal .chest-card-reveal{flex:1;min-height:0;margin:6px 0;align-items:stretch}
+.chest-reveal-modal .footer-note{margin:0}
+@media(min-width:650px){
+ .polished-battle #finisherCharge{bottom:4px}
+ .polished-battle .aim-panel{bottom:4px}
+ .polished-battle .turn-summary{font-size:clamp(9px,1.2vw,13px);gap:clamp(5px,1vw,14px)}
+}
+@media(max-width:649px){
+ .polished-battle .turn-summary{font-size:9px;gap:3px 5px}
+ .polished-battle .turn-banner #phaseLabel{font-size:13px}
+ .polished-battle #battleLog{max-width:25%}
+ .polished-battle .aim-actions .primary{height:31px;min-height:31px}
+ .polished-battle .ship-wheel-control{width:112px;height:112px;bottom:-5px}
+ .polished-battle .arena-water{transform:scaleY(1.16);transform-origin:50% 100%}
+ .chest-reveal-modal{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:12px 10px}
+ .chest-reveal-modal .dialog-banner{height:76px}
+ .chest-reveal-modal h2{font-size:22px}
+ .chest-reveal-modal .gold{font-size:20px}
+ .chest-reveal-modal .chest-card-reveal{grid-template-columns:repeat(2,minmax(0,1fr));min-height:0;overflow:auto}
+}

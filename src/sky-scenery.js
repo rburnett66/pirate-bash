@@ -27,9 +27,9 @@ export function createSkyScenery(){
   const city=document.createElement('img');city.className='sky-city';
   city.src='/pirate-bash/public/sky-art/horizon-city.png';city.alt='';city.draggable=false;
   root.append(city);document.body.prepend(root);
-  return {update({horizon,width,height,center=0,motion=true}){
+  return {update({horizon,width,height,center=0,wind=0,motion=true}){
     const waterline=Math.max(0,Math.min(height,horizon));
-    root.style.height=waterline+'px';root.classList.toggle('still',!motion);
+    root.style.height=waterline+'px';root.classList.toggle('still',!motion);root.style.setProperty('--wind-dir',wind<0?-1:1);
     layers.forEach((node,i)=>{
       const spec=CLOUD_LAYERS[i],size=Math.min(360,Math.max(220,width*.28),Math.max(130,waterline*1.5))*spec.scale;
       node.style.setProperty('--cloud-width',size+'px');

@@ -5,10 +5,10 @@ export const ART = {
   chest:'chest-icon__4d65463e', gift:'gift-icon__4186e173', settings:'options-icon__fb0e7125',
   frame:'crew-frame__819ba7b5', header:'header__08e28e4c', find:'find-match-shadow-v2',
   open:'open-chest__5a0cb1a0', rematch:'rematch__e48b14f8', victory:'victory__1eedb918', lost:'lost__3d56a169',
-  hawaii:'hawaii__85ab9143', bombay:'bombay__ab7b9def', madagascar:'madagascar__2221d2d6',
-  locker:'davies-locker__253f7e6e', fog:'spooky-fog__03d8dedd'
+  hawaii:'ports/IMG_7373.JPG', bombay:'ports/IMG_7370.JPG', madagascar:'ports/IMG_7371.JPG',
+  locker:'ports/IMG_7386.JPG', fog:'ports/IMG_7382.JPG'
 };
-export const imageURL = key => '/pirate-bash/public/menu-art/'+ART[key]+'.png';
+export const imageURL = key => '/pirate-bash/public/menu-art/'+ART[key]+(ART[key]?.includes('/')?'':'.png');
 export const artImage = (key,cls='',alt='') => '<img class="'+cls+'" src="'+imageURL(key)+'" alt="'+alt+'" draggable="false">';
 export const HARBORS = [
   {id:'hawaii',name:'Hawaii',mood:'A fair wind and open water'},

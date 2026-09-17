@@ -1754,7 +1754,7 @@ import {createSkyScenery} from "/pirate-bash/src/sky-scenery.js";
    rowBase[r]=-.29*gameScale+(rowBase[r]+.29*gameScale)*spread;
    rowAmp[r]=gameScale*(.34-.022*r)*vert/baseline;
   }
-  skyScenery.update({horizon:(canvas.height/2-(rowBase[ROWS-1]-cam.y)*cam.ppu)/dpr,width:canvas.width/dpr,height:canvas.height/dpr,center:(cam.x-gameOffset)*cam.ppu/dpr,motion:gameScene.motion});
+  skyScenery.update({horizon:(canvas.height/2-(rowBase[ROWS-1]-cam.y)*cam.ppu)/dpr,width:canvas.width/dpr,height:canvas.height/dpr,center:(cam.x-gameOffset)*cam.ppu/dpr,wind:gameScene.wind||0,motion:gameScene.motion});
  }
  function readGameWater(){
   const old=gl.getParameter(gl.FRAMEBUFFER_BINDING);

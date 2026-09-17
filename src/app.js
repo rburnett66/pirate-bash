@@ -143,8 +143,8 @@ function arena(){
  const b=M.prepareBattle(state.battle);if(!b){page='battle';return home();}
  cameraReady=false;viewMode='crew';scope=false;telescope=false;
  return `<section class="arena combat-arena polished-battle">
-  <div class="battle-top">${['player','enemy'].map(side=>`<div class="health-card ${side}"><h3>${esc(side==='player'?state.name:b.enemyName)}</h3><div class="health-line"><progress id="${side}Health" max="${b[side].maxHull}" aria-label="${side==='player'?'Your':'Enemy'} hull health"></progress><strong id="${side}Percent"></strong></div><div class="health-meta" id="${side}Meta"></div></div>`).join('')}<div class="battle-tools">${button('🔭','scope','','telescope')}${fullscreenButton()}</div></div>
-  <div class="turn-banner" id="turnBanner" role="status"><div class="turn-summary"><strong id="phaseLabel"></strong><span id="turnLabel"></span><span id="shots"></span><span id="turnClock"></span><span id="windIndicator"></span></div><div class="combat-message-row"><span id="battleLog"></span><span id="shotReadout" aria-live="polite"></span></div></div>
+  <div class="battle-top">${['player','enemy'].map(side=>`<div class="health-card ${side}"><h3>${esc(side==='player'?state.name:b.enemyName)}</h3><div class="health-line"><strong id="${side}Percent"></strong></div><div class="health-meta" id="${side}Meta"></div></div>`).join('')}<div class="battle-tools">${button('🔭','scope','','telescope')}${fullscreenButton()}</div></div>
+  <div class="turn-banner" id="turnBanner" role="status"><div class="turn-summary"><strong id="phaseLabel"></strong><span id="turnLabel"></span><span id="shots"></span><span id="turnClock"></span><span id="windIndicator"></span><span class="combat-message-row"><span id="battleLog"></span><span id="shotReadout" aria-live="polite"></span></span></div></div>
   <div id="combatField"><div id="battleWorld"><iframe class="arena-water" id="battleOcean" src="/pirate-bash/public/water.html" title="Battle ocean" tabindex="-1"></iframe><canvas id="specialBehind" class="special-effects" aria-hidden="true" hidden></canvas><iframe class="combat-ship" id="playerShip" src="/pirate-bash/public/ship.html?side=player" title="Your crew and ship" tabindex="-1"></iframe><iframe class="combat-ship" id="enemyShip" src="/pirate-bash/public/ship.html?side=enemy" title="Enemy crew and ship" tabindex="-1"></iframe><canvas id="specialFront" class="special-effects" aria-hidden="true" hidden></canvas><svg id="shotLayer" aria-label="Pull back and release to fire. Aim upward or backward to cancel."><g id="aimArc"></g><g id="flyingShots"></g></svg><div id="crewTargets"></div><div id="powderBlast" hidden></div></div><div id="waterMovement"><span id="movementLabel"></span><div>${button('←','sail','-1','water-arrow')}${button('→','sail','1','water-arrow')}</div></div><div id="specialAnnouncement" role="status" hidden><strong></strong><span></span></div><div id="finisherCharge"><div id="chargeBalls" role="img" aria-label="0 of 4 successful attacks">${[0,1,2,3].map(i=>'<i class="charge-ball" style="--i:'+i+'"></i>').join('')}</div><span id="chargeLabel"><img id="chargeAttackIcon" alt=""><span id="chargeAttackText"></span>${button('ATTACK','finisher','','finisher')}</span></div><div id="crewCheer" role="status"></div>
    <div class="battle-bottom"><div class="crew-stack"><div class="weapon-panel" id="weaponInfo"></div><div class="gun-panel"><div class="eyebrow">CHOOSE YOUR GUNNER</div><div class="gun-selection" id="guns"></div></div></div><button type="button" class="ship-wheel-control" id="shipWheel" aria-label="Drag the ship wheel to steer" title="Drag left or right to steer"><img src="/pirate-bash/public/menu-art/ship-wheel-cutout.png" alt="" draggable="false"></button><div class="aim-panel"><label for="aimAngle">AIM <output id="angleValue">35°</output></label><input type="range" id="aimAngle" min="5" max="75" step="1" value="${b.aimAngle??35}" aria-label="Aim angle"><div class="aim-actions">${button('FIRE','fire','','primary')}<small>Pull back & release<br>or set angle & Fire</small></div></div><div class="move-panel">${button('Retreat','retreat','','ghost small')}</div></div>
   </div></section>`;
@@ -171,7 +171,7 @@ function matchIntro(){
 
 function send(side,data){el(side+'Ship')?.contentWindow?.postMessage({type:'pirate-render',...data},location.origin);}
 function sendOcean(data){el('battleOcean')?.contentWindow?.postMessage({type:'pirate-ocean',...data},location.origin);}
-function syncOcean(){if(!el('battleOcean')||!state.battle)return;sendOcean({action:'scene',...camera,motion:state.settings.motion,settings:activeWater(state.settings.water).values,ships:['player','enemy'].map(side=>({side,x:state.battle[side].x,dir:side==='player'?1:-1}))});}
+function syncOcean(){if(!el('battleOcean')||!state.battle)return;sendOcean({action:'scene',...camera,wind:state.battle.wind??0,motion:state.settings.motion,settings:activeWater(state.settings.water).values,ships:['player','enemy'].map(side=>({side,x:state.battle[side].x,dir:side==='player'?1:-1}))});}
 function visualCrew(f){return f.crew.map(g=>({...g,name:pirate(g.id).name,range:M.stats(pirate(g.id),g.level).range,type:{hull:0,crew:1,sails:2}[pirate(g.id).primary]}));}
 function configure(side){
  if(side==='home'){send(side,homeConfiguration());return;}
@@ -186,7 +186,7 @@ function setBattleView(mode){
  viewMode=mode;const target=desiredCamera();if(!target)return;
  for(const side of ['player','enemy'])send(side,{action:'view',...shipView(side)});
  cancelAnimationFrame(cameraAnimation);cameraTarget=target;
- const from={...camera},start=performance.now(),duration=state.settings.motion?460:0;
+ const from={...camera},start=performance.now(),duration=state.settings.motion?650:0;
  function tick(now){const t=duration?Math.min(1,(now-start)/duration):1,e=t*t*(3-2*t);camera=Object.fromEntries(Object.keys(target).map(k=>[k,from[k]+(target[k]-from[k])*e]));paintCombat();if(t<1)cameraAnimation=requestAnimationFrame(tick);else{cameraAnimation=0;cameraTarget=null;}}
  cameraAnimation=requestAnimationFrame(tick);
 }
@@ -224,7 +224,7 @@ function reactCrew(event,side,kills=0){
 }
 
 function updateArena(){
- const b=M.prepareBattle(state.battle);if(!b||!el('playerHealth'))return;
+ const b=M.prepareBattle(state.battle);if(!b||!el('playerPercent'))return;
  if(gunner!==null&&!M.active(b.player).some(g=>g.id===gunner))gunner=null;
  const activeCrew=M.active(b.player);
  let autoSelected=false;
@@ -232,7 +232,7 @@ function updateArena(){
  const locked=busy||b.phase!=='player';
  for(const side of ['player','enemy']){
   const f=b[side];send(side,{action:'sync',crew:visualCrew(f),parts:f,wind:state.battle?.wind??0,selected:side==='player'?gunner:null,...shipView(side)});
-  el(side+'Health').value=f.hull;el(side+'Percent').textContent=Math.ceil(f.hull/f.maxHull*100)+'%';
+  el(side+'Percent').textContent=Math.ceil(f.hull)+'/'+f.maxHull+' HP';
   el(side+'Meta').innerHTML='<span>'+Math.ceil(f.hull)+'/'+f.maxHull+' HP</span><span>'+Math.round(f.sails)+'% SAILS</span><span>'+M.active(f).length+' CREW</span>';
   el(side+'Meta').title='Hull sections: '+f.hullParts.map(p=>Math.ceil(p.hp)).join(' / ')+' · Masts: '+f.mastParts.map(p=>Math.ceil(p.hp)).join(' / ');
  }
@@ -260,8 +260,10 @@ function updateArena(){
  document.querySelectorAll('[data-action=sail]').forEach(e=>{const unavailable=locked||b.movesLeft<=0;e.disabled=unavailable;e.hidden=b.movesLeft<=0;e.setAttribute('aria-label',e.dataset.id==='1'?'Move forward':'Move backward');});
  el('shipWheel').disabled=locked||b.movesLeft<=0;
  el('movementLabel').textContent=b.movesLeft+' MOVES';
- const fin=document.querySelector('[data-action=finisher]');fin.disabled=locked||!b.charged;fin.hidden=!b.charged;fin.classList.toggle('charged',b.charged);fin.textContent='ATTACK';fin.title=M.FINISHERS[state.move].name;
- const count=b.charged?4:b.streak;el('chargeBalls').setAttribute('aria-label',count+' of 4 successful attacks'+(b.charged?' — big attack ready':''));el('chargeBalls').classList.toggle('ready',b.charged);const equipped=M.FINISHERS[state.move],hasArt=['shark','kraken','gull','whale','siren'].includes(equipped.art),attackIcon=el('chargeAttackIcon');attackIcon.hidden=!hasArt;if(hasArt){const art='/pirate-bash/public/killstreaks/'+equipped.art+'.png';if(attackIcon.getAttribute('src')!==art)attackIcon.src=art;attackIcon.alt=equipped.name;}el('chargeAttackText').textContent=(hasArt?'':equipped.icon+' ')+equipped.name;el('chargeAttackText').hidden=b.charged;el('chargeBalls').querySelectorAll('i').forEach((n,i)=>n.classList.toggle('lit',i<count));
+ const unavailable=b.phase==='player'&&b.charged?M.specialUnavailable(state):'';
+ const noTarget=unavailable&&(/crew|gunners/i.test(unavailable)?'No More Crew on Deck':/mast|sail/i.test(unavailable)?'No More Sails on Deck':'No More Hull');
+ const fin=document.querySelector('[data-action=finisher]');fin.disabled=locked||!b.charged||!!noTarget;fin.hidden=!b.charged||!!noTarget;fin.classList.toggle('charged',b.charged&&!noTarget);fin.textContent='ATTACK';fin.title=M.FINISHERS[state.move].name;
+ const count=b.charged?4:b.streak;el('chargeBalls').hidden=!!noTarget;el('chargeBalls').setAttribute('aria-label',count+' of 4 successful attacks'+(b.charged?' — big attack ready':''));el('chargeBalls').classList.toggle('ready',b.charged);const equipped=M.FINISHERS[state.move],hasArt=['shark','kraken','gull','whale','siren'].includes(equipped.art),attackIcon=el('chargeAttackIcon');attackIcon.hidden=!!noTarget||!hasArt;if(hasArt&&!noTarget){const art='/pirate-bash/public/killstreaks/'+equipped.art+'.png';if(attackIcon.getAttribute('src')!==art)attackIcon.src=art;attackIcon.alt=equipped.name;}el('chargeAttackText').textContent=noTarget||((hasArt?'':equipped.icon+' ')+equipped.name);el('chargeAttackText').hidden=b.charged&&!noTarget;el('chargeBalls').querySelectorAll('i').forEach((n,i)=>n.classList.toggle('lit',i<count));
  el('battleLog').textContent=b.log.at(-1)||'';
  layoutCombat();save();if(autoSelected)setBattleView('wide');
 }

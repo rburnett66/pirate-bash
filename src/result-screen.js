@@ -4,7 +4,7 @@ export function resultScreen(r){
  return `<section class="battle-result ${r.won?'victory':'defeat'}" data-result-id="${escape(r.id)}" aria-label="${r.won?'Victory':'Defeat'} battle results">
  <div class="result-canvas"><img class="result-background" src="/pirate-bash/public/menu-art/${r.won?'victory':'defeat'}-full.jpg" alt="${r.won?'Victorious pirate beside the battle rewards board':'Defeated pirate beside the battle rewards board'}">
  ${!r.won&&!r.rematch&&!r.rematchAsked?'<button class="result-rematch" data-action="rematch" aria-label="Demand a rematch"><img src="/pirate-bash/public/menu-art/rematch__e48b14f8.png" alt=""></button>':''}
- ${r.won?'<button class="result-port-button" data-action="return"><span aria-hidden="true">⚓</span> Return to port <span aria-hidden="true">⚓</span></button>':''}
+ ${r.won?'<button class="result-port-button" data-action="return"><img src="/pirate-bash/public/menu-art/ports/back.JPG" alt="Back to Port"></button>':''}
  <dl class="result-values">${values.map(([label,value],i)=>`<div class="result-value value-${i}"><dt class="sr-only">${label}</dt><dd data-reward="${label}">+${Math.floor(value).toLocaleString()}</dd></div>`).join('')}</dl></div>
  <footer class="result-footer"><div class="result-summary"><strong>${escape(r.enemyName)} · ${r.turns??'—'} turns</strong></div>
  <div class="result-actions"></div></footer>
