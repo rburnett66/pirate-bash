@@ -1,4 +1,4 @@
-import {SHIP_LADDER,hullConfig,stationAnchors,sailConfig} from './ship-config.js';
+import {SHIP_LADDER,hullConfig,stationAnchors,sailConfig,deckFoot} from './ship-config.js';
 export {SHIP_LADDER} from './ship-config.js';
 import {shipToWorld,worldToShip} from './ship-pose.js';
 import {ensureHullMask,maskSolid,maskSampleTimes,hullInside} from './hull-mask.js';
@@ -18,6 +18,7 @@ export function ensureGeometry(f,side){
  ensureHullMask(f);return f;
 }
 export function stationPosition(f,slot){
+ if(f.practiceBonus&&/^d[0-4]$/.test(slot)){const count=hullConfig(f.shipLevel).deck+1,x=(Number(slot.slice(1))/(count-1)-.5)*1.8;return {slot,x,y:deckFoot(x),port:false,width:.32*1.3,height:.44*1.3};}
  return stationAnchors(f.shipLevel).find(p=>p.slot===slot)||{x:0,y:-.52,port:true,width:0,height:0};
 }
 export function muzzle(f,side,g){

@@ -1,8 +1,9 @@
 import {localParabola} from './ship-pose.js';
 import {ART_HULL_BITS} from './ship-art-mask.js';
+import {LEGACY_ART_HULL_BITS} from './legacy-ship-art-mask.js';
 
 // One material bit per texel. Rendering and ballistics consume this same saved mask.
-export const HULL_MASK=Object.freeze({width:512,height:320,left:-1.4,bottom:-.8,spanX:2.8,spanY:1.6,version:2});
+export const HULL_MASK=Object.freeze({width:512,height:320,left:-1.4,bottom:-.8,spanX:2.8,spanY:1.6,version:3});
 const C=HULL_MASK,DX=C.spanX/C.width,DY=C.spanY/C.height,N=C.width*C.height,BYTES=N/8;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function legacyHullInside(x,y){
@@ -13,6 +14,8 @@ export function pixelPoint(col,row){return {x:C.left+(col+.5)*DX,y:C.bottom+(row
 export function hullSection(x,count){return clamp(Math.floor((x+1.08)/2.44*count),0,count-1);}
 const initial=new Uint8Array(N);
 const artBits=atob(ART_HULL_BITS),legacy=new Uint8Array(N);
+const previousBits=atob(LEGACY_ART_HULL_BITS),previous=new Uint8Array(N);
+for(let i=0;i<N;i++)previous[i]=(previousBits.charCodeAt(i>>3)&(1<<(i&7)))?255:0;
 for(let i=0;i<N;i++){initial[i]=(artBits.charCodeAt(i>>3)&(1<<(i&7)))?255:0;const p=pixelPoint(i%C.width,Math.floor(i/C.width));if(legacyHullInside(p.x,p.y))legacy[i]=255;}
 export function hullInside(x,y){const col=Math.floor((x-C.left)/DX),row=Math.floor((y-C.bottom)/DY);return col>=0&&col<C.width&&row>=0&&row<C.height&&initial[row*C.width+col]>0;}
 const initialCount=initial.reduce((s,p)=>s+(p>0),0),sectionCache=new Map(),cache=new WeakMap();
@@ -52,11 +55,12 @@ export function ensureHullMask(f){
 }
 export function maskPixels(f){
  if(!f.hullMask)return ensureHullMask(f);
- if(f.hullMask.version===1){
+ if(f.hullMask.version===1||f.hullMask.version===2){
   // Validate the old bitmap before migrating. Preserve each section's saved
   // condition when moving from the prototype silhouette to the supplied art.
-  const old=decode(f.hullMask.bits,legacy),count=f.hullParts?.length||f.shipLevel||1;
-  const full=sectionCounts(legacy,count),remaining=sectionCounts(old,count),max=(f.maxHull||1)/count;
+  const basis=f.hullMask.version===1?legacy:previous;
+  const old=decode(f.hullMask.bits,basis),count=f.hullParts?.length||f.shipLevel||1;
+  const full=sectionCounts(basis,count),remaining=sectionCounts(old,count),max=(f.maxHull||1)/count;
   f.hullParts=remaining.map((n,i)=>({maxHp:max,hp:full[i]?max*n/full[i]:0}));
   delete f.hullMask;return ensureHullMask(f);
  }

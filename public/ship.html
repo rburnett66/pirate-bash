@@ -1840,7 +1840,7 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
  const portPortraits=document.createElement('div');portPortraits.id='gamePorts';portPortraits.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:2';document.body.append(portPortraits);canvas.style.zIndex='4';interior.style.zIndex='1';
  const deathEffects=document.createElement('div');deathEffects.id='deathEffects';deathEffects.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:11;overflow:visible';document.body.append(deathEffects);
  const artRenderer=new ShipArtRenderer(interior);
- let gameRows=[],gameSelected=null,gameLevel=1,gameCutaway=false,gameMotion=true,portraitKey='';
+ let gameRows=[],gamePracticeBonus=false,gameSelected=null,gameLevel=1,gameCutaway=false,gameMotion=true,portraitKey='';
  function syncCrew(rows){
   const next=rows||[],dead=gameRows.filter(old=>old.hp>0&&next.some(g=>g.id===old.id&&g.hp<=0));
   if(dead.length&&gameMotion)dead.forEach(g=>{
@@ -1850,7 +1850,7 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
    const splash=document.createElement('i');splash.style.cssText='position:absolute;left:'+source.style.left+';top:calc('+source.style.top+' + 175px);width:34px;height:10px;border:3px solid #d9ffff;border-top-color:transparent;border-radius:50%;opacity:0';deathEffects.append(splash);splash.animate([{opacity:0,transform:'scale(.3)'},{opacity:1,transform:'scale(1.2)'},{opacity:0,transform:'scale(1.8)'}],{duration:500,delay:720,fill:'forwards'}).finished.then(()=>splash.remove());
   });
   gameRows=next;let d=0,h=0;
-  stations.forEach(st=>{const key=st.port?'h'+h++:'d'+d++,g=gameRows.find(g=>g.slot===key),position=stationPosition({shipLevel:gameLevel},key);st.x=position.x;st.y=position.y;st.slot=key;st.gunner=g?.id??-1;st.name=g?.name;st.type=g?.type??0;st.out=!g||g.hp<=0;});
+  stations.forEach(st=>{const key=st.port?'h'+h++:'d'+d++,g=gameRows.find(g=>g.slot===key),position=stationPosition({shipLevel:gameLevel,practiceBonus:gamePracticeBonus},key);st.x=position.x;st.y=position.y;st.slot=key;st.gunner=g?.id??-1;st.name=g?.name;st.type=g?.type??0;st.out=!g||g.hp<=0;});
   uploadStations();updateScopeLabels();drawPortraits();
  }
  function syncParts(f){
@@ -1863,8 +1863,8 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
   const key=[canvas.width,canvas.height,cam.ppu,cam.x,cam.y,gameLevel].join(':');
   if(interiorKey!==key){interiorKey=key;}
   const nextKey=key+':'+gameSelected+':'+gameRows.map(g=>g.id+':'+g.hp+':'+g.slot).join('|');if(portraitKey===nextKey)return;portraitKey=nextKey;
-  const drawRows=port=>stations.filter(st=>st.gunner>=1&&st.slot&&st.port===port).map(st=>{
-   const position=stationPosition({shipLevel:gameLevel},st.slot),foot=position.y,w=position.width*ppu,h=position.height*ppu;
+  const drawRows=port=>gameRows.filter(g=>g.slot.startsWith(port?'h':'d')).map(g=>({gunner:g.id,slot:g.slot,name:g.name,out:g.hp<=0,...stationPosition({shipLevel:gameLevel,practiceBonus:gamePracticeBonus},g.slot)})).map(st=>{
+   const position=stationPosition({shipLevel:gameLevel,practiceBonus:gamePracticeBonus},st.slot),foot=position.y,w=position.width*ppu,h=position.height*ppu;
    const x=rect.width/2+(st.x-cam.x)*ppu,y=rect.height/2-(foot-cam.y)*ppu;
    const pedestal=st.gunner===gameSelected?'<span data-pedestal style="position:absolute;left:'+(x-w*.6)+'px;top:'+(y-h*.09)+'px;width:'+w*1.2+'px;height:'+h*.15+'px;border-radius:50%;background:linear-gradient(#fff5ae,#d69922);box-shadow:0 0 12px #ffd450;pointer-events:none"></span>':'';
    return pedestal+'<img data-gunner="'+st.gunner+'" data-alive="'+!st.out+'" alt="'+(st.name||'Gunner')+'" src="/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+st.gunner+'.png" style="position:absolute;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;left:'+(x-w/2)+'px;top:'+(y-h)+'px;width:'+w+'px;height:'+h+'px;opacity:'+(st.out?0:1)+';filter:'+(st.gunner===gameSelected?'drop-shadow(0 0 3px #fff29a)':'none')+'">';
@@ -1890,7 +1890,7 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
   if(d.action==='configure'){
    document.body.dataset.preview=String(!!d.preview);document.body.dataset.previewClose=String(!!d.preview&&!!d.hideRig);
    const ladder=SHIP_LADDER;
-   interiorKey='';portraitKey='';gameMotion=d.motion!==false;gameCutaway=!!d.cutaway;showRig=!d.hideRig;gameLevel=d.level||1;[P.deckStations,P.hullStations]=ladder[gameLevel]||ladder[1];P.shake=0;repair();
+   interiorKey='';portraitKey='';gameMotion=d.motion!==false;gameCutaway=!!d.cutaway;showRig=!d.hideRig;gameLevel=d.level||1;gamePracticeBonus=!!d.parts?.practiceBonus;[P.deckStations,P.hullStations]=ladder[gameLevel]||ladder[1];P.shake=0;repair();
    artRenderer.configure(d,gameSide);gameSelected=d.selected;syncCrew(d.crew);syncParts(d.parts);mark.textContent='';
   }
   if(d.action==='sync'){gameSelected=d.selected;gameCutaway=!!d.cutaway;artRenderer.setView(d);syncCrew(d.crew);syncParts(d.parts);}

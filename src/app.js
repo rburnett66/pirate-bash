@@ -1,3 +1,4 @@
+import {readChallenge,practiceGame,issueChallenge,ownsChallenge,completeChallenge,resultsURL,readChallengeResult,claimChallengeResult} from './challenges.js';
 import {shipScreen,inventory,upgradeComparison} from './ship-screen.js';
 import {celebrateUpgrade} from './upgrade-celebration.js';
 import {resultScreen,preloadResult} from './result-screen.js';
@@ -13,19 +14,20 @@ import {SAIL_STYLES} from './ship-art-layout.js';
 import * as M from './model.js';
 const {$=null}= {};
 const el=id=>document.getElementById(id),fmt=n=>Math.floor(n).toLocaleString(),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let regularState=null,incomingChallenge=null;
 const KEY='pirate-clashers-v1';let state,saveError='',page='battle',tab='ship',selected=null,gunner=null,port=0,busy=false,scope=false,telescope=false,toastTimer,lastFocus;let inventoryTab='sails',upgradeBusy=false;const artWaiters=new Map();
 try{state=M.restore(localStorage.getItem(KEY));}catch(e){state=M.fresh();saveError='Your previous save could not be read. It has been preserved; use Settings to export it before starting a new save.';}
 port=state.port;
-function save(){if(saveError)return false;try{localStorage.setItem(KEY,JSON.stringify(state));return true;}catch(e){saveError='Progress could not be saved on this browser. Export your captain in Settings.';toast(saveError);return false;}}
+function save(){if(regularState)return true;if(saveError)return false;try{localStorage.setItem(KEY,JSON.stringify(state));return true;}catch(e){saveError='Progress could not be saved on this browser. Export your captain in Settings.';toast(saveError);return false;}}
 function toast(s){el('toast').textContent=s;el('toast').classList.add('toast-show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el('toast').classList.remove('toast-show'),3500);}
 function button(label,action,id='',cls='',disabled=false){return '<button class="'+cls+'" data-action="'+action+'" data-id="'+esc(id)+'" '+(disabled?'disabled':'')+'>'+label+'</button>';}
 const SCREENS={battle:['BATTLE','Your next adventure awaits.','battle'],crew:['CREW','The right crew. The wrong crowd.','crew'],ports:['LEADERS','Make your name across the seven seas.'],booty:['BOOTY PASS','The sea rewards the bold.','booty'],store:['STORE','A little edge. A lot of character.','store'],settings:['SETTINGS','Make yourself at home.'],water:['WATER WORKSHOP','Build your favorite seas.'],arena:['BATTLE','Ready, aim, plunder.']};
 function screenHeader(){const [name,tagline,banner]=SCREENS[page]||SCREENS.battle;return '<div class="screen-heading '+(banner?'has-banner':'')+'">'+(banner?artImage(banner,'screen-title-art'):'')+'<div><span class="game-wordmark">PIRATE BASH</span><h1>'+name+'</h1><p class="screen-tagline">'+tagline+'</p></div></div>';}
 
 
-function modal(html){el('sheet').className='';lastFocus=document.activeElement;el('sheet').innerHTML=button('×','close','','close')+html;if(!el('sheet').open)el('sheet').showModal();}
+function modal(html){el('sheet').className='';lastFocus=document.activeElement;el('sheet').innerHTML='<button type="button" class="close" data-action="close" aria-label="Close"><span aria-hidden="true">X</span></button>'+html;if(!el('sheet').open)el('sheet').showModal();}
 function close(){el('sheet').close();lastFocus?.focus?.();}
-el('sheet').addEventListener('close',()=>{if(el('sheet').classList.contains('match-intro'))el('sheet').querySelectorAll('iframe').forEach(f=>f.remove());lastFocus?.focus?.();});
+el('sheet').addEventListener('close',()=>{if(el('sheet').open)return;if(el('sheet').classList.contains('match-intro'))el('sheet').querySelectorAll('iframe').forEach(f=>f.remove());lastFocus?.focus?.();});
 function pirate(id){return M.PIRATES.find(p=>p.id===Number(id));}
 function art(p,cls='pirate-art'){if(p.id>=1&&p.id<=36)return '<img class="'+cls+'" src="/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+p.id+'.png" alt="'+esc(p.name)+'">';return '<div class="pirate-icon">'+p.icon+'</div>';}
 function cost(c){return Object.entries(c).map(([k,v])=>({gold:'🪙',gems:'💎',wood:'🪵',metal:'⚙',cloth:'▱'}[k]||'')+' '+fmt(v)+' '+k).join(' · ');}
@@ -54,7 +56,7 @@ function home(){
    <section class="card crew-overview"><div class="row between"><h3>Your fighting crew</h3>${button('Manage →','nav','crew','ghost small')}</div>
     <div class="crew-dots">${roster.map(p=>`<button class="crew-preview" data-action="detail" data-id="${p.id}" aria-label="View ${esc(p.name)}">${portrait(p)}<span>${esc(p.name)}</span></button>`).join('')}</div>
     <p class="footer-note">${roster.length} gunners aboard · Ship level ${state.shipLevel}</p>
-    ${recent}
+    ${recent}<div class="challenge-action">${button('Text a challenge','challenge','','small')}${state.friendChallenges?.lastResult?button('Copy battle results','challenge-results','','small'):''}</div>
    </section>
    <section class="card orders-card">
     <div class="daily-orders"><div class="row between"><h3>Captain’s orders</h3><span class="pill">DAILY</span></div><div class="quest"><div class="row between"><span>Finish 3 battles</span><span>${Math.min(3,state.quests.matches)}/3</span></div><progress max="3" value="${state.quests.matches}"></progress>${button(state.quests.dailyClaim?'Collected ✓':'Claim 100 season XP','quest','daily','small',state.quests.dailyClaim||state.quests.matches<3)}</div></div>
@@ -155,7 +157,7 @@ async function matchSearch(){
 }
 function matchIntro(){
  const b=state.battle;if(!b)return;
- const team=side=>{const f=b[side];return `<section class="match-team ${side}"><div class="match-captain"><small>${side==='player'?'YOUR CAPTAIN':'LOCAL RIVAL'}</small><h2>${esc(side==='player'?state.name:b.enemyName)}</h2><strong>🏆 ${side==='player'?state.trophies:M.board(state).find(r=>r.name===b.enemyName)?.trophies??'—'}</strong></div><div class="match-ship"><iframe src="/pirate-bash/public/ship.html?side=${side}" title="${side==='player'?'Your':'Rival'} ship and sails" tabindex="-1" data-preview="${side}"></iframe></div></section>`;};
+ const team=side=>{const f=b[side];return `<section class="match-team ${side}"><div class="match-captain"><small>${side==='player'?'YOUR CAPTAIN':'LOCAL RIVAL'}</small><h2>${esc(side==='player'?state.name:b.enemyName)}</h2><strong>🏆 ${side==='player'?state.trophies:M.board(state).find(r=>r.name===b.enemyName)?.trophies??'—'}</strong></div><div class="match-ship">${side==='player'&&b.bonusGunner?`<div class="bonus-gunner" role="status"><strong>Bonus Gunner</strong><span>${esc(pirate(b.bonusGunner).name)} joins your ship!</span></div>`:''}<iframe src="/pirate-bash/public/ship.html?side=${side}" title="${side==='player'?'Your':'Rival'} ship and sails" tabindex="-1" data-preview="${side}"></iframe></div></section>`;};
  const crew=side=>`<aside class="match-crew ${side}-crew" aria-label="${side==='player'?'Your':'Rival'} crew">${b[side].crew.map(g=>`<div class="match-crew-icon" role="img" aria-label="${esc(pirate(g.id).name)}">${portrait(pirate(g.id))}</div>`).join('')}</aside>`;
  modal(`<div class="match-background">${artImage(harbor(state.settings.harbor).id)}</div><div class="match-heading"><small>PIRATE BASH</small><h1>ALL HANDS ON DECK</h1><p>${esc(M.PORTS[state.port])} · Prepare for a broadside.</p></div><div class="match-teams">${crew('player')}${team('player')}<span class="match-vs">VS</span>${team('enemy')}${crew('enemy')}</div><div class="match-begin">${button(artImage('battle','','Battle'),'begin-battle','','art-button match-battle-button')}</div>`);
  el('sheet').classList.add('match-intro');
@@ -237,9 +239,10 @@ function updateArena(){
  el('turnLabel').textContent='TURN '+b.turn;
  el('turnClock').textContent=own?Math.ceil(b.seconds??30)+'s':'';
  el('shots').textContent=(own?b.shots:b.phase==='flight'&&shotSide==='player'?b.shots:b.enemyShots)+' shots left';
- const roster=M.active(b.player),gunHTML=roster.map(g=>button(portrait(pirate(g.id))+'<small>'+esc(pirate(g.id).name)+'</small>','gun',g.id,gunner===g.id?'active':'',locked)).join('');
+ const roster=M.active(b.player),gunHTML=roster.map(g=>'<button data-action="gun" data-id="'+g.id+'" aria-label="Select '+esc(pirate(g.id).name)+'" '+(locked?'disabled':'')+'>'+portrait(pirate(g.id))+'</button>').join('');
  if(el('guns').renderedMarkup!==gunHTML){el('guns').innerHTML=gunHTML;el('guns').renderedMarkup=gunHTML;}
- const targets=gunner===null&&!locked?roster.map(g=>{const p=pirate(g.id);return `<button data-action="gun" data-id="${g.id}" aria-label="Select ${esc(p.name)}" title="${esc(p.projectile)}"><span>${p.icon} ${M.stats(p,g.level).range} m<small>${esc(p.primary.toUpperCase())}</small></span></button>`;}).join(''):'';
+ el('guns').parentElement.hidden=gunner!==null;
+ const targets=!locked&&!telescope?roster.map(g=>{const p=pirate(g.id);return `<button data-action="gun" data-id="${g.id}" aria-label="Select ${esc(p.name)}" title="${esc(p.projectile)}"></button>`;}).join(''):'';
  if(el('crewTargets').renderedMarkup!==targets){el('crewTargets').innerHTML=targets;el('crewTargets').renderedMarkup=targets;}
  const g=roster.find(g=>g.id===gunner),p=g&&pirate(g.id),spec=p&&M.projectileFor(p),stats=p&&M.stats(p,g.level);
  el('weaponInfo').innerHTML=p?'<strong>'+esc(p.name)+'</strong><span>'+esc(p.projectile)+' · Lv. '+g.level+'</span><small>'+stats.range+' m · '+stats.damage+' damage · +60% vs '+spec.bonus+'</small>':'';
@@ -338,7 +341,7 @@ document.addEventListener('pointercancel',e=>{if(draggingWheel?.id===e.pointerId
 function pointerAim(e){if(!draggingAim)return;const aim=dragAim(draggingAim,{x:e.clientX,y:e.clientY});draggingAim.result=aim;
  if(aim.moved){if(aim.cancel){el('shotReadout').textContent='RELEASE TO CHOOSE ANOTHER GUNNER';el('aimArc').style.opacity='.25';}else{el('aimArc').style.opacity='1';el('shotReadout').textContent='RELEASE TO FIRE · '+aim.angle+'°';changeAngle(aim.angle);}}
 }
-document.addEventListener('pointerdown',e=>{const field=e.target.closest('#combatField');const control=e.target.closest('button,input,#guns,#weaponInfo,.aim-panel,.move-panel,#shipWheel');if(field&&!control&&gunner!==null&&!busy&&state.battle?.phase==='player'&&e.isPrimary){const box=field.getBoundingClientRect();if(e.clientY<box.top+box.height*.2||e.clientY>box.top+box.height*.82)return;draggingAim={x:e.clientX,y:e.clientY,id:e.pointerId};field.setPointerCapture?.(e.pointerId);setBattleView('wide');e.preventDefault();}});
+document.addEventListener('pointerdown',e=>{const field=e.target.closest('#combatField');const control=e.target.closest('button,input,#guns,#weaponInfo,.aim-panel,.move-panel,#shipWheel');if(field&&!control&&gunner!==null&&!busy&&state.battle?.phase==='player'&&e.isPrimary){const box=field.getBoundingClientRect(),crew=document.querySelector('.crew-stack')?.getBoundingClientRect(),streak=document.querySelector('.move-panel')?.getBoundingClientRect(),wheel=el('shipWheel')?.getBoundingClientRect(),enemy=el('enemyShip')?.getBoundingClientRect();const left=crew?.right??box.left,right=enemy?.left??box.right,top=Math.max(box.top,streak?.bottom??box.top),bottom=Math.min(box.bottom,wheel?.top??box.bottom);if(e.clientX<left||e.clientX>right||e.clientY<top||e.clientY>bottom)return;draggingAim={x:e.clientX,y:e.clientY,id:e.pointerId};field.setPointerCapture?.(e.pointerId);setBattleView('wide');e.preventDefault();}});
 document.addEventListener('pointermove',e=>{if(draggingAim?.id===e.pointerId)pointerAim(e);});
 function cancelAim(){draggingAim=null;scope=false;if(el('aimArc'))el('aimArc').style.opacity='1';updateArena();setBattleView('crew');}
 document.addEventListener('pointerup',e=>{if(!draggingAim||draggingAim.id!==e.pointerId)return;pointerAim(e);const result=draggingAim.result;draggingAim=null;el('aimArc').style.opacity='1';if(result?.moved){if(result.cancel)cancelAim();else fire();}});
@@ -364,6 +367,7 @@ async function finish(){
   clearTimeout(cheerTimer);if(el('crewCheer')){el('crewCheer').hidden=false;el('crewCheer').textContent=(b.won?'YOUR CREW':'RIVAL CREW')+': VICTORY!';}
   await sleep(state.settings.motion?2100:120);busy=false;
  }
+ if(state.battle?.practice){showCompletedChallenge();return;}
  M.settle(state);save();const r=state.lastResult;if(!r)return;await preloadResult(r.won);if(state.lastResult?.id!==r.id)return;sound(r.won?640:160,.5);modal(resultScreen(r));el('sheet').className='battle-result-sheet';}
 
 let cinemaResolve=null;
@@ -383,7 +387,45 @@ cinemaResolve=null;c.hidden=true;busy=false;sound(650,.3);updateArena();if(state
 }
 
 function help(){modal('<div class="eyebrow">WELCOME ABOARD</div><h2>Your ship. Your shots. Your spoils.</h2><p><strong>1. Post your crew.</strong> Select a pirate and tap an open station. Deck gunners are exposed; hull gunners get cover.</p><p class="spaced"><strong>2. Pick your shots.</strong> Your turn is highlighted in gold. Move ahead or back up to twice, choose a gunner, then pull back and release to fire. Aim straight up or backward to cancel; the angle slider and Fire button also work. Each weapon has fixed power and a shown range. Every slow, arcing projectile damages the first intact part it hits; its specialty gets bonus damage. You have two shots per turn.</p><p class="spaced"><strong>3. Make a scene.</strong> Hit both shots four turns running to charge your equipped finishing move.</p><p class="spaced"><strong>4. Bring home the booty.</strong> Wins earn chests. Cards and gold upgrade your crew. Weekly wins move you through ports.</p><div class="row spaced">'+button('Aye, captain →','onboard','','primary')+'</div>');}
-function homeConfiguration(){return {action:'configure',level:state.shipLevel,sailLevel:state.sailLevel,flag:state.flag,figure:state.figurehead,crew:Object.entries(state.slots).map(([slot,id])=>({id,slot,hp:M.stats(pirate(id),state.levels[id]).hp,name:pirate(id).name,type:{hull:0,crew:1,sails:2}[pirate(id).primary]})),cosmetic:state.cosmetic,plating:state.plating,motion:state.settings.motion,preview:true,cutaway:tab==='gunners',hideRig:tab==='gunners'};}
+function rewardFireworks(){
+ const layer=document.createElement('div');layer.className='reward-fireworks';layer.setAttribute('aria-hidden','true');
+ const reduced=!state.settings.motion||matchMedia('(prefers-reduced-motion: reduce)').matches;
+ for(let burst=0;burst<5;burst++)for(let i=0;i<(reduced?6:20);i++){const spark=document.createElement('i'),a=i*Math.PI*2/(reduced?6:20),r=65+(i%4)*24;spark.style.cssText=`--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px;--delay:${burst*180}ms;--color:${['#ffce43','#ff6e7a','#65eaff','#c091ff','#fff4be'][burst]};left:${15+burst*17}%;top:${28+(burst%2)*24}%`;layer.append(spark);}
+ if(reduced)layer.classList.add('reduced');(el('sheet').open?el('sheet'):document.body).append(layer);setTimeout(()=>layer.remove(),2200);
+}
+function showChallenge(){
+ let link;try{updateChallengeCaptain(s=>{link=issueChallenge(s,location.href);});}catch(error){toast(error.message);return;}
+ const text='Can you beat my ship in Pirate Bash? You get a bonus gunner, and we each earn 100 wood. Send me your results after the battle: '+link;
+ const ios=/iPhone|iPad|iPod/.test(navigator.userAgent),sms='sms:'+(ios?'&':'?')+'body='+encodeURIComponent(text);
+ modal('<div class="eyebrow">FRIEND CHALLENGE</div><h2>Challenge a friend</h2><p>They battle a copy of your ship, using their own ship or a new ship to keep. They get one bonus gunner and 100 wood after the battle. Open their results link to collect your 100 wood.</p><div class="row spaced"><a class="challenge-text-button" href="'+esc(sms)+'">Send as text</a>'+button('Copy link','copy-challenge')+'</div><label class="challenge-link-label">Challenge link<input id="challengeLink" readonly value="'+esc(link)+'"></label>'+(/^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname)?'<p class="footer-note">For phone testing, create this link from the phone preview address. Both phones must be on the same Wi-Fi while the server is running.</p>':''));
+}
+function updateChallengeCaptain(change){
+ if(saveError)throw Error(saveError);
+ const raw=localStorage.getItem(KEY),next=raw?M.restore(raw):structuredClone(regularState||state);
+ const result=change(next);M.validate(next);
+ try{localStorage.setItem(KEY,JSON.stringify(next));}catch{throw Error('Could not save your challenge reward. Free browser storage and try again.');}
+ if(regularState)regularState=next;else state=next;return result;
+}
+function resultsShare(result){
+ if(!result)return '<p>This older challenge has no return link. Ask your friend for a new challenge to earn wood.</p>';
+ const link=resultsURL(result,location.href),sms='sms:'+(/iPhone|iPad|iPod/.test(navigator.userAgent)?'&':'?')+'body='+encodeURIComponent('I '+(result.won?'beat':'battled')+' your ship in Pirate Bash! Open my results to collect 100 wood: '+link);
+ return '<div class="row spaced">'+button('Copy results link','copy-results','','primary')+'<a class="challenge-text-button" href="'+esc(sms)+'">Text results</a></div><label class="challenge-link-label">Results link<input id="resultsLink" readonly value="'+esc(link)+'"></label>';
+}
+function showCompletedChallenge(){
+ const b=state.battle;let receipt;
+ try{receipt=updateChallengeCaptain(s=>completeChallenge(s,incomingChallenge,state));}catch(error){modal('<h2>Save your result</h2><p>'+esc(error.message)+'</p>'+button('Try again','retry-challenge-result','','primary'));return;}
+ b.rewarded=true;
+ modal('<div class="eyebrow">FRIEND CHALLENGE</div><h2>'+(b.won?'Victory!':'Defeat')+'</h2><p>Against '+esc(b.enemyName)+' · '+b.turn+' turns</p>'+(receipt.result?'<p><strong>'+(receipt.awarded?'+100 wood added to your inventory.':'Your 100 wood for this challenge is already collected.')+'</strong></p><p>Send your results to '+esc(b.enemyName)+' so they can collect 100 wood too. Each captain earns once per challenge link.</p>':'')+resultsShare(receipt.result)+'<div class="row spaced">'+button('Play again','practice-again')+button('Return to port','return')+'</div>');
+}
+function acceptChallenge(){
+ try{
+  const captain=regularState||state;if(ownsChallenge(captain,incomingChallenge))throw Error('This is your challenge. Send the link to a friend to battle your ship.');
+  const game=practiceGame(incomingChallenge,captain.onboarded?captain:null);
+  if(!captain.onboarded){const kept=structuredClone(game);kept.battle=null;M.validate(kept);if(saveError)throw Error(saveError);localStorage.setItem(KEY,JSON.stringify(kept));regularState=kept;}else regularState=captain;
+  state=game;page='arena';gunner=null;close();render();matchIntro();
+ }catch(error){toast(error.message);}
+}
+function homeConfiguration(){return {action:'configure',level:state.shipLevel,sailLevel:state.sailLevel,flag:state.flag,figure:state.figurehead,crew:Object.entries(state.slots).map(([slot,id])=>({id,slot,hp:M.stats(pirate(id),state.levels[id]).hp,name:pirate(id).name,type:{hull:0,crew:1,sails:2}[pirate(id).primary]})),cosmetic:state.cosmetic,plating:state.plating,motion:state.settings.motion,preview:true,cutaway:tab==='gunners'||tab==='ship',hideRig:tab==='gunners'};}
 async function purchaseHull(expected){
  if(upgradeBusy||saveError)return;const previous=structuredClone(state),before=M.hullConfig(state.shipLevel);if(!M.shipUpgrade(state,expected)){toast('Not enough supplies, or finish your current battle first.');return;}
  if(!save()){state=previous;render();return;}upgradeBusy=true;el('app').inert=true;const after=M.hullConfig(state.shipLevel),stage=el('homeShip')?.parentElement;
@@ -394,10 +436,15 @@ async function purchaseHull(expected){
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==el('homeShip')?.contentWindow)return;const d=e.data;if(d?.type==='pirate-art-ready'){artWaiters.get(d.requestId)?.();artWaiters.delete(d.requestId);}if(d?.type==='pirate-stations')for(const p of d.anchors){const button=document.querySelector('.ship-diagram [data-id="'+p.slot+'"]');if(button){button.style.left=p.left+'%';button.style.top=p.top+'%';button.setAttribute('aria-label',(state.slots[p.slot]?pirate(state.slots[p.slot]).name:'Empty')+' '+(p.port?'gun port':'deck')+' station '+(Number(p.slot[1])+1));}}});
 function actionResult(ok,msg){if(!ok)toast('Not enough supplies, or this action is not available yet.');else{save();toast(msg);render();}}
 document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-action]');if(!b||b.disabled||upgradeBusy)return;const {action:a,id}=b.dataset;switch(a){
-case 'nav':page=id;render();break;
+case 'nav':page=id;render();window.scrollTo({top:0,left:0,behavior:'instant'});el('main').scrollTo({top:0,left:0,behavior:'instant'});break;
+case 'challenge':showChallenge();break;
+case 'copy-challenge':case 'copy-results':{const input=el(a==='copy-results'?'resultsLink':'challengeLink');try{await navigator.clipboard.writeText(input.value);toast('Link copied.');}catch{input.focus();input.select();input.setSelectionRange(0,input.value.length);if(document.execCommand('copy'))toast('Link copied.');else toast('Press and hold the selected link, then choose Copy.');}break;}
+case 'accept-challenge':case 'practice-again':acceptChallenge();break;
+case 'retry-challenge-result':showCompletedChallenge();break;
+case 'challenge-results':modal('<h2>Your battle results</h2><p>Your 100 wood is already collected. Send this link to your friend for their reward.</p>'+resultsShare(state.friendChallenges.lastResult));break;
 case 'last-result':finish();break;
 case 'harbor':if(HARBORS.some(h=>h.id===id)){state.settings.harbor=id;save();close();render();}break;
-case 'close':close();if(page==='arena'&&state.battle?.phase==='result'){page='battle';state.battle=null;save();render();}break;
+case 'close':close();if(page==='arena'&&state.battle?.phase==='result'){page='battle';if(regularState){state=regularState;regularState=null;history.replaceState(null,'',location.pathname+location.search);}else state.battle=null;save();render();}break;
 case 'tab':tab=id;render();break;
 case 'yard':page='crew';tab='yard';render();break;
 case 'select':selected=Number(id);render();break;
@@ -419,13 +466,13 @@ case 'figure':actionResult(M.figure(state,id),'Figurehead fitted.');break;
 case 'cosmetic':actionResult(M.cosmetic(state,Number(id)),'Flying your colors.');break;
 case 'weekly':modal('<h2>Weekly orders</h2><p class="spaced">Win 5 battles · '+Math.min(5,state.quests.wins)+'/5</p><div class="spaced">'+button(state.quests.weeklyClaim?'Claimed ✓':'Claim 300 XP','quest','weekly','primary',state.quests.weeklyClaim||state.quests.wins<5)+'</div>');break;
 case 'quest':if(id==='weekly'&&el('sheet').open)close();actionResult(M.questClaim(state,id),'Season XP claimed.');break;
-case 'chest':{const r=M.openChest(state,id);if(!r)break;save();render();modal('<div class="eyebrow">A FAIR SHARE OF THE SPOILS</div>'+artImage('open','dialog-banner','Open booty chest')+'<h2>Look what the tide brought in.</h2><p class="gold">+'+r.gold+' gold</p><div class="chest-card-reveal" id="chestCardReveal" role="list" aria-label="Four cards revealed one at a time" aria-live="polite"></div><p class="footer-note">'+r.draws.length+' new cards found</p>');el('sheet').classList.add('chest-reveal-modal');const reveal=el('chestCardReveal'),revealNext=index=>{if(!reveal.isConnected||index>=r.draws.length)return;const p=pirate(r.draws[index]),card=document.createElement('article');card.className='chest-reward-card';card.dataset.revealIndex=String(index);card.dataset.revealedAt=String(performance.now());card.setAttribute('role','listitem');card.innerHTML=portrait(p)+'<strong>'+esc(p.name)+'</strong><small>+1 CARD</small>';reveal.append(card);setTimeout(()=>revealNext(index+1),500);};revealNext(0);break;}
+case 'chest':{const r=M.openChest(state,id);if(!r)break;save();render();modal('<div class="eyebrow">A FAIR SHARE OF THE SPOILS</div>'+artImage('open','dialog-banner','Open booty chest')+'<h2>Look what the tide brought in.</h2><p class="gold">+'+r.gold+' gold</p><div class="chest-card-reveal" id="chestCardReveal" role="list" aria-label="Four cards revealed one at a time" aria-live="polite"></div><p class="footer-note">'+r.draws.length+' new cards found</p>');el('sheet').classList.add('chest-reveal-modal');rewardFireworks();const reveal=el('chestCardReveal'),revealNext=index=>{if(!reveal.isConnected||index>=r.draws.length)return;const p=pirate(r.draws[index]),card=document.createElement('article');card.className='chest-reward-card';card.dataset.revealIndex=String(index);card.dataset.revealedAt=String(performance.now());card.setAttribute('role','listitem');card.innerHTML=portrait(p)+'<strong>'+esc(p.name)+'</strong><small>+1 CARD</small>';reveal.append(card);setTimeout(()=>revealNext(index+1),500);};revealNext(0);break;}
 case 'port':setPort(Number(id));break;
 case 'port-step':stepPort(Number(id));break;
 case 'scenery':scenery();break;
 case 'captain':{const p=M.board(state,port)[Number(id)];modal('<div class="eyebrow">'+M.PORTS[port]+' · CAPTAIN’S RECORD</div><h2>'+esc(p.name)+'</h2><div class="stats"><div class="stat"><small>SHIP LEVEL</small><strong>'+p.level+'</strong></div><div class="stat"><small>WEEKLY WINS</small><strong>'+p.wins+'</strong></div><div class="stat"><small>TROPHIES</small><strong>'+p.trophies+'</strong></div></div><p>'+(p.self?'Your place in these waters.':'A seeded rival captain. Scout the enemy deck during battle to identify their gunners.')+'</p>');break;}
-case 'claim':{const[l,p]=id.split(':');actionResult(M.claim(state,Number(l),p==='true'),'Reward claimed.');break;}
-case 'claim-all':{let n=0;for(let l=1;l<=M.seasonLevel(state);l++)for(const p of[false,true])if(M.claim(state,l,p))n++;save();render();toast(n?n+' rewards claimed.':'All available rewards already claimed.');break;}
+case 'claim':{const[l,p]=id.split(':');const claimed=M.claim(state,Number(l),p==='true');actionResult(claimed,'Reward claimed.');if(claimed)rewardFireworks();break;}
+case 'claim-all':{let n=0;for(let l=1;l<=M.seasonLevel(state);l++)for(const p of[false,true])if(M.claim(state,l,p))n++;save();render();toast(n?n+' rewards claimed.':'All available rewards already claimed.');if(n)rewardFireworks();break;}
 case 'moves':moves();break;
 case 'move':{const n=Number(id);if(state.moves.includes(n)||M.buyMove(state,n)){state.move=n;save();moves();}else toast('Earn more gems from port discoveries and chest runs.');break;}
 case 'decline':M.declineOffer(state,id);save();render();break;
@@ -450,9 +497,9 @@ case 'fire':await fire();break;
 case 'skip-cinema':cinemaResolve?.();break;
 case 'finisher':await finisher();break;
 case 'scope':telescope=!telescope;setBattleView(telescope?'scope':'crew');updateArena();break;
-case 'retreat':modal('<h2>Strike your colors?</h2><p>Retreat counts as a loss. Your crew still earns a little gold for the fight.</p><div class="row spaced">'+button('Retreat','confirm-retreat','','danger')+button('Keep fighting','close','','primary')+'</div>');break;
+case 'retreat':modal('<h2>Strike your colors?</h2><p>Retreat counts as a loss.</p><div class="row spaced">'+button('Retreat','confirm-retreat','','danger')+button('Keep fighting','close','','primary')+'</div>');break;
 case 'confirm-retreat':close();state.battle.won=false;state.battle.phase='result';finish();break;
-case 'return':close();state.battle=null;page='battle';save();render();break;
+case 'return':close();if(regularState){state=regularState;regularState=null;history.replaceState(null,'',location.pathname+location.search);}else state.battle=null;page='battle';save();render();break;
 case 'rematch':{b.disabled=true;b.textContent='Waiting for their answer…';await sleep(1500);const r=M.requestRematch(state);save();if(r){close();page='arena';gunner=null;render();matchIntro();toast('Challenge accepted. Their accuracy is reduced 20%.');}else{modal('<div class="rematch-scene">'+artImage('fog')+'</div><h2>RUNNING SCARED.</h2><p>'+esc(state.lastResult.enemyName)+' has decided the open sea looks safer. No rematch, no reward. Their pride is another matter.</p><div class="spaced">'+button('Back to port','return','','primary')+'</div>');}break;}
 }});
 document.addEventListener('change',async e=>{if(e.target.id==='waterLook'){const library=waterLibrary(state.settings.water);library.selected=e.target.value;state.settings.water=waterLibrary(library);save();toast('Battle water look selected.');}if(e.target.id==='captainName'){state.name=e.target.value.trim().slice(0,24)||'Captain';save();}if(e.target.id==='importSave'){const file=e.target.files[0];if(!file)return;try{const next=M.restore(await file.text());state=next;saveError='';save();render();toast('Captain restored.');}catch{toast('That file is not a valid captain backup. Nothing changed.');}}});
@@ -476,5 +523,15 @@ window.addEventListener('message',e=>{
 document.addEventListener('keydown',e=>{if(page==='arena'&&!el('sheet').open&&e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();fire();}});
 setInterval(async()=>{if(page==='arena'&&!busy&&!document.hidden&&!el('sheet').open&&state.battle?.phase==='player'){const expired=M.elapse(state);updateArena();if(expired){await runEnemyTurn();}}const old=state.bench?.id,stamp=state.day+state.week+state.season,dealKeys=Object.keys(state.deals).join();M.offers(state);if(page==='store'&&dealKeys!==Object.keys(state.deals).join())render();M.advance(state,Date.now());if(stamp!==state.day+state.week+state.season){save();if(page!=='arena')render();}if(old&&!state.bench){save();if(page!=='arena')render();toast('Your gunner’s upgrade is complete.');}document.querySelectorAll('[data-timer]').forEach(n=>n.textContent=duration(Number(n.dataset.timer)-Date.now())+' remaining');},1000);
 function duration(ms){const m=Math.max(0,Math.ceil(ms/60000));return m>=60?Math.floor(m/60)+'h '+m%60+'m':m+'m';}
-render();if(!state.onboarded)setTimeout(help,500);
-
+function openIncomingChallenge(){
+ try{
+  if(!/^#challenge(?:-result)?=/.test(location.hash))return;
+  if(regularState)throw Error('Return to port before opening another challenge or result.');
+  const result=readChallengeResult(location.hash);
+  if(result){const awarded=updateChallengeCaptain(s=>claimChallengeResult(s,result));render();modal('<div class="eyebrow">CHALLENGE RESULTS</div><h2>'+esc(result.friend)+(result.won?' beat your ship!':' battled your ship!')+'</h2><p>'+result.turns+' turns</p><p><strong>'+(awarded?'+100 wood added to your inventory.':'You already collected 100 wood for this challenge.')+'</strong></p>'+button('Return to port','return','','primary'));return;}
+  incomingChallenge=readChallenge(location.hash);
+  if(incomingChallenge)modal('<div class="eyebrow">FRIEND CHALLENGE</div><h2>'+esc(incomingChallenge.ship.name)+' challenges you!</h2><p>Battle a copy of their ship with your own ship, or get a new ship to keep. A bonus gunner joins you for this battle.</p><p>'+(incomingChallenge.id?'Finish the battle for 100 wood, then send your results so your friend can collect 100 wood too.':'This older practice link has no wood reward.')+'</p>'+button('Accept challenge','accept-challenge','','primary'));
+ }catch(error){modal('<h2>Cannot open link</h2><p>'+esc(error.message)+'</p>');}
+}
+window.addEventListener('hashchange',openIncomingChallenge);
+render();if(/^#challenge(?:-result)?=/.test(location.hash))openIncomingChallenge();else if(!state.onboarded)setTimeout(()=>{if(!state.onboarded&&!el('sheet').open&&!/^#challenge(?:-result)?=/.test(location.hash))help();},500);

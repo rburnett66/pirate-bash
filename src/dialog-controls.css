@@ -1,0 +1,20 @@
+/* One physical size and square shape across ordinary, matchup and result sheets. */
+#sheet>.close{
+ --close-size:calc(60px / var(--ui-scale,1));
+ position:absolute;top:8px;right:8px;z-index:20;
+ display:grid;place-items:center;flex:none;
+ width:var(--close-size);height:var(--close-size);
+ min-width:var(--close-size);min-height:var(--close-size);max-width:none;
+ aspect-ratio:1;padding:0;border:2px solid #c59a58;border-radius:9px;
+ background:linear-gradient(145deg,#392619,#160f0b);
+ box-shadow:inset 0 0 0 2px #100a0680,0 3px 7px #0008;
+ color:#ef5949;font:calc(46px / var(--ui-scale,1))/1 'Lilita One',Impact,serif;
+ text-shadow:1px 2px 0 #651b15,-1px -1px 0 #ffaf79;
+}
+#sheet>.close>span{display:block;transform:rotate(-9deg);pointer-events:none}
+#sheet>.close:hover{background:linear-gradient(145deg,#563622,#21140d);color:#ff7965}
+#sheet>.close:active>span{transform:rotate(-9deg) scale(.92)}
+#sheet>.close:focus-visible{outline:3px solid #ffe5a1;outline-offset:3px}
+#sheet:not(.match-intro):not(.match-search):not(.battle-result-sheet){padding-top:calc(68px / var(--ui-scale,1))}
+.match-heading{padding-inline:calc(62px / var(--ui-scale,1))}
+@media(max-width:649px){.match-heading{padding-inline:50px}.match-heading h1{font-size:21px}}

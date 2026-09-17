@@ -4,11 +4,11 @@ import {ECON} from './catalog.js';
 export const PROGRESSION_VERSION=2;
 export const SHIP_LADDER={1:[2,1],2:[2,2],3:[3,2],4:[3,3],5:[4,3],6:[4,4]};
 export const SHIP_TUNING={baseMove:.3,moveGain:.05,figureBonus:.05,figureGradeGain:.025};
-const deckSurface=[[-1,.28],[-.63,.12],[-.38,-.015],[0,-.115],[.25,-.085],[.65,.025],[1,.10]];
+const deckSurface=[[-1,.28],[-.63,.14],[-.38,.096],[0,.04],[.25,.059],[.65,.128],[1,.16]];
 export function deckFoot(x){for(let i=1;i<deckSurface.length;i++){const a=deckSurface[i-1],b=deckSurface[i];if(x<=b[0]){const t=Math.max(0,(x-a[0])/(b[0]-a[0]));return a[1]+(b[1]-a[1])*t;}}return .1;}
-const anchors=(n,port)=>Array.from({length:n},(_,i)=>{const x=n===1?0:(i/(n-1)-.5)*1.45;return {slot:(port?'h':'d')+i,x,y:port?-.52:deckFoot(x),port,width:.32*1.3,height:port?.38:.44*1.3};});
+const anchors=(n,port)=>Array.from({length:n},(_,i)=>{const x=n===1?0:(i/(n-1)-.5)*1.45;return {slot:(port?'h':'d')+i,x,y:port?-.54:deckFoot(x),port,width:.32*1.3,height:.44*1.3};});
 export const HULLS=Object.entries(SHIP_LADDER).map(([key,[deck,hold]],i)=>({
- level:+key,hull:['IMG_7298','IMG_7291','IMG_7293','IMG_7294','IMG_7297','IMG_7287'][i],
+ level:+key,hull:'revised-hull',
  inner:'bodies/xray-hull-nomast-right.png',hp:540+i*40,movement:1+i*SHIP_TUNING.moveGain,
  deck,hold,capacity:deck+hold,sections:deck+hold,ports:hold,
  deckAnchors:anchors(deck,false),holdAnchors:anchors(hold,true),

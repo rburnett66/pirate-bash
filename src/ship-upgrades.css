@@ -1,8 +1,6 @@
 /* Reference result boards retain their 1792 x 1008 coordinates. */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #sheet.battle-result-sheet{width:min(1440px,96vw);max-width:96vw;max-height:96dvh;padding:0;border:2px solid #9c7137;border-radius:12px;background:#1c130e;overflow:hidden}
-.battle-result-sheet>.close{z-index:5!important;background:#1a110de6!important;color:#fff!important;width:44px;height:44px;border:1px solid #dfbc70!important;border-radius:50%;top:6px!important;right:6px!important}
-.battle-result-sheet>.close{width:72px;height:72px;top:10px!important;right:10px!important;font-size:34px!important;line-height:1}
 .result-canvas{position:relative;width:100%;aspect-ratio:1792/1008;container-type:inline-size}
 .result-rematch{position:absolute;z-index:2;right:3.5%;bottom:4%;width:23%;padding:0;border:0;background:transparent!important;box-shadow:none!important;min-height:0;line-height:0}
 .result-rematch img{display:block;width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 3px 5px #000b)}

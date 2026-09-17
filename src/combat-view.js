@@ -22,7 +22,7 @@ export function aimDots(origin,speed,angle,distance,count=9){
  return Array.from({length:count},(_,i)=>{const t=duration*i/(count-1);return {x:origin.x+vx*t,y:origin.y+vy*t-1.6*t*t,r:4.8-3.1*i/(count-1)};});
 }
 export function dragAim(start,pointer){
- const x=start.x-pointer.x,y=pointer.y-start.y,length=Math.hypot(x,y),angle=Math.atan2(y,x)*180/Math.PI;
+ const x=pointer.x-start.x,y=start.y-pointer.y,length=Math.hypot(x,y),angle=Math.atan2(y,x)*180/Math.PI;
  return {moved:length>=10,cancel:x<=0||angle>=82||angle<0,angle:Math.max(5,Math.min(75,Math.round(angle)))};
 }
 export function crewReaction(event,maxHull,kills=0){

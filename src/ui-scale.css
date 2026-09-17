@@ -372,3 +372,76 @@ body:not(.scaled-ui):not(.battle-mode) #rail{left:var(--safe-left);top:var(--saf
 }
 
 .city-pin{width:6.3%;height:4.2%}.city-pin i{width:100%;height:100%}
+
+/* Phone menus share one breakpoint, including the bottom navigation. */
+@media(max-width:999px){
+ .screen-heading .screen-tagline,.harbor-caption>.eyebrow{display:none}
+}
+@media(max-width:649px){
+ body:not(.battle-mode) #workspace{width:100%;margin-left:0;min-width:0}
+ body:not(.scaled-ui):not(.battle-mode) #rail{position:fixed;inset:auto 0 0;width:100%;height:calc(76px + var(--safe-bottom));flex-direction:row;justify-content:space-around;border-right:0;border-top:3px ridge #80562e;padding:4px max(3px,var(--safe-right)) max(4px,var(--safe-bottom)) max(3px,var(--safe-left));gap:2px;overflow:visible}
+ #rail .nav-btn{min-width:0;padding:0 2px 2px}
+ #rail .nav-btn.active::after{display:none}
+ .harbor-aside{grid-template-columns:minmax(0,1fr)}
+ .orders-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .orders-card .row{flex-wrap:wrap;gap:8px}
+ .orders-card .season-orders{min-width:0}
+ .orders-card button{max-width:100%;white-space:normal}
+ #topbar .screen-heading{min-width:0}
+ #topbar .wallet-plaque{flex-shrink:0}
+ #topbar .wallet-add{width:44px;height:44px;min-height:44px;top:0}
+ #topbar .wallet-add::after{width:24px;height:24px;font-size:22px;line-height:20px}
+ #sheet:not(.match-intro):not(.battle-result-sheet){max-width:calc(100vw - var(--safe-left) - var(--safe-right) - 16px);max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px);padding:16px;border-width:12px;overscroll-behavior:contain}
+ #sheet:not(.match-intro)>.row{flex-wrap:wrap}
+ .setting input,.water-toolbar input{font-size:16px}
+ #toast{bottom:calc(86px + var(--safe-bottom));max-width:calc(100vw - 24px)}
+ .battle-mode #toast{bottom:calc(16px + var(--safe-bottom))}
+}
+@media(max-width:360px){
+ #topbar .wallet-plaque{width:154px}
+ #topbar .screen-heading h1{font-size:21px!important;overflow-wrap:anywhere}
+ #topbar .screen-tagline{font-size:10px}
+ .orders-card{grid-template-columns:minmax(0,1fr)}
+ .orders-card .season-orders{padding:12px 0 0;border-left:0;border-top:1px solid var(--line)}
+}
+/* Keep chest artwork inside its own tile at every menu scale. */
+.hold-panel>.row.between,.hold-panel button.chest,.hold-panel .empty-chest{top:0}
+.hold-panel .chests{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch}
+.hold-panel button.chest,.scaled-ui .hold-panel button.chest{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:0;height:auto;min-height:96px;padding:4px;gap:2px;text-align:center}
+.hold-panel button.chest .chest-art,.scaled-ui .hold-panel button.chest .chest-art{width:100%;max-width:72px;height:56px;object-fit:contain;flex:none}
+.hold-panel button.chest strong,.hold-panel button.chest small{max-width:100%;font-size:11px;line-height:1.1;overflow-wrap:anywhere}
+.hold-panel .empty-chest{min-width:0;min-height:96px;flex-direction:column;justify-content:center;text-align:center}
+.hold-panel .empty-chest .chest-art{width:36px;height:36px;object-fit:contain}
+.scaled-ui .hold-panel,.scaled-ui .orders-card{height:100%}
+.scaled-ui[data-page=battle] #main{grid-template-rows:minmax(0,1fr) 228px;padding-bottom:6px}
+@media(max-width:999px) and (min-width:650px){
+ [data-page=battle] #main{grid-template-rows:minmax(150px,1fr) 126px;padding-bottom:4px!important}
+ .hold-panel>.row{height:auto;min-height:17px}
+ .hold-panel button.chest,.hold-panel .empty-chest{min-height:76px}
+ .hold-panel button.chest .chest-art{height:42px;max-width:54px}
+ .hold-panel .empty-chest small{font-size:9px}
+}
+@media(max-width:649px){
+ [data-page=battle] .harbor-scene iframe{display:none}
+ .hold-panel .chests{gap:4px}
+ .hold-panel .empty-chest small{font-size:9px}
+ .hold-panel button.chest .chest-art{height:40px}
+ .hold-panel>.row.between>.row{min-width:0}
+ .hold-panel .hold-title{display:none}
+}
+.challenge-action{margin-top:auto}.challenge-text-button{display:inline-grid;place-items:center;min-height:44px;padding:10px 18px;background:#a97731;border:1px solid #f3ce81;border-radius:7px;color:#fff3d0;text-decoration:none;font-weight:700}.challenge-link-label{display:grid;gap:6px;margin-top:18px}.challenge-link-label input{width:100%;min-width:0;padding:10px;font-size:16px}
+/* The pass milestones and available treasure should be unmistakable. */
+.season-track .waypoint{height:86px;display:grid;place-items:center}
+.season-track .waypoint span{display:grid;place-items:center;min-width:76px;width:auto;height:76px;padding:0 8px;border:3px solid #d5a450;border-radius:50%;font:52px/1 'Lilita One',Impact,sans-serif;color:#ffe5a0;text-shadow:0 3px #50300f;box-shadow:0 3px 10px #0008}
+.season-track .waypoint.current span{background:linear-gradient(#fff0a1,#e8a529);color:#3d2209;text-shadow:none;box-shadow:0 0 20px #ffbf4a88}
+.season-track .reward.ready{opacity:1;background:linear-gradient(145deg,#b16a16,#694218 60%,#bd842d);border:3px solid #ffe492;color:#fff9d9;box-shadow:inset 0 0 16px #ffc64b77,0 0 15px #ffb32988;animation:treasure-glow 1.8s ease-in-out infinite alternate}
+.season-track .reward.ready .reward-art{filter:drop-shadow(0 0 8px #ffe878)}
+.season-track .reward.ready small{color:#fff4a8;font-weight:900;letter-spacing:.06em}
+.hold-panel button.chest{border-color:#ffe18a;background:linear-gradient(145deg,#b16a16,#553010);box-shadow:inset 0 0 16px #ffc64b66,0 0 12px #ffac2b88;animation:treasure-glow 1.8s ease-in-out infinite alternate}
+@keyframes treasure-glow{to{box-shadow:inset 0 0 22px #ffd35b99,0 0 24px #ffb329bb;border-color:#fff3bc}}
+.reward-fireworks{position:fixed;inset:0;z-index:10000;pointer-events:none;overflow:hidden}
+.reward-fireworks i{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--color);box-shadow:0 0 8px 2px var(--color);opacity:0;animation:reward-burst 1.15s var(--delay) ease-out forwards}
+@keyframes reward-burst{0%{opacity:0;transform:translate(0,0) scale(.3)}15%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.15)}}
+.reward-fireworks.reduced i{animation:reward-sparkle 1.3s ease-out forwards;transform:translate(var(--x),var(--y))}
+@keyframes reward-sparkle{20%,65%{opacity:.8}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.season-track .reward.ready,.hold-panel button.chest{animation:none}}

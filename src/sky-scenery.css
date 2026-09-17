@@ -1,0 +1,8 @@
+#skyScenery{display:block!important;position:fixed;inset:0 0 auto;overflow:hidden;pointer-events:none;z-index:0;isolation:isolate}
+#sea{z-index:1}
+.sky-cloud-layer{position:absolute;left:-15%;width:130%;height:1px;pointer-events:none}
+.sky-cloud{position:absolute;display:block;width:var(--cloud-width);aspect-ratio:3/2;background-image:url('/pirate-bash/public/sky-art/cloud-atlas.png');background-size:200% 200%;background-repeat:no-repeat;animation:cloud-drift linear infinite alternate;will-change:transform}
+.sky-city{position:absolute;left:57%;bottom:-3px;height:auto;opacity:.57;filter:saturate(.62);mask-image:linear-gradient(to bottom,#000 65%,transparent 78%)}
+@keyframes cloud-drift{from{transform:translateX(-30px)}to{transform:translateX(70px)}}
+.still .sky-cloud{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.sky-cloud{animation:none;will-change:auto}}
