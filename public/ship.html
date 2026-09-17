@@ -1838,25 +1838,17 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
  const interior=document.createElement('canvas');interior.id='gameInterior';interior.setAttribute('aria-hidden','true');interior.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0';document.body.append(interior);let interiorKey='';
  const portraits=document.createElement('div');portraits.id='gameCrew';portraits.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9';document.body.append(portraits);
  const portPortraits=document.createElement('div');portPortraits.id='gamePorts';portPortraits.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:2';document.body.append(portPortraits);canvas.style.zIndex='4';interior.style.zIndex='1';
- const deathEffects=document.createElement('div');deathEffects.id='deathEffects';deathEffects.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:11;overflow:visible';document.body.append(deathEffects);
  const artRenderer=new ShipArtRenderer(interior);
  let gameRows=[],gamePracticeBonus=false,gameSelected=null,gameLevel=1,gameCutaway=false,gameMotion=true,portraitKey='';
  function syncCrew(rows){
-  const next=rows||[],dead=gameRows.filter(old=>old.hp>0&&next.some(g=>g.id===old.id&&g.hp<=0));
-  if(dead.length&&gameMotion)dead.forEach(g=>{
-   const source=[...document.querySelectorAll('#gameCrew img, #gamePorts img')].find(n=>Number(n.dataset.gunner)===g.id);if(!source)return;
-   const clone=source.cloneNode(true);clone.style.opacity='1';deathEffects.append(clone);const dir=(g.id%2)?1:-1;
-   clone.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:'translate('+(dir*35)+'px,-65px) rotate('+(dir*120)+'deg)',opacity:1,offset:.35},{transform:'translate('+(dir*120)+'px,185px) rotate('+(dir*420)+'deg)',opacity:0}],{duration:1050,easing:'ease-in',fill:'forwards'}).finished.then(()=>clone.remove());
-   const splash=document.createElement('i');splash.style.cssText='position:absolute;left:'+source.style.left+';top:calc('+source.style.top+' + 175px);width:34px;height:10px;border:3px solid #d9ffff;border-top-color:transparent;border-radius:50%;opacity:0';deathEffects.append(splash);splash.animate([{opacity:0,transform:'scale(.3)'},{opacity:1,transform:'scale(1.2)'},{opacity:0,transform:'scale(1.8)'}],{duration:500,delay:720,fill:'forwards'}).finished.then(()=>splash.remove());
-  });
-  gameRows=next;let d=0,h=0;
+  gameRows=rows||[];let d=0,h=0;
   stations.forEach(st=>{const key=st.port?'h'+h++:'d'+d++,g=gameRows.find(g=>g.slot===key),position=stationPosition({shipLevel:gameLevel,practiceBonus:gamePracticeBonus},key);st.x=position.x;st.y=position.y;st.slot=key;st.gunner=g?.id??-1;st.name=g?.name;st.type=g?.type??0;st.out=!g||g.hp<=0;});
   uploadStations();updateScopeLabels();drawPortraits();
  }
  function syncParts(f){
   if(!f)return;uploadMaterial(f);artRenderer.setParts(f);
   f.sailParts?.forEach((p,i)=>{if(sails[i])sails[i].damage=1-p.hp/p.maxHp;});
-  f.mastParts?.forEach((p,i)=>{if(p.hp<=0&&masts[i]?.breakTime<0)breakMast(masts[i]);});uploadRig();
+  f.mastParts?.forEach((p,i)=>{if(p.hp<=0&&masts[i]?.breakTime<0&&artRenderer.specialMast!==i)breakMast(masts[i]);});uploadRig();
  }
  function drawPortraits(){
   const rect=canvas.getBoundingClientRect(),ratio=rect.width/canvas.width,ppu=cam.ppu*ratio;
@@ -1867,7 +1859,7 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
    const position=stationPosition({shipLevel:gameLevel,practiceBonus:gamePracticeBonus},st.slot),foot=position.y,w=position.width*ppu,h=position.height*ppu;
    const x=rect.width/2+(st.x-cam.x)*ppu,y=rect.height/2-(foot-cam.y)*ppu;
    const pedestal=st.gunner===gameSelected?'<span data-pedestal style="position:absolute;left:'+(x-w*.6)+'px;top:'+(y-h*.09)+'px;width:'+w*1.2+'px;height:'+h*.15+'px;border-radius:50%;background:linear-gradient(#fff5ae,#d69922);box-shadow:0 0 12px #ffd450;pointer-events:none"></span>':'';
-   return pedestal+'<img data-gunner="'+st.gunner+'" data-alive="'+!st.out+'" alt="'+(st.name||'Gunner')+'" src="/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+st.gunner+'.png" style="position:absolute;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;left:'+(x-w/2)+'px;top:'+(y-h)+'px;width:'+w+'px;height:'+h+'px;opacity:'+(st.out?0:1)+';filter:'+(st.gunner===gameSelected?'drop-shadow(0 0 3px #fff29a)':'none')+'">';
+   return pedestal+'<img data-gunner="'+st.gunner+'" data-alive="'+!st.out+'" alt="'+(st.name||'Gunner')+'" src="/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+st.gunner+'.png" style="position:absolute;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;left:'+x+'px;top:'+(y-h)+'px;width:auto;height:'+h+'px;translate:-50% 0;opacity:'+(st.out?0:1)+';filter:'+(st.gunner===gameSelected?'drop-shadow(0 0 3px #fff29a)':'none')+'">';
   }).join('');
   portraits.innerHTML=drawRows(false);portPortraits.innerHTML=drawRows(true);
   parent.postMessage({type:'pirate-stations',side:gameSide,anchors:stationAnchors(gameLevel).map(p=>({...p,left:50+(p.x-cam.x)*ppu/rect.width*100,top:50-(p.y+p.height/2-cam.y)*ppu/rect.height*100}))},location.origin);
@@ -1875,13 +1867,13 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
  }
  function animateCrew(kind,level=2){
   document.body.dataset.reaction=kind;
-  if(!gameMotion)return;
+  if(!gameMotion||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   if(kind==='defeat')[...artRenderer.canvases,canvas,mark].forEach(n=>n.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(90px) rotate(9deg)'}],{duration:1100,fill:'forwards',easing:'ease-in'}));
   [...document.querySelectorAll('#gameCrew img, #gamePorts img')].filter(n=>n.dataset.alive==='true').forEach((n,i)=>{
    n.getAnimations().forEach(a=>a.cancel());
-   const victory=kind==='victory',laugh=kind==='laugh',defeat=kind==='defeat',cringe=kind==='cringe';
+   const victory=kind==='victory',laugh=kind==='laugh'||kind==='dance',defeat=kind==='defeat',cringe=kind==='cringe';
    const frames=defeat?[{transform:'translate(0,0) rotate(0)',opacity:1},{transform:'translate('+(i%2?150:-150)+'px,-170px) rotate('+(i%2?460:-460)+'deg)',opacity:0}]:cringe?[{transform:'scale(1)'},{transform:'scale(1.12,.75) rotate(-8deg)'},{transform:'scale(1)'}]:[{transform:'scale(1)'},{transform:'translateY('+(-(victory?26:laugh?8:level*3))+'px) scale(.94,'+(level===0?.88:1.08+level*.025)+')'},{transform:'scale(1.04,.94)'},{transform:'scale(1)'}];
-   n.animate(frames,{duration:defeat?1250:victory?420:laugh?250:450,delay:i*45,iterations:victory?5:laugh?4:1,fill:defeat?'forwards':'none',easing:'ease-out'});
+   n.animate(frames,{duration:defeat?1250:victory?420:laugh?250:450,delay:i*45,iterations:victory?5:laugh?12:1,fill:defeat?'forwards':'none',easing:'ease-out'});
    if(victory)for(let j=0;j<3;j++)setTimeout(()=>{const st=stations.find(s=>s.gunner===Number(n.dataset.gunner));if(st)fireStation(st);const spark=document.createElement('span');spark.style.cssText='position:absolute;left:'+n.style.left+';top:'+n.style.top+';width:5px;height:5px;background:#fff4a8;box-shadow:0 0 7px #ffd664;border-radius:50%';portraits.append(spark);spark.animate([{transform:'translate(15px,0)',opacity:1},{transform:'translate('+(i%2?55:-35)+'px,-140px)',opacity:0}],{duration:700,easing:'ease-out'}).finished.then(()=>spark.remove());},j*420+i*60);
   });
  }
@@ -1895,6 +1887,10 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
   }
   if(d.action==='sync'){gameSelected=d.selected;gameCutaway=!!d.cutaway;artRenderer.setView(d);syncCrew(d.crew);syncParts(d.parts);}
   if(d.action==='view'){gameCutaway=!!d.cutaway;showRig=!d.hideRig;artRenderer.setView(d);}
+  if(d.action==='special-prepare'){
+   let attempts=0;const capture=()=>{if(!artRenderer.ready&&attempts++<60){setTimeout(capture,50);return;}const image=artRenderer.snapshotRig(d.mast,d.before);parent.postMessage({type:'pirate-special-rig',requestId:d.requestId,image,side:gameSide},location.origin);};capture();
+  }
+  if(d.action==='special-end'){artRenderer.specialMast=null;artRenderer.revision++;}
   if(d.action==='reaction')animateCrew(d.kind||'hit',d.level??2);
   if(d.action==='hit'){archetype=ARCHETYPES.find(a=>a.id===d.weapon)||ARCHETYPES[0];fire(d.x??0,d.y??0);}
   if(d.action==='fire')stations.filter(st=>st.gunner===d.gunner).forEach(st=>fireStation(st));

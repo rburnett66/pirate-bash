@@ -1,6 +1,7 @@
 import {hullConfig,sailConfig,FIGUREHEADS,FLAGS,SHIP_TUNING,figureBonus} from './ship-config.js';
 import {SAIL_STYLES} from './ship-art-layout.js';
 import {ECON} from './catalog.js';
+import {SPECIAL_ATTACKS,specialAttackIcon} from './special-attacks.js';
 
 export function inventory(s,category,{button,cost}){
  const items=category==='sails'?SAIL_STYLES.map(([asset,name],id)=>({id,name,image:'sails/'+asset+'.png',owned:s.cosmetics.includes(id),equipped:s.cosmetic===id,cost:{gold:ECON.SAILS[id]},action:'cosmetic',label:'Sail appearance'})):
@@ -10,7 +11,7 @@ export function inventory(s,category,{button,cost}){
 }
 export function shipScreen(s,category,helpers){
  const {button,cost,diagram,materials}=helpers,h=hullConfig(s.shipLevel),rig=sailConfig(s.sailLevel),inBattle=!!s.battle&&s.battle.phase!=='result';
- return `<div class="ship-customization"><section class="card ship-focus"><div class="row between"><div><span class="eyebrow">YOUR SHIP</span><h2>The Blackwake</h2></div><span class="pill">HULL ${h.level} / 6</span></div>${diagram()}<div class="upgrade-status" aria-live="polite"></div>
+ return `<div class="ship-customization"><section class="card ship-focus"><div class="row between"><div><span class="eyebrow">YOUR SHIP</span><h2>The Blackwake</h2></div><span class="pill">HULL ${h.level} / 6</span></div><div class="ship-special-loadout">${specialAttackIcon(s.move)}<div><small>KILL STREAK</small><strong>${SPECIAL_ATTACKS[s.move].name}</strong></div>${button('Choose attack','moves','','small')}</div>${diagram()}<div class="upgrade-status" aria-live="polite"></div>
  <div class="ship-summary"><div><strong>${h.hp}</strong><small>HULL HP</small></div><div><strong>${h.deck} + ${h.hold}</strong><small>GUNNER SLOTS</small></div><div><strong>${rig.masts.length} / ${rig.panels.length}</strong><small>MASTS / SAILS</small></div></div>${materials()}
  <div class="ship-controls">${button(h.cost?'Upgrade Hull':'Hull complete','ship-up',h.level,'primary',!h.cost||inBattle)}${button(rig.cost?'Upgrade Sails':'Sails complete','sail-up',s.sailLevel,'',!rig.cost||inBattle)}<small>${h.cost?cost(h.cost):'All 8 gunner slots unlocked'}</small><small>${rig.cost?cost(rig.cost):'Future: front jib and rear spanker'}</small></div>
  <div class="custom-shortcuts">${[['sails','Customize Sails'],['flags','Customize Flag'],['figureheads','Customize Figurehead']].map(([key,label])=>button(label,'inventory-tab',key,'ghost')).join('')}</div>${inBattle?'<p class="footer-note">Finish your current battle before upgrading.</p>':''}</section>

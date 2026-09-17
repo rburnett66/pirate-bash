@@ -1,0 +1,65 @@
+/* Ocean -> rear tentacles -> ships -> creatures/debris -> announcements/controls. */
+#battleWorld .arena-water{z-index:0}
+#battleWorld .combat-ship{z-index:2}
+.special-effects{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#specialBehind{z-index:1}#specialFront{z-index:4}
+.special-effects[hidden],#specialAnnouncement[hidden],#finisherCharge button[hidden]{display:none}
+#specialAnnouncement{position:absolute;top:8px;left:8px;right:8px;z-index:30;text-align:center;pointer-events:none;color:#ffedb0;text-shadow:0 3px 0 #40200b,0 5px 12px #000}
+#specialAnnouncement strong{display:block;font:clamp(52px,10vw,116px)/1.04 'Lilita One',Impact,fantasy;letter-spacing:.025em;-webkit-text-stroke:1px #6c370e}
+#specialAnnouncement span{display:block;margin-top:6px;font:bold clamp(11px,1.5vw,17px)/1.3 'Lilita One',sans-serif;color:#fff}
+#finisherCharge{position:absolute;z-index:20;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:156px 166px;grid-template-rows:47px 44px;gap:6px 8px;align-items:center;width:max-content;pointer-events:auto}
+#chargeBalls{position:relative;display:flex;gap:5px;align-items:center;justify-content:center;height:47px;margin-bottom:0;isolation:isolate}
+#chargeBalls{background:#082536d9;border:1px solid #bed9e780;border-radius:9px;box-shadow:0 2px 8px #0005}
+#chargeLabel{position:relative;isolation:isolate;grid-column:2;grid-row:1;display:flex;align-items:center;gap:5px;text-align:left;font:bold 11px/1.25 sans-serif;color:#fff0c4;text-shadow:0 2px 3px #000,0 0 5px #000}
+#chargeLabel .finisher{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:0}
+#chargeAttackIcon{position:relative;z-index:1;pointer-events:none;display:block;width:92px;height:72px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 2px #000)}
+#chargeAttackIcon[hidden]{display:none}
+#chargeAttackText{min-width:0}#chargeAttackText[hidden]{display:none}
+.charge-ball{position:relative;display:block;flex:0 0 33px;height:33px;background:url('/pirate-bash/public/killstreaks/ball.png') center/155% no-repeat;opacity:.8;filter:grayscale(1) brightness(2);border-radius:50%;outline:1px dashed #e1f1ff;outline-offset:-4px}
+.charge-ball.lit{background-image:url('/pirate-bash/public/killstreaks/flaming-ball.png');background-size:125%;opacity:1;filter:drop-shadow(0 0 4px #ff8529);outline:none;animation:charge-flame .7s calc(var(--i)*-.17s) ease-in-out infinite alternate}
+.charge-ball.lit::after{content:'';position:absolute;left:40%;top:25%;width:3px;height:5px;background:#ffdc74;box-shadow:9px 2px #ff972d,-6px 5px #ffef9f;border-radius:50%;animation:charge-embers .9s calc(var(--i)*-.19s) linear infinite}
+#chargeBalls.ready .charge-ball::before{content:'';position:absolute;inset:-3px;background:url('/pirate-bash/public/killstreaks/fireball.png') center/115% no-repeat;opacity:0;animation:charge-streak 1.6s calc(var(--i)*.4s - 1.6s) linear infinite}
+#finisherCharge .finisher{width:156px;height:47px;min-height:0;padding:4px 4px 4px 80px;font:21px/1 'Lilita One',Impact,sans-serif;color:#321806;border:2px solid #ffe592;background:linear-gradient(#fff0ad,#f5a02b);box-shadow:0 0 16px #fa882744}
+#finisherCharge .finisher:disabled{opacity:.55;filter:grayscale(.5)}
+.polished-battle .move-panel{top:8px;bottom:auto!important;right:12px;left:auto!important;width:auto}
+.polished-battle .move-panel button{min-height:44px}
+.polished-battle #waterMovement{top:auto!important;bottom:12px!important;left:50%!important;right:auto;width:286px;transform:translateX(-50%)}
+.polished-battle .aim-panel{right:12px;bottom:12px;max-width:220px}
+#combatField[data-special] .crew-stack,#combatField[data-special] .aim-panel,#combatField[data-special] .move-panel,#combatField[data-special] #shipWheel{visibility:hidden}
+@keyframes charge-flame{to{filter:drop-shadow(0 0 8px #ffb534);transform:scale(1.09,.96)}}
+@keyframes charge-embers{to{transform:translate(3px,-24px);opacity:0}}
+/* One streak at a time: first -> second -> third -> fourth, then repeat. */
+@keyframes charge-streak{0%{opacity:1;transform:translateX(-3px);filter:drop-shadow(0 0 5px #ffab23)}24.99%{opacity:1;transform:translateX(3px);filter:drop-shadow(0 0 8px #ffab23)}25%,100%{opacity:0;transform:translateX(0)}}
+@media(max-width:649px){
+ #finisherCharge{left:8px;width:max-content;grid-template-columns:108px 130px;grid-template-rows:37px 44px;bottom:max(12px,env(safe-area-inset-bottom))}
+ #chargeBalls{height:37px;gap:3px}.charge-ball{flex-basis:24px;height:24px}
+ #chargeLabel{font-size:10px;gap:2px}#chargeAttackIcon{width:68px;height:60px}
+ #finisherCharge .finisher{width:108px;height:37px;font-size:13px;padding-left:56px}
+ .polished-battle .ship-wheel-control{width:116px;height:116px;bottom:-76px}
+ .polished-battle .aim-panel{right:8px;bottom:12px;width:108px;max-width:108px;grid-template-columns:1fr 48px;gap:2px}
+ .polished-battle .aim-panel .primary{min-width:48px;font-size:12px;padding:4px}
+ .polished-battle #waterMovement{width:238px}
+ #specialAnnouncement{top:12px}#specialAnnouncement strong{font-size:clamp(48px,14vw,72px)}
+ .polished-battle .crew-stack{max-width:140px}
+}
+/* Keep the wheel and its two arrows in a separate bottom row on narrow screens. */
+@media(max-width:800px){
+ #finisherCharge{bottom:76px}
+ .polished-battle .aim-panel{bottom:76px}
+}
+@media(max-width:360px){#finisherCharge{grid-template-columns:108px 72px;column-gap:4px}#chargeAttackIcon{width:56px}#chargeLabel{flex-direction:column;gap:0;text-align:center}}
+@media(max-height:560px){#specialAnnouncement{top:5px}#specialAnnouncement strong{font-size:60px}#specialAnnouncement span{font-size:11px;margin-top:3px}}
+.reduce-motion .charge-ball,.reduce-motion .charge-ball::before,.reduce-motion .charge-ball::after{animation:none!important}
+@media(prefers-reduced-motion:reduce){.charge-ball,.charge-ball::before,.charge-ball::after{animation:none!important}}
+
+
+#chargeLabel:has(#chargeAttackIcon[hidden]) .finisher{padding-left:5px}
+@media(max-width:360px){#finisherCharge:has(.finisher:not([hidden])){bottom:160px}#chargeLabel:has(.finisher:not([hidden])){height:37px;flex-direction:row}#chargeLabel .finisher{padding-left:52px}}
+
+
+.special-loadout-icon{display:inline-block;width:64px;height:54px;object-fit:contain;font-size:38px;text-align:center;flex:none}
+.ship-special-loadout{display:flex;align-items:center;gap:12px;margin:14px 0;padding:10px;border:1px solid #b58c4b66;border-radius:12px;background:#0b1d27}
+.ship-special-loadout>div{flex:1;min-width:0}.ship-special-loadout strong{display:block}.ship-special-loadout small{color:#ffd884;font-size:10px;letter-spacing:.1em}
+.match-special{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:#ffe5a7}.match-special .special-loadout-icon{width:46px;height:36px;font-size:28px}
+@media(max-width:649px){.ship-special-loadout{gap:6px}.ship-special-loadout .special-loadout-icon{width:48px}.ship-special-loadout strong{font-size:13px}.match-special{flex-direction:column;gap:0;font-size:9px}}
+@media(max-height:560px){.match-special .special-loadout-icon{width:34px;height:26px}.match-special{font-size:9px}}

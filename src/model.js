@@ -6,13 +6,15 @@ import {chipHull,maskPixels} from './hull-mask.js';
 import {ensureGeometry,trajectory,projectileFor,rigLayout,traceProjectile,muzzle,parabolicPath} from './ballistics.js';
 export {projectileFor} from './ballistics.js';
 import {ROSTER,ECON as E} from './catalog.js';
+import {SPECIAL_ATTACKS,SPECIAL_TUNING} from './special-attacks.js';
+export {SPECIAL_TUNING};
 export {E};
 export const PORT_REGIONS=[{name:'Europe',towns:['London','Calais','Lisbon']},{name:'Americas',towns:['Bermuda','Puerto Rico','Caracas','Seattle']},{name:'Africa / India',towns:['Mombasa','Madagascar','Mumbai']},{name:'Asia',towns:['Singapore','Manila','Hong Kong','Shanghai']},{name:'Pacific',towns:['Hawaii']}];
 export const PORTS=PORT_REGIONS.flatMap(r=>r.towns);
 export const LADDER=SHIP_LADDER;
 export const BASE={hull:{hp:120,range:62,damage:46},sails:{hp:100,range:74,damage:30},crew:{hp:90,range:86,damage:22}};
 export const PIRATES=ROSTER.map(([id,name,icon,projectile,tags])=>({id,name,icon,projectile,tags,primary:tags[0],rarity:id%12===0?'legendary':tags.length>1&&id%3===0?'epic':tags.length>1||id%4===0?'rare':'common'}));
-export const FINISHERS=E.MOVES.map((m,i)=>({...m,id:i,icon:['🦈','🐙','🐋','⚡','🐟','🕊'][i],target:['crew','sails','hull','sails','sails','crew'][i]}));
+export const FINISHERS=SPECIAL_ATTACKS;
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function weekKey(t){const d=new Date(t);d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.toISOString().slice(0,10);}
 export const dayKey=t=>new Date(t).toISOString().slice(0,10);
@@ -27,7 +29,7 @@ if(s.friendChallenges!==undefined){const l=s.friendChallenges,id=x=>typeof x==='
 for(const p of PIRATES)if(!int(s.levels[p.id],12)||!int(s.cards[p.id]))bad();
 if(Object.entries(s.slots).some(([k,id])=>!positions(s).includes(k)||!PIRATES.some(p=>p.id===id)||!s.levels[id])||new Set(Object.values(s.slots)).size!==Object.values(s.slots).length)bad();
 for(const k of ['moves','claims','history','chests','visited','settlements','cosmetics'])if(!Array.isArray(s[k]))bad();
-if(!int(s.port,14)||!s.visited.every(n=>int(n,14))||!s.moves.every(n=>int(n,5))||!s.moves.includes(s.move)||!s.cosmetics.every(n=>int(n,5))||(s.cosmetic!==null&&!s.cosmetics.includes(s.cosmetic)))bad();
+if(!int(s.port,14)||!s.visited.every(n=>int(n,14))||!s.moves.every(n=>int(n,FINISHERS.length-1))||!s.moves.includes(s.move)||!s.cosmetics.every(n=>int(n,5))||(s.cosmetic!==null&&!s.cosmetics.includes(s.cosmetic)))bad();
 if(s.chests.length>5||new Set(s.chests.map(c=>c.id)).size!==s.chests.length||s.chests.some(c=>!obj(c)||typeof c.id!=='string'||!E.CHESTS[c.kind]||!int(c.seed,4294967295)))bad();
 if(s.claims.some(k=>typeof k!=='string'||!/^([1-9]|[1-4][0-9]|50):(true|false)$/.test(k)))bad();
 if(!bool(s.premium)||!bool(s.onboarded)||!obj(s.quests)||!obj(s.settings)||!bool(s.settings.sound)||!bool(s.settings.motion)||!int(s.quests.matches)||!int(s.quests.wins)||!bool(s.quests.dailyClaim)||!bool(s.quests.weeklyClaim))bad();
@@ -39,7 +41,9 @@ if(s.bench!==null&&(!obj(s.bench)||!s.levels[s.bench.id]||s.levels[s.bench.id]>=
 const partsOK=(parts,n)=>Array.isArray(parts)&&parts.length===n&&parts.every(p=>obj(p)&&num(p.hp)&&num(p.maxHp)&&p.maxHp>0&&p.hp<=p.maxHp);
 const maskOK=f=>{try{return !f.hullMask||!!maskPixels(f);}catch{return false;}};
 const fighterOK=f=>obj(f)&&(!f.pose||(obj(f.pose)&&Number.isFinite(f.pose.heave)&&Math.abs(f.pose.heave)<=.4&&Number.isFinite(f.pose.roll)&&Math.abs(f.pose.roll)<=.27))&&maskOK(f)&&(!f.hullParts||(num(f.x,12)&&LADDER[f.shipLevel]&&partsOK(f.hullParts,f.legacySections||hullConfig(f.shipLevel).sections)&&partsOK(f.mastParts,3)&&partsOK(f.sailParts,8)))&&num(f.hull)&&num(f.maxHull)&&f.maxHull>0&&f.hull<=f.maxHull&&num(f.sails,100)&&num(f.durability,100)&&Array.isArray(f.crew)&&f.crew.length<=8&&f.crew.every(g=>obj(g)&&PIRATES.some(p=>p.id===g.id)&&num(g.hp)&&int(g.level,12)&&g.level>0&&/^[dh][0-3]$/.test(g.slot))&&obj(f.enh);
-if(s.battle!==null){const b=s.battle;if(!obj(b)||!['player','enemy','flight','result'].includes(b.phase)||!fighterOK(b.player)||!fighterOK(b.enemy)||!int(b.rng,4294967295)||!int(b.turn,25)||!int(b.shots,2)||!Array.isArray(b.events)||!Array.isArray(b.log)||!bool(b.rewarded)||!bool(b.charged)||!bool(b.used))bad();}
+if(s.battle!==null){const b=s.battle;if(!obj(b)||!['player','enemy','flight','special','result'].includes(b.phase)||!fighterOK(b.player)||!fighterOK(b.enemy)||!int(b.rng,4294967295)||!int(b.turn,25)||!int(b.shots,2)||!Array.isArray(b.events)||!Array.isArray(b.log)||!bool(b.rewarded)||!bool(b.charged)||!bool(b.used))bad();}
+if(s.battle?.special){const p=s.battle.special;if(s.battle.phase!=='special'||!obj(p)||!int(p.id,FINISHERS.length-1)||!int(p.sequence)||p.sequence<1||!bool(p.applied)||!fighterOK(p.before)||([1,3].includes(p.id)&&!int(p.targetMast,2))||(p.id===0&&!p.before.crew.some(g=>g.id===p.targetCrew&&g.hp>0)))bad();}
+if(s.battle?.phase==='special'&&!s.battle.special)bad();
 if(s.battle?.phase==='flight'&&(!s.battle.pending||!['player','enemy'].includes(s.battle.pending.side)||!num(s.battle.pending.angle,75)||s.battle.pending.angle<5||!s.battle[s.battle.pending.side]?.crew.some(g=>g.id===s.battle.pending.gunner&&g.hp>0)))bad();
 
 if(s.battle?.pending?.plan){
@@ -72,7 +76,7 @@ export function seasonLevel(s){return Math.min(50,1+Math.floor(s.xp/100));}
 export function rewardAt(level,premium){if(premium&&[6,14,22,30,38,46].includes(level))return{move:[6,14,22,30,38,46].indexOf(level)};if(level%5===0)return{gems:premium?8:3};return premium?{gold:180+level*10}:{gold:70+level*5};}
 export function claim(s,level,premium){const key=level+':'+premium;if(!Number.isInteger(level)||typeof premium!=='boolean'||level<1||level>seasonLevel(s)||(premium&&!s.premium)||s.claims.includes(key))return false;const r=rewardAt(level,premium);if('move'in r){if(!s.moves.includes(r.move))s.moves.push(r.move);}else grant(s,r);s.claims.push(key);return true;}
 export function questClaim(s,type){if(!['daily','weekly'].includes(type))return false;const daily=type==='daily',key=daily?'dailyClaim':'weeklyClaim';if(s.quests[key]||(daily?s.quests.matches<3:s.quests.wins<5))return false;s.quests[key]=true;s.xp+=daily?100:300;return true;}
-export function buyMove(s,id){const m=FINISHERS[id];if(!m||s.moves.includes(id)||!pay(s,{gems:m.gems}))return false;s.moves.push(id);return true;}
+export function buyMove(s,id){const m=FINISHERS[id];if(!m||s.moves.includes(id)||!pay(s,m.cost))return false;s.moves.push(id);return true;}
 export function equip(s,type,value,section=0){if(type==='plating'){if(!Number.isInteger(section)||section<0||section>=hullSections(s))return false;const c=value==='hardwood'?{wood:220,gold:1800}:value==='iron'?{metal:140,gold:3000,gems:25}:null;if(!c||s.plates[section].kind===value||!pay(s,c))return false;s.plates[section]={kind:value,durability:100};s.plating=value;}else if(type==='canvas'){const c=value==='heavy'?{cloth:180,gold:1200}:value==='storm'?{cloth:240,gold:2400,gems:20}:null;if(!c||s.canvas===value||!pay(s,c))return false;s.canvas=value;s.canvasDurability=100;}else return false;return true;}
 export function repair(s){const c=repairCost(s);if(!Object.keys(c).length||!pay(s,c))return false;for(const p of s.plates)p.durability=100;s.canvasDurability=100;s.durability=100;return true;}
 export function enhance(s,name){if(!E.ENHANCEMENTS[name])return false;const l=s.enh[name]||0;if(l>=5||!pay(s,{gold:E.ENH_GOLD[l],gems:E.ENH_GEMS[l]}))return false;s.enh[name]=l+1;return true;}
@@ -83,8 +87,8 @@ export function sailUpgrade(s,expectedLevel=s.sailLevel){const c=sailConfig(s.sa
 export function flag(s,id){const f=FLAGS.find(f=>f.id===id);if(!f)return false;if(!s.flags.includes(id)){if(!pay(s,f.cost))return false;s.flags.push(id);}s.flag=id;return true;}
 export function cosmetic(s,i){if(!Number.isInteger(i)||i<0||i>=E.SAILS.length)return false;if(!s.cosmetics.includes(i)){if(!pay(s,{gold:E.SAILS[i]}))return false;s.cosmetics.push(i);}s.cosmetic=i;return true;}
 export function board(s,port=s.port){const r=seeded(871+port*937),rows=Array.from({length:port===s.port?99:100},(_,i)=>({id:i,name:['Black','Salty','Crimson','Lucky','Old','Mad','Silver','Dread'][i%8]+' '+['Morgan','Bonny','Flint','Hook','Marrow','Reed','Drake','Tide'][Math.floor(i/8)%8]+' '+(i+1),wins:Math.floor(r()*19),trophies:Math.floor(r()*900),lastWin:Math.floor(r()*1e6),level:1+Math.floor(r()*Math.min(6,1+port)),self:false}));if(port===s.port)rows.push({id:'self',name:s.name,wins:s.weeklyWins,trophies:s.trophies,lastWin:s.lastWin,level:s.shipLevel,self:true});return rows.sort((a,b)=>b.wins-a.wins||b.trophies-a.trophies||b.lastWin-a.lastWin||String(a.id).localeCompare(String(b.id)));}
-function fighter(s,enemy,r){let roster=positions(s).filter(k=>s.slots[k]).map(k=>({id:s.slots[k],slot:k,hp:stats(PIRATES.find(p=>p.id===s.slots[k]),s.levels[s.slots[k]]).hp,level:s.levels[s.slots[k]]}));if(enemy){const pool=[...PIRATES];roster=roster.map((g,i)=>{const p=pool.splice(Math.floor(r()*pool.length),1)[0];return {...g,id:p.id,hp:stats(p,g.level).hp};});}return {shipLevel:s.shipLevel,sailLevel:s.sailLevel,cosmetic:enemy?null:s.cosmetic,flag:enemy?7:s.flag,hull:hullConfig(s.shipLevel).hp,maxHull:hullConfig(s.shipLevel).hp,sails:100,crew:roster,plating:enemy?'bare':s.plating,canvas:enemy?'plain':s.canvas,durability:enemy?100:s.durability,enh:enemy?{}:clone(s.enh),figure:enemy?null:s.figurehead,figureGrade:enemy?0:(s.figureheads[s.figurehead]||0),plates:enemy?Array.from({length:hullSections(s)},()=>({kind:'bare',durability:100})):clone(s.plates.slice(0,hullSections(s))),canvasDurability:enemy?100:s.canvasDurability};}
-export function startBattle(s,t=Date.now(),rematch=false){if(!Object.values(s.slots).length)return false;const old=s.lastResult;if(rematch&&(!old||old.won||old.rematch||old.rematchAsked))return false;const seed=rematch?old.seed:Math.floor(t)%2147483647,r=seeded(seed);const b={id:String(t),seed,rng:seed,turn:1,shots:2,seconds:30,dualHits:0,streak:0,charged:false,used:false,phase:'player',log:[],events:[],rematch,enemyName:rematch?old.enemyName:board(s).filter(p=>!p.self)[Math.floor(r()*99)].name,temperament:['supportive','angry','fun','playful','competitive','rager','silly'][Math.floor(r()*7)],player:fighter(s,false,r),enemy:fighter(s,true,r),started:t,rewarded:false};if(rematch&&old.opponent){b.enemy=clone(old.opponent);b.temperament=old.temperament;}prepareBattle(b);b.opponent=clone(b.enemy);s.battle=b;return b;}
+function fighter(s,enemy,r){let roster=positions(s).filter(k=>s.slots[k]).map(k=>({id:s.slots[k],slot:k,hp:stats(PIRATES.find(p=>p.id===s.slots[k]),s.levels[s.slots[k]]).hp,level:s.levels[s.slots[k]]}));if(enemy){const pool=[...PIRATES];roster=roster.map((g,i)=>{const p=pool.splice(Math.floor(r()*pool.length),1)[0];return {...g,id:p.id,hp:stats(p,g.level).hp};});}return {move:enemy?0:s.move,shipLevel:s.shipLevel,sailLevel:s.sailLevel,cosmetic:enemy?null:s.cosmetic,flag:enemy?7:s.flag,hull:hullConfig(s.shipLevel).hp,maxHull:hullConfig(s.shipLevel).hp,sails:100,crew:roster,plating:enemy?'bare':s.plating,canvas:enemy?'plain':s.canvas,durability:enemy?100:s.durability,enh:enemy?{}:clone(s.enh),figure:enemy?null:s.figurehead,figureGrade:enemy?0:(s.figureheads[s.figurehead]||0),plates:enemy?Array.from({length:hullSections(s)},()=>({kind:'bare',durability:100})):clone(s.plates.slice(0,hullSections(s))),canvasDurability:enemy?100:s.canvasDurability};}
+export function startBattle(s,t=Date.now(),rematch=false){if(!Object.values(s.slots).length)return false;const old=s.lastResult;if(rematch&&(!old||old.won||old.rematch||old.rematchAsked))return false;const seed=rematch?old.seed:Math.floor(t)%2147483647,r=seeded(seed);const b={id:String(t),seed,rng:seed,turn:1,shots:2,seconds:30,dualHits:0,streak:0,streakVersion:2,charged:false,used:false,phase:'player',log:[],events:[],rematch,enemyName:rematch?old.enemyName:board(s).filter(p=>!p.self)[Math.floor(r()*99)].name,temperament:['supportive','angry','fun','playful','competitive','rager','silly'][Math.floor(r()*7)],player:fighter(s,false,r),enemy:fighter(s,true,r),started:t,rewarded:false};if(rematch&&old.opponent){b.enemy=clone(old.opponent);b.temperament=old.temperament;}prepareBattle(b);b.opponent=clone(b.enemy);s.battle=b;return b;}
 function random(b){b.rng=(Math.imul(b.rng,1664525)+1013904223)>>>0;return b.rng/4294967296;}
 export function active(f){return f.crew.filter(g=>g.hp>0);}
 // Movement is tied to sail power: two full sail-equivalents grant one move.
@@ -95,6 +99,7 @@ export function outcome(b){if((b.enemy.hull<=0&&b.enemy.sails<=0)||!active(b.ene
 export function prepareBattle(b){
  if(!b)return b;
  ensureGeometry(b.player,'player');ensureGeometry(b.enemy,'enemy');
+ if(b.streakVersion!==2){b.streak=b.charged?4:0;b.streakVersion=2;}
  b.movesLeft??=sailMoves(b.player);b.movesLeft=Math.min(b.movesLeft,sailMoves(b.player));b.enemyShots??=2;b.enemyMoves??=1;b.pending??=null;
  if(b.opponent)ensureGeometry(b.opponent,'enemy');
  return b;
@@ -220,7 +225,8 @@ export function advanceShot(s,elapsed){
  b.pending=null;b.phase=side;
  if(side==='player'){
   b.shots--;if(hit)b.dualHits++;
-  if(b.shots===0){b.streak=b.dualHits===2?b.streak+1:0;if(b.streak>=4&&!b.used)b.charged=true;b.phase='enemy';b.enemyShots=2;b.enemyMoves=1;}
+  if(!b.charged){b.streak=damage>0?Math.min(SPECIAL_TUNING.chargeAttacks,b.streak+1):0;if(b.streak===SPECIAL_TUNING.chargeAttacks)b.charged=true;}
+  if(b.shots===0){b.phase='enemy';b.enemyShots=2;b.enemyMoves=1;}
  }else{
   b.enemyShots--;
   if(b.enemyShots<=0){b.turn++;b.phase='player';b.shots=2;b.seconds=30;b.dualHits=0;b.movesLeft=sailMoves(b.player);b.log.push(b.enemyName+': '+EMOTES[b.temperament]);}
@@ -253,7 +259,41 @@ export function enemyTurn(s){
  return events.filter(Boolean);
 }
 
-export function finishMove(s){const b=s.battle,m=FINISHERS[s.move];if(!b||!b.charged||b.used||!m||!s.moves.includes(s.move)||b.phase!=='player')return false;b.used=true;b.charged=false;const f=ensureGeometry(b.enemy,'enemy');if(m.id===0){const g=active(f).find(g=>g.slot.startsWith('d'))||active(f)[0];if(g)g.hp=0;}if(m.id===5)f.crew.filter(g=>g.slot.startsWith('d')).forEach(g=>g.hp=0);if(m.id===2)chipHull(f,.6,-.15,220,'roundshot');if(m.id===3){const i=f.mastParts.findIndex(p=>p.hp>0);if(i>=0){f.mastParts[i].hp=0;rigLayout().sails.forEach((r,j)=>{if(r.mast===i)f.sailParts[j].hp=0;});}}if([1,4].includes(m.id))f.sailParts.forEach(p=>p.hp=Math.max(0,p.hp-p.maxHp*(m.id===1?.65:.45)));totalDamage(f);b.log.push(m.name+' unleashed');const won=outcome(b);if(won!==null){b.phase='result';b.won=won;}return m;}
+export function specialUnavailable(s){
+ const b=s.battle,m=FINISHERS[s.move];
+ if(!b||!m||!s.moves.includes(s.move))return 'Equip an unlocked big attack first.';
+ if(b.phase!=='player'||b.pending||b.special)return 'Wait until your attack sequence finishes.';
+ if(!b.charged)return 'Land four successful attacks to charge.';
+ const f=ensureGeometry(b.enemy,'enemy');
+ if(m.id===0&&!active(f).some(g=>g.slot.startsWith('d')))return 'No enemy deck gunners remain. Hull gunners are protected from the shark. Your charge is kept.';
+ if([1,3].includes(m.id)&&!f.mastParts.some(p=>p.hp>0))return 'No standing mast remains. Your charge is kept.';
+ return '';
+}
+// Begin, impact, and completion are separate persistent transitions. No clock runs in this phase.
+export function finishMove(s){
+ const b=prepareBattle(s.battle);if(specialUnavailable(s))return false;
+ const move=FINISHERS[s.move],f=b.enemy;
+ const target=move.id===0?active(f).find(g=>g.slot.startsWith('d')).id:null;
+ b.specialSequence=(b.specialSequence||0)+1;
+ b.special={id:move.id,sequence:b.specialSequence,applied:false,targetCrew:target,targetMast:[1,3].includes(move.id)?f.mastParts.findIndex(p=>p.hp>0):null,before:clone(f)};
+ b.charged=false;b.streak=0;b.used=false;b.phase='special';return b.special;
+}
+export function resolveFinishMove(s){
+ const b=s.battle,p=b?.special;if(!p||b.phase!=='special'||p.applied)return false;
+ const f=ensureGeometry(b.enemy,'enemy'),m=FINISHERS[p.id];
+ if(p.id===0){const g=f.crew.find(g=>g.id===p.targetCrew);if(g)g.hp=0;}
+ if(p.id===5)f.crew.filter(g=>g.slot.startsWith('d')).forEach(g=>g.hp=0);
+ if(p.id===2)chipHull(f,.6,-.15,SPECIAL_TUNING.whaleHullDamage,'roundshot');
+ if([1,3].includes(p.id)){f.mastParts[p.targetMast].hp=0;rigLayout().sails.forEach((r,j)=>{if(r.mast===p.targetMast)f.sailParts[j].hp=0;});}
+ if(p.id===4)f.sailParts.forEach(part=>part.hp=Math.max(0,part.hp-part.maxHp*SPECIAL_TUNING.swordfishSailFraction));
+ if(p.id===6)f.crew.forEach(g=>g.hp=Math.max(0,g.hp-SPECIAL_TUNING.sirenCrewDamage));
+ totalDamage(f);p.applied=true;b.log.push(m.name+' unleashed');return p;
+}
+export function completeFinishMove(s){
+ const b=s.battle,p=b?.special;if(!p?.applied||b.phase!=='special')return false;
+ b.special=null;b.phase='player';const won=outcome(b);if(won!==null){b.phase='result';b.won=won;}return true;
+}
+
 export function settle(s,t=Date.now()){const b=s.battle;if(!b||b.phase!=='result'||b.rewarded)return null;b.rewarded=true;const looted=b.won&&!active(b.enemy).length&&!(b.enemy.hull<=0&&b.enemy.sails<=0),baseGold=Math.floor(E.MATCH.gold*(b.won?1:E.MATCH.lossShare)),lootBonus=looted?Math.floor(baseGold*.1):0,gold=baseGold+lootBonus;s.gold+=gold;s.xp+=b.won?50:20;s.quests.matches++;if(b.won){s.weeklyWins++;s.trophies++;s.lastWin=t;s.quests.wins++;}let chest=null;if(b.won&&s.chests.length<5&&s.dailyChests<5){chest={id:b.id,kind:roll(()=>random(b),E.BONUS_ODDS),seed:b.rng};s.chests.push(chest);s.dailyChests++;s.chestRun++;if(s.chestRun%5===0){s.gems+=E.GEMS.fifthChest;queueOffer(s,'chests-'+s.chestRun,1,t);}}s.durability=b.player.durability;if(b.player.plates)b.player.plates.forEach((p,i)=>s.plates[i]=clone(p));s.canvasDurability=b.player.canvasDurability??100;const result={id:b.id,won:b.won,gold,gems:chest&&s.chestRun%5===0?E.GEMS.fifthChest:0,xp:b.won?50:20,honor:b.won?1:0,lootBonus,looted,chest,seed:b.seed,enemyName:b.enemyName,rematch:b.rematch,rematchAsked:false,opponent:clone(b.opponent||b.enemy),temperament:b.temperament,log:b.log.slice(-8),turns:b.turn};s.lastResult=result;return result;}
 export function requestRematch(s,r=Math.random){const q=s.lastResult;if(!q||q.won||q.rematch||q.rematchAsked)return null;const accept=r()<.65;if(accept){const b=startBattle(s,Date.now(),true);q.rematchAsked=true;return !!b;}q.rematchAsked=true;return false;}
 
@@ -294,4 +334,4 @@ if(Math.abs(x)<=.99&&y>=.62&&y<=2.38)return 'sails';
 return null;
 }
 
-export function elapse(s,seconds=1){const b=s.battle;if(!b||b.phase!=='player'||!Number.isFinite(seconds)||seconds<=0)return false;b.seconds=Math.max(0,(b.seconds??30)-seconds);if(b.seconds>0)return false;b.shots=0;b.streak=0;b.dualHits=0;b.phase='enemy';b.enemyShots=2;b.enemyMoves=1;b.log.push('Time is up. The rival takes their turn.');return true;}
+export function elapse(s,seconds=1){const b=s.battle;if(!b||b.phase!=='player'||!Number.isFinite(seconds)||seconds<=0)return false;b.seconds=Math.max(0,(b.seconds??30)-seconds);if(b.seconds>0)return false;b.shots=0;b.dualHits=0;b.phase='enemy';b.enemyShots=2;b.enemyMoves=1;b.log.push('Time is up. The rival takes their turn.');return true;}

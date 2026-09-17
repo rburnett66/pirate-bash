@@ -37,6 +37,11 @@ export class ShipArtRenderer{
   if(this.ready)this.rebuild();
  }
  rebuild(){this.buildBody();this.buildRig();this.revision++;}
+ snapshotRig(index,before){
+  if(!this.ready||!Number.isInteger(index)||index<0||index>2)return null;
+  const current=this.parts;this.setParts(before,true);
+  const image=this.groups[index].toDataURL('image/png');this.setParts(current,true);this.specialMast=index;return image;
+ }
  buildBody(){
   const ctx=this.body.getContext('2d');ctx.clearRect(0,0,1792,1008);if(!this.cutaway){ctx.drawImage(this.skin,0,0);
    // Port doors are exterior details; the intact material mask still protects crew.
@@ -76,7 +81,7 @@ export class ShipArtRenderer{
   if(portKey!==this.portKey){this.portKey=portKey;const mask=surface(canvas.width,canvas.height),ctx=mask.getContext('2d');transform(ctx);drawMask(ctx,bitmap(initial));const ports=document.querySelector('#gamePorts');if(ports){ports.style.maskImage=`url(${mask.toDataURL()})`;ports.style.webkitMaskImage=ports.style.maskImage;ports.style.maskSize='100% 100%';ports.style.webkitMaskSize='100% 100%';}}
   if(key!==this.paintKey){this.paintKey=key;
    const ctx=this.rig.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);transform(ctx);
-   if(!this.hideRig)this.groups.forEach((g,i)=>{const at=this.fallen[i],age=at===null?0:clock-at;if(at!==null&&(!this.motion||age>=1.25))return;ctx.save();if(at!==null){const [x,y]=MAST_MOUNTS[i],t=age/1.25;ctx.translate(x,y);ctx.rotate((i%2?-1:1)*1.5*t*t);ctx.translate(-x,-y);ctx.globalAlpha=Math.max(0,1-Math.max(0,t-.6)/.4);}ctx.drawImage(g,0,0);ctx.restore();});
+   if(!this.hideRig)this.groups.forEach((g,i)=>{const at=this.fallen[i],age=at===null?0:clock-at;if(at!==null&&(this.specialMast===i||!this.motion||age>=1.25))return;ctx.save();if(at!==null){const [x,y]=MAST_MOUNTS[i],t=age/1.25;ctx.translate(x,y);ctx.rotate((i%2?-1:1)*1.5*t*t);ctx.translate(-x,-y);ctx.globalAlpha=Math.max(0,1-Math.max(0,t-.6)/.4);}ctx.drawImage(g,0,0);ctx.restore();});
    const inner=this.interior.getContext('2d');inner.setTransform(1,0,0,1,0,0);inner.clearRect(0,0,canvas.width,canvas.height);transform(inner);inner.drawImage(this.inside,0,0);
   }
   const wetKey=key+':'+Math.floor(now*15);if(wetKey===this.wetKey)return;this.wetKey=wetKey;
