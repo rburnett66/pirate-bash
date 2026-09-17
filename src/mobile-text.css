@@ -162,7 +162,7 @@
 
 /* View Pirate keeps the whole supplied character visible beside their details. */
 .gunner-detail-art{float:right;width:48%;height:360px;margin:0 0 16px 18px;pointer-events:none}
-.gunner-detail-art .pirate-art{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 8px 10px #0005)}
+.gunner-detail-art .pirate-art{display:block;width:100%;height:100%;object-fit:contain;object-position:center top;transform:translateY(-12px) scale(1.08);transform-origin:right top;filter:drop-shadow(0 8px 10px #0005)}
 #sheet:has(.gunner-detail-art)::after{content:"";display:block;clear:both}
 @media(max-width:600px){
  .gunner-detail-art{width:50%;height:288px;margin-left:10px}
@@ -183,3 +183,5 @@
  #sheet:has(.gunner-detail-art)>h2{font-size:34px}
  #sheet:has(.gunner-detail-art)>.gunner-detail-art+p{font-size:18px}
 }
+
+@media(orientation:landscape) and (max-height:600px){.gunner-detail-art .pirate-art{transform:translateY(-96px) scale(1.08)}}
