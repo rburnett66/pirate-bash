@@ -14,7 +14,7 @@
 #chargeLabel .finisher{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:0}
 #chargeAttackIcon{position:relative;z-index:1;pointer-events:none;display:block;width:92px;height:72px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 2px #000)}
 #chargeAttackIcon[hidden]{display:none}
-#chargeAttackText{min-width:0;font:33px/1 'Lilita One',Impact,fantasy;overflow-wrap:anywhere}#chargeAttackText[hidden]{display:none}
+#chargeAttackText{min-width:0;font:33px/.88 'Lilita One',Impact,fantasy;overflow-wrap:anywhere}#chargeAttackText[hidden]{display:none}
 .charge-ball{position:relative;display:block;flex:0 0 33px;height:33px;background:url('/pirate-bash/public/killstreaks/ball.png') center/155% no-repeat;opacity:.8;filter:grayscale(1) brightness(2);border-radius:50%;outline:1px dashed #e1f1ff;outline-offset:-4px}
 .charge-ball.lit{background-image:url('/pirate-bash/public/killstreaks/flaming-ball.png');background-size:125%;opacity:1;filter:drop-shadow(0 0 4px #ff8529);outline:none;animation:charge-flame .7s calc(var(--i)*-.17s) ease-in-out infinite alternate}
 .charge-ball.lit::after{content:'';position:absolute;left:40%;top:25%;width:3px;height:5px;background:#ffdc74;box-shadow:9px 2px #ff972d,-6px 5px #ffef9f;border-radius:50%;animation:charge-embers .9s calc(var(--i)*-.19s) linear infinite}

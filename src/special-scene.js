@@ -58,6 +58,16 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
    sprite(fg,pictures.kraken,x,waterline+(.12+(1-rise*.75)*1.3)*ppu,width*ppu,0,alpha);fg.restore();
    fg.save();fg.globalAlpha=alpha*rise;fg.strokeStyle='#c9faff';fg.lineWidth=Math.max(2,.018*ppu);fg.beginPath();fg.ellipse(x,waterline,(.34+rise*.26)*ppu,.045*ppu,0,0,Math.PI*2);fg.stroke();fg.restore();
   };
+  const whaleBody=(offset,rise,angle,smash=0)=>{
+   const x=anchor.x+offset*ppu,waterline=anchor.y+.2*ppu,width=2.2*ppu;
+   const rect=artBounds(pictures.whale),height=width*rect[3]/rect[2];
+   fg.save();fg.beginPath();fg.moveTo(0,0);fg.lineTo(front.width,0);fg.lineTo(front.width,waterline);
+   for(let px=front.width;px>=0;px-=8)fg.lineTo(px,waterline+(reduced?0:Math.sin((px-x)/ppu*8+t/400)*.025*ppu));
+   fg.lineTo(0,waterline);fg.closePath();fg.clip();
+   sprite(fg,pictures.whale,x,waterline+height*(1-.5*rise)+smash*.35*ppu,width,angle,alpha);fg.restore();
+   fg.save();fg.globalAlpha=alpha*rise;fg.strokeStyle='#d2faff';fg.lineWidth=Math.max(2,.025*ppu);
+   fg.beginPath();fg.ellipse(x,waterline,.7*ppu,.075*ppu,0,0,Math.PI*2);fg.stroke();fg.restore();
+  };
   const sirenBody=rise=>{
    const x=anchor.x-.85*ppu,waterline=anchor.y+.2*ppu,width=1.65*ppu;
    const rect=artBounds(pictures.siren),height=width*rect[3]/rect[2];
@@ -70,7 +80,7 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
    fg.beginPath();fg.ellipse(x,waterline,.45*ppu,.055*ppu,0,0,Math.PI*2);fg.stroke();fg.restore();
   };
   if(reduced){
-   const name=names.includes(move.art)?move.art:'fireball';if(move.id===1){sprite(bg,pictures.tentacles,anchor.x,anchor.y+.2*ppu,1.4*ppu,0,alpha);krakenBody(1.176,1);}else if(move.id===6){sirenBody(emergence*(1-sink));}else creature(name,move.id===0?.7:1.4,0,0);if(impacted){fg.strokeStyle='#ffdf8c';fg.lineWidth=4;fg.beginPath();fg.ellipse(anchor.x,anchor.y-.5*ppu,1.2*ppu,.7*ppu,0,0,Math.PI*2);fg.stroke();}
+   const name=names.includes(move.art)?move.art:'fireball';if(move.id===1){sprite(bg,pictures.tentacles,anchor.x,anchor.y+.2*ppu,1.4*ppu,0,alpha);krakenBody(1.176,1);}else if(move.id===2){whaleBody(0,emergence*(1-sink),0);}else if(move.id===6){sirenBody(emergence*(1-sink));}else creature(name,move.id===0?.7:1.4,0,0);if(impacted){fg.strokeStyle='#ffdf8c';fg.lineWidth=4;fg.beginPath();fg.ellipse(anchor.x,anchor.y-.5*ppu,1.2*ppu,.7*ppu,0,0,Math.PI*2);fg.stroke();}
   }else if(move.id===0){
    const leap=impact<0?Math.sin(pre*Math.PI*.65):Math.max(0,1-impact/1600);
    creature('shark',.8,impact<0?1.6*(1-pre):-.5*clamp(impact/1500),-.65+leap*.8,impact<0?-.35+.35*pre:clamp(impact/1800)*-.6);
@@ -87,7 +97,7 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
    krakenBody(1.47,reach);
   }else if(move.id===2){
    const rise=emergence*(1-sink);const smash=impact<0?0:Math.sin(clamp(impact/850)*Math.PI);
-   creature('whale',2.2,impact<0?1.2*(1-pre):-.35*smash,-.9+rise*1.1-smash*.35,impact<0?-.24:-.24+.65*smash);
+   whaleBody(impact<0?1.2*(1-pre):-.35*smash,rise,impact<0?-.24:-.24+.65*smash,smash);
   }else if(move.id===5){
    creature('gull',1.4,2.7-5.4*t/duration,1.2+.14*Math.sin(t/160));
    for(let i=0;i<6;i++){const fall=clamp((t-(impactAt-650+i*90))/650);if(fall<=0)continue;const x=anchor.x+(2.5-i)*.22*ppu,y=anchor.y-(1.35-1.45*fall)*ppu;fg.fillStyle='#f8f1c9';fg.beginPath();fg.ellipse(x,y,(fall===1?.13:.04)*ppu,(fall===1?.035:.075)*ppu,.3,0,7);fg.fill();}
