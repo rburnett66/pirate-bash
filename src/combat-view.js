@@ -1,5 +1,5 @@
 // Presentation math: no collision forecasts or changes to the combat simulation.
-export const COMBAT_TIMING=Object.freeze({hitHoldMs:3000,finalExplosionHoldMs:5000});
+export const COMBAT_TIMING=Object.freeze({hitHoldMs:3000,finalExplosionHoldMs:5000,victoryCelebrationMs:3000});
 export function cutawaySide({phase,pending},busy,attacker,view,focus){
  if(view==='celebrate')return focus;
  if(phase==='result')return null;

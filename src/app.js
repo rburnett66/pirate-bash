@@ -181,7 +181,7 @@ function configure(side){
 let camera={ppu:1,ox:0,oy:0},flying=false,cameraReady=false,viewMode='crew',cameraAnimation=0,cameraTarget=null,flightTarget='enemy',attackSide='player';
 function shipView(side){return {cutaway:side===cutawaySide(state.battle,busy,attackSide,viewMode,flightTarget),hideRig:viewMode==='crew'||viewMode==='celebrate'};}
 const screenPoint=p=>({x:camera.ox+p.x*camera.ppu,y:camera.oy-p.y*camera.ppu});
- function desiredCamera(){const field=el('combatField'),b=state.battle;if(!field||!b)return null;if(viewMode==='scope')return battleCamera(field.clientWidth,field.clientHeight,b.enemy.x,b.enemy.x,'crew',b.enemy.x);if(viewMode==='special'){const ppu=Math.min(field.clientWidth/4.2,Math.max(90,field.clientHeight-130)/2.8);return {ppu,ox:field.clientWidth/2-b.enemy.x*ppu,oy:(field.clientHeight-130)*.78};}return viewMode==='celebrate'?battleCamera(field.clientWidth,field.clientHeight,b[flightTarget].x,b[flightTarget==='player'?'enemy':'player'].x,'crew'):battleCamera(field.clientWidth,Math.max(150,field.clientHeight-(matchMedia('(pointer:coarse) and (orientation:landscape) and (max-height:600px)').matches?45:110)),b.player.x,b.enemy.x,viewMode,b[flightTarget].x);}
+ function desiredCamera(){const field=el('combatField'),b=state.battle;if(!field||!b)return null;if(viewMode==='scope')return battleCamera(field.clientWidth,field.clientHeight,b.enemy.x,b.enemy.x,'crew',b.enemy.x);if(viewMode==='special'){const ppu=Math.min(field.clientWidth/4.2,Math.max(90,field.clientHeight-130)/2.8);return {ppu,ox:field.clientWidth/2-b.enemy.x*ppu,oy:(field.clientHeight-130)*.78};}return viewMode==='celebrate'?battleCamera(field.clientWidth,field.clientHeight,b[flightTarget].x,b[flightTarget].x,'crew'):battleCamera(field.clientWidth,Math.max(150,field.clientHeight-(matchMedia('(pointer:coarse) and (orientation:landscape) and (max-height:600px)').matches?45:110)),b.player.x,b.enemy.x,viewMode,b[flightTarget].x);}
 function setBattleView(mode){
  viewMode=mode;const target=desiredCamera();if(!target)return;
  for(const side of ['player','enemy'])send(side,{action:'view',...shipView(side)});
@@ -373,7 +373,7 @@ async function finish(){
   }
   const winner=b.won?'player':'enemy';flightTarget=winner;setBattleView('celebrate');send(winner,{action:'reaction',kind:'victory',level:4});
   clearTimeout(cheerTimer);if(el('crewCheer')){el('crewCheer').hidden=false;el('crewCheer').textContent=(b.won?'YOUR CREW':'RIVAL CREW')+': VICTORY!';}
-  await sleep(state.settings.motion?2100:120);busy=false;
+  await sleep(state.settings.motion?COMBAT_TIMING.victoryCelebrationMs:120);busy=false;
  }
  if(state.battle?.practice){showCompletedChallenge();return;}
  M.settle(state);save();const r=state.lastResult;if(!r)return;await preloadResult(r.won);if(state.lastResult?.id!==r.id)return;sound(r.won?640:160,.5);modal(resultScreen(r));el('sheet').className='battle-result-sheet';}
