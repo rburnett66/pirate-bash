@@ -161,12 +161,25 @@
 .battle-result .result-summary strong{font-size:clamp(12px,1.5vw,22px)}
 
 /* View Pirate keeps the whole supplied character visible beside their details. */
-.gunner-detail-art{float:right;width:38%;height:300px;margin:0 0 16px 18px;pointer-events:none}
+.gunner-detail-art{float:right;width:48%;height:360px;margin:0 0 16px 18px;pointer-events:none}
 .gunner-detail-art .pirate-art{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 8px 10px #0005)}
 #sheet:has(.gunner-detail-art)::after{content:"";display:block;clear:both}
 @media(max-width:600px){
- .gunner-detail-art{width:40%;height:240px;margin-left:10px}
+ .gunner-detail-art{width:50%;height:288px;margin-left:10px}
 }
 @media(orientation:landscape) and (max-height:600px){
- .gunner-detail-art{width:30%;height:220px;margin-bottom:0}
+ .gunner-detail-art{width:40%;height:264px;margin-bottom:0}
+}
+
+/* Keep character stats compact so the full-body artwork gets more room. */
+#sheet:has(.gunner-detail-art)>.stats{width:calc(49.6% - 9.6px);min-width:0}
+@media(max-width:600px){#sheet:has(.gunner-detail-art)>.stats{width:calc(48% - 6.6px)}}
+@media(orientation:landscape) and (max-height:600px){#sheet:has(.gunner-detail-art)>.stats{width:calc(56% - 9.6px)}}
+
+#sheet:has(.gunner-detail-art)>.eyebrow{font-size:14px;line-height:1.35;letter-spacing:.08em;padding-right:52px}
+#sheet:has(.gunner-detail-art)>h2{font-size:40px;line-height:1.1;padding-right:0;overflow-wrap:break-word}
+#sheet:has(.gunner-detail-art)>.gunner-detail-art+p{font-size:19px;line-height:1.4}
+@media(max-width:600px){
+ #sheet:has(.gunner-detail-art)>h2{font-size:34px}
+ #sheet:has(.gunner-detail-art)>.gunner-detail-art+p{font-size:18px}
 }
