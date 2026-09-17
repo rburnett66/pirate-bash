@@ -106,6 +106,19 @@ export function chipHull(f,x,y,damage,effect='roundshot'){
  }
  if(!removed)return 0;install(f,pixels);syncHullHealth(f);return before-f.hull;
 }
+// A creature crushes remaining wood, including the edges of an existing breach.
+export function crushHull(f,x,y,damage){
+ if(!Number.isFinite(damage)||damage<=0)return 0;
+ const pixels=maskPixels(f).slice(),before=f.hull,target=Math.min(before,damage);
+ const count=f.hullParts.length,full=startingCounts(count),candidates=[];
+ for(let i=0;i<pixels.length;i++)if(pixels[i]){
+  const p=pixelPoint(i%C.width,Math.floor(i/C.width)),dx=p.x-x,dy=(p.y-y)*1.5;
+  candidates.push({i,score:(dx*dx+dy*dy)*(1+.08*Math.sin(i*.37)),hp:f.maxHull/count/full[hullSection(p.x,count)]});
+ }
+ candidates.sort((a,b)=>a.score-b.score||a.i-b.i);let removed=0;
+ for(const p of candidates){if(removed>=target)break;pixels[p.i]=0;removed+=p.hp;}
+ install(f,pixels);syncHullHealth(f);return before-f.hull;
+}
 // Exact parabola crossings of mask grid lines. Sampling every crossed cell prevents pixel tunnelling.
 
 export function maskSampleTimes(f,dir,origin,vx,vy,gravity,t0,t1){

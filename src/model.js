@@ -1,9 +1,11 @@
+import {WOOD_TUNING,passWood} from './wood-economy.js';
+export {WOOD_TUNING};
 import {battleWind,WIND_TUNING} from './wind.js';
 import {PROGRESSION_VERSION,SHIP_LADDER,hullConfig,hullSections,sailConfig,SAIL_LEVELS,figureConfig,figureBonus,FIGUREHEADS,FLAGS,SHIP_TUNING} from './ship-config.js';
 export {hullConfig,hullSections,sailConfig,SAIL_LEVELS,FIGUREHEADS,FLAGS};
 import {poseOf,seaShot,movingContact} from './moving-shot.js';
 import {waterLibrary} from './ocean-settings.js';
-import {chipHull,maskPixels} from './hull-mask.js';
+import {chipHull,crushHull,maskPixels} from './hull-mask.js';
 import {ensureGeometry,trajectory,projectileFor,rigLayout,traceProjectile,muzzle,parabolicPath} from './ballistics.js';
 export {projectileFor} from './ballistics.js';
 import {ROSTER,ECON as E} from './catalog.js';
@@ -75,8 +77,8 @@ export function seeded(seed){let x=seed>>>0;return()=>{x=(Math.imul(x,1664525)+1
 function roll(r,odds){let n=r();for(const[k,v]of Object.entries(odds)){n-=v;if(n<0)return k;}return Object.keys(odds).at(-1);}
 export function openChest(s,id){const c=s.chests.find(c=>c.id===id);if(!c)return null;const r=seeded(c.seed),spec=E.CHESTS[c.kind],gains={},draws=[];s.gold+=spec.gold;for(let i=0;i<4;i++){const rarity=roll(r,spec.odds),pool=PIRATES.filter(p=>p.rarity===rarity),p=pool[Math.floor(r()*pool.length)];draws.push(p.id);gains[p.id]=(gains[p.id]||0)+1;if(!s.levels[p.id])s.levels[p.id]=1;else if(s.levels[p.id]===12)s.gold+=10;else s.cards[p.id]++;}s.chests=s.chests.filter(x=>x.id!==id);return {gold:spec.gold,cards:gains,draws};}
 export function seasonLevel(s){return Math.min(50,1+Math.floor(s.xp/100));}
-export function rewardAt(level,premium){if(premium&&[6,14,22,30,38,46].includes(level))return{move:[6,14,22,30,38,46].indexOf(level)};if(level%5===0)return{gems:premium?8:3};return premium?{gold:180+level*10}:{gold:70+level*5};}
-export function claim(s,level,premium){const key=level+':'+premium;if(!Number.isInteger(level)||typeof premium!=='boolean'||level<1||level>seasonLevel(s)||(premium&&!s.premium)||s.claims.includes(key))return false;const r=rewardAt(level,premium);if('move'in r){if(!s.moves.includes(r.move))s.moves.push(r.move);}else grant(s,r);s.claims.push(key);return true;}
+export function rewardAt(level,premium){const wood=passWood(level,premium);if(premium&&[6,14,22,30,38,46].includes(level))return{wood,move:[6,14,22,30,38,46].indexOf(level)};if(level%5===0)return{wood,gems:premium?8:3};return premium?{wood,gold:180+level*10}:{wood,gold:70+level*5};}
+export function claim(s,level,premium){const key=level+':'+premium;if(!Number.isInteger(level)||typeof premium!=='boolean'||level<1||level>seasonLevel(s)||(premium&&!s.premium)||s.claims.includes(key))return false;const {move,...reward}=rewardAt(level,premium);if(move!==undefined&&!s.moves.includes(move))s.moves.push(move);grant(s,reward);s.claims.push(key);return true;}
 export function questClaim(s,type){if(!['daily','weekly'].includes(type))return false;const daily=type==='daily',key=daily?'dailyClaim':'weeklyClaim';if(s.quests[key]||(daily?s.quests.matches<3:s.quests.wins<5))return false;s.quests[key]=true;s.xp+=daily?100:300;return true;}
 export function buyMove(s,id){const m=FINISHERS[id];if(!m||s.moves.includes(id)||!pay(s,m.cost))return false;s.moves.push(id);return true;}
 export function equip(s,type,value,section=0){if(type==='plating'){if(!Number.isInteger(section)||section<0||section>=hullSections(s))return false;const c=value==='hardwood'?{wood:220,gold:1800}:value==='iron'?{metal:140,gold:3000,gems:25}:null;if(!c||s.plates[section].kind===value||!pay(s,c))return false;s.plates[section]={kind:value,durability:100};s.plating=value;}else if(type==='canvas'){const c=value==='heavy'?{cloth:180,gold:1200}:value==='storm'?{cloth:240,gold:2400,gems:20}:null;if(!c||s.canvas===value||!pay(s,c))return false;s.canvas=value;s.canvasDurability=100;}else return false;return true;}
@@ -270,6 +272,7 @@ export function specialUnavailable(s){
  const f=ensureGeometry(b.enemy,'enemy');
  if(m.id===0&&!active(f).some(g=>g.slot.startsWith('d')))return 'No enemy deck gunners remain. Hull gunners are protected from the shark. Your charge is kept.';
  if([1,3].includes(m.id)&&!f.mastParts.some(p=>p.hp>0))return 'No standing mast remains. Your charge is kept.';
+ if(m.id===2&&f.hull<=0)return 'No enemy hull remains. Your charge is kept.';
  return '';
 }
 // Begin, impact, and completion are separate persistent transitions. No clock runs in this phase.
@@ -286,11 +289,11 @@ export function resolveFinishMove(s){
  const f=ensureGeometry(b.enemy,'enemy'),m=FINISHERS[p.id];
  if(p.id===0){const g=f.crew.find(g=>g.id===p.targetCrew);if(g)g.hp=0;}
  if(p.id===5)f.crew.filter(g=>g.slot.startsWith('d')).forEach(g=>g.hp=0);
- if(p.id===2)chipHull(f,.6,-.15,SPECIAL_TUNING.whaleHullDamage,'roundshot');
+ if(p.id===2)p.hullDamage=crushHull(f,.6,-.15,SPECIAL_TUNING.whaleHullDamage);
  if([1,3].includes(p.id)){f.mastParts[p.targetMast].hp=0;rigLayout().sails.forEach((r,j)=>{if(r.mast===p.targetMast)f.sailParts[j].hp=0;});}
  if(p.id===4)f.sailParts.forEach(part=>part.hp=Math.max(0,part.hp-part.maxHp*SPECIAL_TUNING.swordfishSailFraction));
  if(p.id===6)f.crew.forEach(g=>g.hp=Math.max(0,g.hp-SPECIAL_TUNING.sirenCrewDamage));
- totalDamage(f);p.applied=true;b.log.push(m.name+' unleashed');return p;
+ totalDamage(f);p.applied=true;b.log.push(p.id===2?m.name+' · '+Math.round(p.hullDamage)+' hull damage':m.name+' unleashed');return p;
 }
 export function completeFinishMove(s){
  const b=s.battle,p=b?.special;if(!p?.applied||b.phase!=='special')return false;
@@ -338,3 +341,5 @@ return null;
 }
 
 export function elapse(s,seconds=1){const b=s.battle;if(!b||b.phase!=='player'||!Number.isFinite(seconds)||seconds<=0)return false;b.seconds=Math.max(0,(b.seconds??30)-seconds);if(b.seconds>0)return false;b.shots=0;b.dualHits=0;b.phase='enemy';b.enemyShots=2;b.enemyMoves=1;b.log.push('Time is up. The rival takes their turn.');return true;}
+
+export function buyWood(s){if(!Number.isSafeInteger(s.mats.wood+WOOD_TUNING.bundleWood)||!pay(s,{gold:WOOD_TUNING.bundleGold}))return false;s.mats.wood+=WOOD_TUNING.bundleWood;return true;}

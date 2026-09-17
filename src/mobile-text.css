@@ -1,0 +1,78 @@
+/* Combat narration belongs in the header, separate from the ocean and aiming. */
+.wood-store{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}.wood-store p{margin-top:5px}.wood-store button{flex-shrink:0}
+.reward .wood-bonus{display:block;font-size:14px;color:#efd39b}
+.polished-battle .turn-banner{display:flex;flex-direction:column;justify-content:center;gap:3px;padding:5px 10px;overflow:visible}
+.turn-summary{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.combat-message-row{width:100%;min-width:0;min-height:17px;text-align:center}
+.polished-battle #battleLog,.polished-battle #shotReadout{position:static;display:block;max-width:none;margin:0;padding:0;border:0;background:none;box-shadow:none;transform:none;white-space:normal;overflow-wrap:anywhere;font:13px/1.3 'DM Sans',system-ui,sans-serif;color:#fff0cf;text-shadow:none}
+.polished-battle #shotReadout:empty{display:none}
+.combat-message-row:has(#shotReadout:not(:empty)) #battleLog{display:none}
+.combat-arena.polished-battle{grid-template-rows:72px minmax(60px,auto) minmax(0,1fr)}
+
+@media(max-width:1000px),(max-height:600px){
+ body:not(.battle-mode):not(.scaled-ui) #main p,#sheet p{font:14px/1.45 'DM Sans',system-ui,sans-serif;color:#e4d4b9}
+ body:not(.battle-mode):not(.scaled-ui) #main small,#sheet small{font-size:12px;line-height:1.3;color:#dccbb0}
+ body:not(.battle-mode):not(.scaled-ui) #main .eyebrow{font-size:11px;letter-spacing:.1em}
+ body:not(.battle-mode):not(.scaled-ui) #main h2{font-size:26px;line-height:1.12}
+ body:not(.battle-mode):not(.scaled-ui) #main h3{font-size:20px;line-height:1.15}
+ body:not(.battle-mode):not(.scaled-ui) #main button.small,#sheet button.small{font-size:14px;line-height:1.2}
+ body:not(.scaled-ui) .crew-preview>span:last-child{font-size:12px;white-space:normal;line-height:1.2}
+ body:not(.scaled-ui) .quest .row,body:not(.scaled-ui) .season-orders small{font-size:12px}
+ body:not(.scaled-ui) .reward{height:110px;gap:3px;padding:6px;opacity:1}
+ body:not(.scaled-ui) .reward .label{font-size:16px;line-height:1.1}
+ body:not(.scaled-ui) .reward small{font-size:11px!important;color:#ead8b2}
+ .reward .wood-bonus{font:600 13px/1.2 'DM Sans',system-ui,sans-serif;color:#e9d09b}
+ .reward.claimed{filter:saturate(.5)}
+ body:not(.scaled-ui) .port-rules,body:not(.scaled-ui) .standings .footer-note{font:12px/1.35 'DM Sans',system-ui,sans-serif}
+ #sheet h2{font-size:26px;line-height:1.12;padding-right:42px}
+ body:not(.battle-mode):not(.scaled-ui) #main .season-intro button{font-size:14px;line-height:1.2}
+ body:not(.battle-mode):not(.scaled-ui) #main .crew-overview h3{max-width:none;font-size:18px}
+ body:not(.scaled-ui) #topbar .wallet small{font-size:10px}
+ #sheet .gear-grid h3{font-size:20px;line-height:1.15}
+ #sheet .gear-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #sheet.match-intro .match-captain small{font-size:10px;letter-spacing:.03em}
+ #sheet.match-intro .match-captain h2{padding:0;font-size:20px;white-space:normal;line-height:1.1}
+ #sheet.match-intro .match-captain strong,.match-special{font-size:12px}
+ #sheet.match-intro{overflow:auto}
+ .result-summary strong{font-size:16px;line-height:1.25}
+ .polished-battle .health-card h3{font-size:16px;line-height:1.1}
+ .polished-battle .health-line strong{font-size:20px}
+ .polished-battle .health-meta{font:11px/1.25 'DM Sans',system-ui,sans-serif;gap:4px 8px;flex-wrap:wrap}
+ .polished-battle .turn-summary{gap:4px 10px;font:12px/1.2 'DM Sans',system-ui,sans-serif}
+ .polished-battle .turn-banner #phaseLabel{font:16px/1.1 'Lilita One',Impact,sans-serif;letter-spacing:0}
+ .polished-battle .weapon-panel>strong{font-size:16px}
+ .polished-battle .weapon-panel>span{font:12px/1.25 'DM Sans',system-ui,sans-serif}
+ .polished-battle .weapon-panel small{font:11px/1.3 'DM Sans',system-ui,sans-serif}
+ .polished-battle .aim-panel label{font-size:12px}
+ .polished-battle .aim-panel .primary{font-size:14px}
+ .polished-battle .move-panel button{font-size:12px}
+ #chargeAttackText{font-size:24px;line-height:1.05}
+ #specialAnnouncement strong{font-size:clamp(28px,5vw,44px);line-height:1.05;-webkit-text-stroke:0}
+ #specialAnnouncement span{font-size:13px;line-height:1.3}
+ #waterMovement #movementLabel{font:11px/1.2 'DM Sans',system-ui,sans-serif}
+ .bonus-gunner strong{font-size:14px}.bonus-gunner span{font-size:12px}
+}
+@media(max-width:649px){
+ .wood-store{flex-direction:column;align-items:stretch;gap:12px}
+ .combat-arena.polished-battle{grid-template-rows:92px minmax(78px,auto) minmax(0,1fr)}
+ .polished-battle .battle-top{gap:8px;padding:5px 8px}
+ .polished-battle .health-meta{font-size:10px;gap:3px 6px}
+ .polished-battle .turn-summary{gap:3px 8px}
+ .polished-battle .turn-banner #phaseLabel{width:100%;text-align:center}
+ .polished-battle #battleLog,.polished-battle #shotReadout{font-size:12px}
+ #chargeAttackText{font-size:22px}
+ #chargeLabel:has(#chargeAttackText:not([hidden])) #chargeAttackIcon{bottom:calc(50% + 28px)}
+ #sheet .gear-grid{grid-template-columns:1fr}
+ #sheet.match-intro .match-captain h2{font-size:17px}
+ .match-special{font-size:11px}
+ .ship-special-loadout strong{font-size:16px}.ship-special-loadout small{font-size:11px}
+ .result-port-button{font-size:12px;width:34%;padding:4px;min-height:40px}
+ .result-port-button span{display:none}
+}
+@media(max-height:600px) and (min-width:650px){
+ .combat-arena.polished-battle{grid-template-rows:62px minmax(55px,auto) minmax(0,1fr)}
+ body:not(.scaled-ui) .crew-overview h3{font-size:18px}
+ body:not(.battle-mode):not(.scaled-ui) #main .orders-card h3,body:not(.battle-mode):not(.scaled-ui) #main .hold-panel h3{font-size:16px}
+ .polished-battle .battle-top{gap:14px}
+ #sheet.match-intro .match-ship{height:85px}
+}
