@@ -1,6 +1,8 @@
+import {CHALLENGE_FIELDS,packShipChallenge,unpackShipChallenge} from './challenge-wire.js';
+import {encodeLinkPayload,decodeLinkPayload} from './link-codec.js';
 import * as M from './model.js';
 
-const fields=['name','shipLevel','sailLevel','slots','levels','cosmetic','cosmetics','flag','flags','figurehead','figureheads','plating','canvas','durability','plates','canvasDurability','enh','move','moves'];
+const fields=CHALLENGE_FIELDS;
 export function challengeSnapshot(state,seed=Math.floor(Math.random()*2147483647)){
  const ship=Object.fromEntries(fields.map(k=>[k,structuredClone(state[k])]));
  return validateChallenge({v:1,seed,ship});
@@ -26,14 +28,12 @@ export function hasChallengeLink(source){const url=new URL(source,'https://pirat
 export function clearChallengeLink(source){const url=new URL(source);url.searchParams.delete('challenge');url.searchParams.delete('challenge-result');url.hash='';return url.href;}
 function decodeToken(token,max){
  if(token.length>max||!/^[\w-]+$/.test(token))throw Error('Invalid encoded link.');
+ if(token.startsWith('b3_'))return decodeLinkPayload(token);
  return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(token.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0))));
-}
-function packChallenge(c){
- const values=fields.map(k=>k==='levels'?M.PIRATES.map(p=>c.ship.levels[p.id]):c.ship[k]);
- return [2,c.seed,c.id??null,values];
 }
 function unpackChallenge(c){
  if(!Array.isArray(c))return c;
+ if(c[0]===3)return unpackShipChallenge(c);
  if(c.length!==4||c[0]!==2||!Array.isArray(c[3])||c[3].length!==fields.length)throw Error('Invalid challenge data.');
  const ship=Object.fromEntries(fields.map((k,i)=>[k,c[3][i]]));
  if(!Array.isArray(ship.levels)||ship.levels.length!==M.PIRATES.length)throw Error('Invalid crew levels.');
@@ -68,9 +68,8 @@ export function practiceGame(challenge,recipient=null,now=Date.now()){
 // Receipts are for browser-local saves, not server-verified multiplayer results.
 function ledger(s){return s.friendChallenges??={issued:[],claimed:[],completed:{}};}
 function linkFor(value,base,kind){
- const packed=kind==='challenge'?packChallenge(value):[2,value.id,value.friend,value.won?1:0,value.turns];
- const bytes=new TextEncoder().encode(JSON.stringify(packed));
- const token=btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+ const packed=kind==='challenge'?packShipChallenge(value):[3,value.id,value.friend,((value.turns-1)<<1)|(value.won?1:0)];
+ const token=encodeLinkPayload(packed);
  const url=new URL(base);url.hash='';url.search='';url.searchParams.set(kind,token);return url.href;
 }
 export function issueChallenge(s,base){
@@ -87,7 +86,10 @@ export function resultsURL(r,base){return linkFor(validateResult(r),base,'challe
 export function readChallengeResult(source){
  try{const token=tokenFrom(source,'challenge-result');if(token===null)return null;
   let r=decodeToken(token,2000);
-  if(Array.isArray(r)){if(r.length!==5||r[0]!==2||![0,1].includes(r[3]))throw Error('Invalid result data.');r={v:1,id:r[1],friend:r[2],won:r[3]===1,turns:r[4]};}
+  if(Array.isArray(r)){
+   if(r[0]===3){if(r.length!==4||!Number.isInteger(r[3])||r[3]<0||r[3]>49)throw Error('Invalid result bits.');r={v:1,id:r[1],friend:r[2],won:!!(r[3]&1),turns:(r[3]>>1)+1};}
+   else{if(r.length!==5||r[0]!==2||![0,1].includes(r[3]))throw Error('Invalid result data.');r={v:1,id:r[1],friend:r[2],won:r[3]===1,turns:r[4]};}
+  }
   return validateResult(r);
  }catch{throw Error('This results link is invalid.');}
 }
