@@ -45,7 +45,8 @@ const partsOK=(parts,n)=>Array.isArray(parts)&&parts.length===n&&parts.every(p=>
 const maskOK=f=>{try{return !f.hullMask||!!maskPixels(f);}catch{return false;}};
 const fighterOK=f=>obj(f)&&(!f.pose||(obj(f.pose)&&Number.isFinite(f.pose.heave)&&Math.abs(f.pose.heave)<=.4&&Number.isFinite(f.pose.roll)&&Math.abs(f.pose.roll)<=.27))&&maskOK(f)&&(!f.hullParts||(num(f.x,12)&&LADDER[f.shipLevel]&&partsOK(f.hullParts,f.legacySections||hullConfig(f.shipLevel).sections)&&partsOK(f.mastParts,3)&&partsOK(f.sailParts,8)))&&num(f.hull)&&num(f.maxHull)&&f.maxHull>0&&f.hull<=f.maxHull&&num(f.sails,100)&&num(f.durability,100)&&Array.isArray(f.crew)&&f.crew.length<=8&&f.crew.every(g=>obj(g)&&PIRATES.some(p=>p.id===g.id)&&num(g.hp)&&int(g.level,12)&&g.level>0&&/^[dh][0-3]$/.test(g.slot))&&obj(f.enh);
 if(s.battle!==null){const b=s.battle;if(!obj(b)||!Number.isInteger(b.wind)||Math.abs(b.wind)>WIND_TUNING.maxStrength||!['player','enemy','flight','special','result'].includes(b.phase)||!fighterOK(b.player)||!fighterOK(b.enemy)||!int(b.rng,4294967295)||!int(b.turn,25)||!int(b.shots,2)||!Array.isArray(b.events)||!Array.isArray(b.log)||!bool(b.rewarded)||!bool(b.charged)||!bool(b.used))bad();}
-if(s.battle?.special){const p=s.battle.special;if(s.battle.phase!=='special'||!obj(p)||!int(p.id,FINISHERS.length-1)||!int(p.sequence)||p.sequence<1||!bool(p.applied)||!fighterOK(p.before)||([1,3].includes(p.id)&&!int(p.targetMast,2))||(p.id===0&&!p.before.crew.some(g=>g.id===p.targetCrew&&g.hp>0)))bad();}
+if(s.battle&&(!int(s.battle.enemyStreak,4)||!bool(s.battle.enemyCharged)))bad();
+if(s.battle?.special){const p=s.battle.special;if(p.side!==undefined&&!['player','enemy'].includes(p.side))bad();if(s.battle.phase!=='special'||!obj(p)||!int(p.id,FINISHERS.length-1)||!int(p.sequence)||p.sequence<1||!bool(p.applied)||!fighterOK(p.before)||([1,3].includes(p.id)&&!int(p.targetMast,2))||(p.id===0&&!p.before.crew.some(g=>g.id===p.targetCrew&&g.hp>0)))bad();}
 if(s.battle?.phase==='special'&&!s.battle.special)bad();
 if(s.battle?.phase==='flight'&&(!s.battle.pending||!['player','enemy'].includes(s.battle.pending.side)||!num(s.battle.pending.angle,75)||s.battle.pending.angle<5||!s.battle[s.battle.pending.side]?.crew.some(g=>g.id===s.battle.pending.gunner&&g.hp>0)))bad();
 
@@ -103,6 +104,7 @@ export function outcome(b){if((b.enemy.hull<=0)||!active(b.enemy).length)return 
 export function prepareBattle(b){
  if(!b)return b;
  b.wind??=0;
+ b.enemyStreak??=0;b.enemyCharged??=false;
  ensureGeometry(b.player,'player');ensureGeometry(b.enemy,'enemy');
  if(b.streakVersion!==2){b.streak=b.charged?4:0;b.streakVersion=2;}
  b.movesLeft??=sailMoves(b.player);b.movesLeft=Math.min(b.movesLeft,sailMoves(b.player));b.enemyShots??=2;b.enemyMoves??=1;b.pending??=null;
@@ -228,9 +230,10 @@ export function advanceShot(s,elapsed){
  const e={side,gunnerId:g.id,angle:flight.angle,target:first?.kind||'sea',hit,damage,x:first?.x||0,y:first?.y||0,impacts,pirate:p.name,weapon:flight.spec.effect,projectile:flight.spec.name,bonus:flight.spec.bonus,n:b.events.length};
  b.events.push(e);b.log.push(p.name+(hit?' hits '+[...new Set(impacts.map(i=>i.kind))].join(' / ')+' for '+Math.round(damage)+(impacts.some(i=>i.bonus)?' · specialty bonus!':''):' splashes into the sea.'));
  b.pending=null;b.phase=side;
+ const streakKey=side==='player'?'streak':'enemyStreak',chargeKey=side==='player'?'charged':'enemyCharged';
+ if(!b[chargeKey]){b[streakKey]=damage>0?Math.min(SPECIAL_TUNING.chargeAttacks,b[streakKey]+1):0;if(b[streakKey]===SPECIAL_TUNING.chargeAttacks)b[chargeKey]=true;}
  if(side==='player'){
   b.shots--;if(hit)b.dualHits++;
-  if(!b.charged){b.streak=damage>0?Math.min(SPECIAL_TUNING.chargeAttacks,b.streak+1):0;if(b.streak===SPECIAL_TUNING.chargeAttacks)b.charged=true;}
   if(b.shots===0){b.phase='enemy';b.enemyShots=2;b.enemyMoves=1;}
  }else{
   b.enemyShots--;
@@ -260,20 +263,20 @@ export function planEnemyShot(s){
 export function enemyTurn(s){
  const b=prepareBattle(s.battle);if(!b||b.phase!=='enemy')return [];
  const events=[];if(b.enemyMoves)moveShip(s,random(b)<.5?1:-1,'enemy');
- for(let i=0;i<2&&b.phase==='enemy';i++){const plan=planEnemyShot(s);if(!plan)break;events.push(attack(s,plan));}
+ for(let i=0;i<2&&b.phase==='enemy';i++){if(!specialUnavailable(s,'enemy')){finishMove(s,'enemy');resolveFinishMove(s);completeFinishMove(s);if(b.phase==='result')break;}const plan=planEnemyShot(s);if(!plan)break;events.push(attack(s,plan));}
  return events.filter(Boolean);
 }
 
-export function specialUnavailable(s){
- const b=s.battle,m=FINISHERS[s.move];
- if(!b||!m||!s.moves.includes(s.move))return 'Equip an unlocked big attack first.';
- if(b.phase!=='player'||b.pending||b.special)return 'Wait until your attack sequence finishes.';
- if(!b.charged)return 'Land four successful attacks to charge.';
- return specialTargetUnavailable(s);
+export function specialUnavailable(s,side='player'){
+ const b=prepareBattle(s.battle),m=FINISHERS[side==='player'?s.move:b?.enemy.move??0];
+ if(!b||!m||(side==='player'&&!s.moves.includes(s.move)))return 'Equip an unlocked big attack first.';
+ if(b.phase!==side||b.pending||b.special)return 'Wait until your attack sequence finishes.';
+ if(!(side==='player'?b.charged:b.enemyCharged))return 'Land four successful attacks to charge.';
+ return specialTargetUnavailable(s,side);
 }
-export function specialTargetUnavailable(s){
- const b=s.battle,m=FINISHERS[s.move];if(!b||!m)return '';
- const f=ensureGeometry(b.enemy,'enemy');
+export function specialTargetUnavailable(s,side='player'){
+ const b=s.battle,m=FINISHERS[side==='player'?s.move:b?.enemy.move??0];if(!b||!m)return '';
+ const targetSide=side==='player'?'enemy':'player',f=ensureGeometry(b[targetSide],targetSide);
  if(m.id===0&&!active(f).some(g=>g.slot.startsWith('d')))return 'No enemy deck gunners remain. Hull gunners are protected from the shark. Your charge is kept.';
  if([1,3].includes(m.id)&&!f.mastParts.some(p=>p.hp>0))return 'No standing mast remains. Your charge is kept.';
  if(m.id===5&&!active(f).some(g=>g.slot.startsWith('d')))return 'No enemy deck gunners remain. Your charge is kept.';
@@ -283,17 +286,17 @@ export function specialTargetUnavailable(s){
  return '';
 }
 // Begin, impact, and completion are separate persistent transitions. No clock runs in this phase.
-export function finishMove(s){
- const b=prepareBattle(s.battle);if(specialUnavailable(s))return false;
- const move=FINISHERS[s.move],f=b.enemy;
+export function finishMove(s,side='player'){
+ const b=prepareBattle(s.battle);if(specialUnavailable(s,side))return false;
+ const move=FINISHERS[side==='player'?s.move:b.enemy.move??0],f=b[side==='player'?'enemy':'player'];
  const target=move.id===0?active(f).find(g=>g.slot.startsWith('d')).id:null;
  b.specialSequence=(b.specialSequence||0)+1;
- b.special={id:move.id,sequence:b.specialSequence,applied:false,targetCrew:target,targetMast:[1,3].includes(move.id)?f.mastParts.findIndex(p=>p.hp>0):null,before:clone(f)};
- b.charged=false;b.streak=0;b.used=false;b.phase='special';return b.special;
+ b.special={side,id:move.id,sequence:b.specialSequence,applied:false,targetCrew:target,targetMast:[1,3].includes(move.id)?f.mastParts.findIndex(p=>p.hp>0):null,before:clone(f)};
+ if(side==='player'){b.charged=false;b.streak=0;b.used=false;}else{b.enemyCharged=false;b.enemyStreak=0;}b.phase='special';return b.special;
 }
 export function resolveFinishMove(s){
  const b=s.battle,p=b?.special;if(!p||b.phase!=='special'||p.applied)return false;
- const f=ensureGeometry(b.enemy,'enemy'),m=FINISHERS[p.id];
+ const targetSide=p.side==='enemy'?'player':'enemy',f=ensureGeometry(b[targetSide],targetSide),m=FINISHERS[p.id];
  if(p.id===0){const g=f.crew.find(g=>g.id===p.targetCrew);if(g)g.hp=0;}
  if(p.id===5)f.crew.filter(g=>g.slot.startsWith('d')).forEach(g=>g.hp=0);
  if(p.id===2)p.hullDamage=crushHull(f,.6,-.15,SPECIAL_TUNING.whaleHullDamage);
@@ -304,7 +307,7 @@ export function resolveFinishMove(s){
 }
 export function completeFinishMove(s){
  const b=s.battle,p=b?.special;if(!p?.applied||b.phase!=='special')return false;
- b.special=null;b.phase='player';const won=outcome(b);if(won!==null){b.phase='result';b.won=won;}return true;
+ b.special=null;b.phase=p.side==='enemy'?'enemy':'player';const won=outcome(b);if(won!==null){b.phase='result';b.won=won;}return true;
 }
 
 export function settle(s,t=Date.now()){const b=s.battle;if(!b||b.phase!=='result'||b.rewarded)return null;b.rewarded=true;const looted=b.won&&!active(b.enemy).length&&!(b.enemy.hull<=0),baseGold=Math.floor(E.MATCH.gold*(b.won?1:E.MATCH.lossShare)),lootBonus=looted?Math.floor(baseGold*.1):0,gold=baseGold+lootBonus;s.gold+=gold;s.xp+=b.won?50:20;s.quests.matches++;if(b.won){s.weeklyWins++;s.trophies++;s.lastWin=t;s.quests.wins++;}let chest=null;if(b.won&&s.chests.length<5&&s.dailyChests<5){chest={id:b.id,kind:roll(()=>random(b),E.BONUS_ODDS),seed:b.rng};s.chests.push(chest);s.dailyChests++;s.chestRun++;if(s.chestRun%5===0){s.gems+=E.GEMS.fifthChest;queueOffer(s,'chests-'+s.chestRun,1,t);}}s.durability=b.player.durability;if(b.player.plates)b.player.plates.forEach((p,i)=>s.plates[i]=clone(p));s.canvasDurability=b.player.canvasDurability??100;const result={id:b.id,won:b.won,gold,gems:chest&&s.chestRun%5===0?E.GEMS.fifthChest:0,xp:b.won?50:20,honor:b.won?1:0,lootBonus,looted,chest,seed:b.seed,enemyName:b.enemyName,rematch:b.rematch,rematchAsked:false,opponent:clone(b.opponent||b.enemy),temperament:b.temperament,log:b.log.slice(-8),turns:b.turn};s.lastResult=result;return result;}

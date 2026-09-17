@@ -181,7 +181,7 @@ function configure(side){
 let camera={ppu:1,ox:0,oy:0},flying=false,cameraReady=false,viewMode='crew',cameraAnimation=0,cameraTarget=null,flightTarget='enemy',attackSide='player';
 function shipView(side){return {cutaway:side===cutawaySide(state.battle,busy,attackSide,viewMode,flightTarget),hideRig:viewMode==='crew'||viewMode==='celebrate'};}
 const screenPoint=p=>({x:camera.ox+p.x*camera.ppu,y:camera.oy-p.y*camera.ppu});
- function desiredCamera(){const field=el('combatField'),b=state.battle;if(!field||!b)return null;if(viewMode==='scope')return battleCamera(field.clientWidth,field.clientHeight,b.enemy.x,b.enemy.x,'crew',b.enemy.x);if(viewMode==='special'){const ppu=Math.min(field.clientWidth/4.2,Math.max(90,field.clientHeight-130)/2.8);return {ppu,ox:field.clientWidth/2-b.enemy.x*ppu,oy:(field.clientHeight-130)*.78};}return viewMode==='celebrate'?battleCamera(field.clientWidth,field.clientHeight,b[flightTarget].x,b[flightTarget].x,'crew'):battleCamera(field.clientWidth,Math.max(150,field.clientHeight-(matchMedia('(pointer:coarse) and (orientation:landscape) and (max-height:600px)').matches?45:110)),b.player.x,b.enemy.x,viewMode,b[flightTarget].x);}
+ function desiredCamera(){const field=el('combatField'),b=state.battle;if(!field||!b)return null;if(viewMode==='scope')return battleCamera(field.clientWidth,field.clientHeight,b.enemy.x,b.enemy.x,'crew',b.enemy.x);if(viewMode==='special'){const ppu=Math.min(field.clientWidth/4.2,Math.max(90,field.clientHeight-130)/2.8);return {ppu,ox:field.clientWidth/2-b[flightTarget].x*ppu,oy:(field.clientHeight-130)*.78};}return viewMode==='celebrate'?battleCamera(field.clientWidth,field.clientHeight,b[flightTarget].x,b[flightTarget].x,'crew'):battleCamera(field.clientWidth,Math.max(150,field.clientHeight-(matchMedia('(pointer:coarse) and (orientation:landscape) and (max-height:600px)').matches?45:110)),b.player.x,b.enemy.x,viewMode,b[flightTarget].x);}
 function setBattleView(mode){
  viewMode=mode;const target=desiredCamera();if(!target)return;
  for(const side of ['player','enemy'])send(side,{action:'view',...shipView(side)});
@@ -238,7 +238,7 @@ function updateArena(){
  }
  const own=b.phase==='player',shotSide=b.pending?.side;
  el('turnBanner').dataset.phase=own?'player':b.phase==='result'?'result':'enemy';
- el('phaseLabel').textContent=own?'Choose Your Gunner':b.phase==='result'?'BATTLE OVER':b.phase==='special'?'BIG ATTACK':b.phase==='flight'?(shotSide==='player'?'YOUR SHOT IN FLIGHT':'Incoming Fire'):'Incoming Fire';
+ el('phaseLabel').textContent=own?'Choose Your Gunner':b.phase==='result'?'BATTLE OVER':b.phase==='special'?(b.special?.side==='enemy'?'ENEMY ATTACK':'BIG ATTACK'):b.phase==='flight'?(shotSide==='player'?'YOUR SHOT IN FLIGHT':'Incoming Fire'):'Incoming Fire';
  el('turnLabel').textContent='TURN '+b.turn;
  el('windIndicator').textContent=windLabel(b.wind);el('windIndicator').title='Wind pushes every shot '+(b.wind<0?'left':b.wind>0?'right':'equally in calm air')+'. Flags show its strength.';
  el('turnClock').textContent=own?Math.ceil(b.seconds??30)+'s':'';
@@ -263,7 +263,7 @@ function updateArena(){
  const unavailable=M.specialTargetUnavailable(state);
  const noTarget=unavailable&&(/crew|gunners/i.test(unavailable)?'No More Crew on Deck':/mast|sail/i.test(unavailable)?'No More Sails on Deck':'No More Hull');
  const fin=document.querySelector('[data-action=finisher]');fin.disabled=locked||!b.charged||!!noTarget;fin.hidden=!b.charged||!!noTarget;fin.classList.toggle('charged',b.charged&&!noTarget);fin.textContent='ATTACK';fin.title=M.FINISHERS[state.move].name;
- const count=b.charged?4:b.streak;el('chargeBalls').hidden=!!noTarget;el('chargeBalls').setAttribute('aria-label',count+' of 4 successful attacks'+(b.charged?' — big attack ready':''));el('chargeBalls').classList.toggle('ready',b.charged);const equipped=M.FINISHERS[state.move],hasArt=['shark','kraken','gull','whale','siren'].includes(equipped.art),attackIcon=el('chargeAttackIcon');attackIcon.hidden=!!noTarget||!hasArt;if(hasArt&&!noTarget){const art='/pirate-bash/public/killstreaks/'+equipped.art+'.png';if(attackIcon.getAttribute('src')!==art)attackIcon.src=art;attackIcon.alt=equipped.name;}el('chargeAttackText').textContent=noTarget||((hasArt?'':equipped.icon+' ')+equipped.name);el('chargeAttackText').hidden=b.charged&&!noTarget;el('chargeBalls').querySelectorAll('i').forEach((n,i)=>n.classList.toggle('lit',i<count));
+ const count=b.charged?4:b.streak;el('chargeBalls').hidden=!!noTarget;el('chargeBalls').setAttribute('aria-label',count+' of 4 successful attacks'+(b.charged?' — big attack ready':''));el('chargeBalls').classList.toggle('ready',b.charged);const equipped=M.FINISHERS[state.move],hasArt=['shark','kraken','gull','whale','siren'].includes(equipped.art),attackIcon=el('chargeAttackIcon');attackIcon.hidden=!hasArt;if(hasArt){const art='/pirate-bash/public/killstreaks/'+equipped.art+'.png';if(attackIcon.getAttribute('src')!==art)attackIcon.src=art;attackIcon.alt=equipped.name;}el('chargeAttackText').textContent=noTarget||((hasArt?'':equipped.icon+' ')+equipped.name);el('chargeAttackText').hidden=b.charged&&!noTarget;el('chargeBalls').querySelectorAll('i').forEach((n,i)=>n.classList.toggle('lit',i<count));
  el('battleLog').textContent=b.log.at(-1)||'';
  layoutCombat();save();if(autoSelected)setBattleView('wide');
 }
@@ -312,12 +312,12 @@ async function runEnemyTurn(){
  const b=state.battle;if(!b||b.phase!=='enemy')return;
  busy=true;attackSide='enemy';setBattleView('wide');updateArena();await sleep(650);
  if(b.enemyMoves>0){M.moveShip(state,b.enemy.x>8.4?1:-1,'enemy');updateArena();await sleep(250);}
- while(b.phase==='enemy'){const shot=M.planEnemyShot(state);if(!shot)break;const flight=M.launchShot(state,{...shot,live:true});if(!flight)break;updateArena();await animateShot(flight);if(b.phase==='enemy')await sleep(400);}
+ while(b.phase==='enemy'){if(!M.specialUnavailable(state,'enemy')){busy=false;await finisher(false,'enemy');if(b.phase!=='enemy')break;busy=true;setBattleView('wide');updateArena();}const shot=M.planEnemyShot(state);if(!shot)break;const flight=M.launchShot(state,{...shot,live:true});if(!flight)break;updateArena();await animateShot(flight);if(b.phase==='enemy')await sleep(400);}
  busy=false;updateArena();if(b.phase==='result')finish();
 }
 async function resumeCombat(){
  if(busy)return;
- if(state.battle?.phase==='special'){await finisher(true);return;}
+ if(state.battle?.phase==='special'){await finisher(true);if(state.battle?.phase==='enemy')await runEnemyTurn();return;}
  if(state.battle?.phase==='flight'){busy=true;updateArena();await animateShot(M.pendingFlight(state));busy=false;}
  if(state.battle?.phase==='enemy')await runEnemyTurn();else {updateArena();if(state.battle?.phase==='result')finish();}
 }
@@ -379,30 +379,32 @@ async function finish(){
  M.settle(state);save();const r=state.lastResult;if(!r)return;await preloadResult(r.won);if(state.lastResult?.id!==r.id)return;sound(r.won?640:160,.5);modal(resultScreen(r));el('sheet').className='battle-result-sheet';}
 
 const rigRequests=new Map();
-window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==el('enemyShip')?.contentWindow||e.data?.type!=='pirate-special-rig')return;rigRequests.get(e.data.requestId)?.(e.data.image);});
+window.addEventListener('message',e=>{if(e.origin!==location.origin||![el('enemyShip')?.contentWindow,el('playerShip')?.contentWindow].includes(e.source)||e.data?.type!=='pirate-special-rig')return;rigRequests.get(e.data.requestId)?.(e.data.image);});
 function specialRig(pending){
  if(pending.targetMast===null)return Promise.resolve(null);
- return new Promise((resolve,reject)=>{const requestId='special-'+pending.sequence+'-'+Date.now(),timer=setTimeout(()=>{rigRequests.delete(requestId);reject(Error('Ship artwork is still loading. Try the attack again.'));},6500);rigRequests.set(requestId,image=>{clearTimeout(timer);rigRequests.delete(requestId);if(image)resolve(image);else reject(Error('Ship artwork is still loading. Try the attack again.'));});send('enemy',{action:'special-prepare',requestId,mast:pending.targetMast,before:pending.before});});
+ return new Promise((resolve,reject)=>{const requestId='special-'+pending.sequence+'-'+Date.now(),timer=setTimeout(()=>{rigRequests.delete(requestId);reject(Error('Ship artwork is still loading. Try the attack again.'));},6500);rigRequests.set(requestId,image=>{clearTimeout(timer);rigRequests.delete(requestId);if(image)resolve(image);else reject(Error('Ship artwork is still loading. Try the attack again.'));});send(pending.side==='enemy'?'player':'enemy',{action:'special-prepare',requestId,mast:pending.targetMast,before:pending.before});});
 }
-async function finisher(resuming=false){
+async function finisher(resuming=false,side='player'){
  if(busy)return;
- if(!resuming){const reason=M.specialUnavailable(state);if(reason){toast(reason);return;}}
+ if(resuming)side=state.battle?.special?.side??'player';
+ const targetSide=side==='player'?'enemy':'player';
+ if(!resuming){const reason=M.specialUnavailable(state,side);if(reason){toast(reason);return;}}
  if(state.settings.sound)try{audioContext??=new AudioContext();audioContext.resume().catch(()=>{});}catch{}
- busy=true;telescope=false;gunner=null;attackSide='player';flightTarget='enemy';setBattleView('special');updateArena();
+ busy=true;telescope=false;gunner=null;attackSide=side;flightTarget=targetSide;setBattleView('special');updateArena();
  try{
-  await preloadSpecialArt(M.FINISHERS[state.battle.special?.id??state.move]);
-  if(!resuming){const previous=structuredClone(state.battle);if(!M.finishMove(state))throw Error('This big attack is not available.');if(!save()){state.battle=previous;throw Error('Could not save the attack. Your charge is kept.');}}
+  await preloadSpecialArt(M.FINISHERS[state.battle.special?.id??(side==='player'?state.move:state.battle.enemy.move??0)]);
+  if(!resuming){const previous=structuredClone(state.battle);if(!M.finishMove(state,side))throw Error('This big attack is not available.');if(!save()){state.battle=previous;throw Error('Could not save the attack. Your charge is kept.');}}
   const pending=state.battle.special,move=M.FINISHERS[pending.id],rigImage=await specialRig(pending);
   updateArena();
   const reduced=!state.settings.motion||matchMedia('(prefers-reduced-motion: reduce)').matches;
   await playSpecialScene({field:el('combatField'),move,pending,rigImage,reduced,getBattle:()=>state.battle,getCamera:()=>camera,
    sound:{enabled:state.settings.sound,context:audioContext,impact:id=>{if(id!==6)sound(id===5?380:65,.7);}},
    onImpact:()=>{const previous=structuredClone(state.battle);M.resolveFinishMove(state);if(!save()){state.battle=previous;throw Error('Could not save the impact. Retry to continue safely.');}updateArena();},
-   onAfterImpact:()=>{send('enemy',{action:'reaction',kind:'cringe'});if(move.id!==5&&move.id!==6)sendOcean({action:'splash',id:'special-'+pending.sequence,x:state.battle.enemy.x,y:-.29,energy:move.id===2?1:.7});},
-   onCelebrate:()=>{flightTarget='player';setBattleView('celebrate');send('player',{action:'reaction',kind:'dance'});}
+   onAfterImpact:()=>{send(targetSide,{action:'reaction',kind:'cringe'});if(move.id!==5&&move.id!==6)sendOcean({action:'splash',id:'special-'+pending.sequence,x:state.battle[targetSide].x,y:-.29,energy:move.id===2?1:.7});},
+   onCelebrate:()=>{flightTarget=side;setBattleView('celebrate');send(side,{action:'reaction',kind:'dance'});}
   });
   if(move.id===2){updateArena();await sleep(reduced?400:1000);}
-  M.completeFinishMove(state);save();send('enemy',{action:'special-end'});el('crewCheer').hidden=true;busy=false;updateArena();
+  M.completeFinishMove(state);save();send(targetSide,{action:'special-end'});el('crewCheer').hidden=true;busy=false;updateArena();
   if(state.battle.phase==='result')await finish();else setBattleView('crew');
  }catch(error){busy=false;updateArena();if(state.battle?.special)modal('<h2>Continue your big attack</h2><p>'+esc(error.message)+'</p>'+button('Continue attack','resume-special','','primary'));else{setBattleView('crew');toast(error.message);}}
 }
@@ -525,7 +527,7 @@ case 'begin-battle':close();setBattleView('crew');break;
 case 'gun':if(!busy&&state.battle?.phase==='player'){gunner=Number(id);scope=true;telescope=false;updateArena();setBattleView('wide');}break;
 case 'sail':if(!busy&&M.moveShip(state,Number(id)))updateArena();break;
 case 'fire':await fire();break;
-case 'resume-special':close();await finisher(true);break;
+case 'resume-special':close();await finisher(true);if(state.battle?.phase==='enemy')await runEnemyTurn();break;
 case 'finisher':await finisher();break;
 case 'scope':telescope=!telescope;setBattleView(telescope?'scope':'crew');updateArena();break;
 case 'retreat':modal('<h2>Strike your colors?</h2><p>Retreat counts as a loss.</p><div class="row spaced">'+button('Retreat','confirm-retreat','','danger')+button('Keep fighting','close','','primary')+'</div>');break;

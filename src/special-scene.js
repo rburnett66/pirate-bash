@@ -45,9 +45,9 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
  let resizeObserver;
  const resize=()=>{for(const c of [back,front]){const w=field.clientWidth,h=field.clientHeight;if(c.width!==w||c.height!==h){c.width=w;c.height=h;}}};resize();resizeObserver=new ResizeObserver(resize);resizeObserver.observe(field);
  function draw(t){
-  const b=getBattle(),f=b.enemy,{ppu,ox,oy}=getCamera(),at=(x,y)=>({x:ox+x*ppu,y:oy-y*ppu}),anchor=at(f.x,-.25+(f.pose?.heave||0));
+  const b=getBattle(),f=b[pending.side==='enemy'?'player':'enemy'],{ppu,ox,oy}=getCamera(),at=(x,y)=>({x:ox+x*ppu,y:oy-y*ppu}),anchor=at(f.x,-.25+(f.pose?.heave||0));
   const impact=t-impactAt,pre=ease(t/impactAt),after=clamp(impact/(duration-impactAt));
-  field.querySelector('#enemyShip')?.style.setProperty('--special-rock',!reduced&&move.id===2&&impact>0?Math.sin(impact/95)*4*Math.max(0,1-impact/2300)+'deg':'0deg');
+  field.querySelector(pending.side==='enemy'?'#playerShip':'#enemyShip')?.style.setProperty('--special-rock',!reduced&&move.id===2&&impact>0?Math.sin(impact/95)*4*Math.max(0,1-impact/2300)+'deg':'0deg');
   bg.clearRect(0,0,back.width,back.height);fg.clearRect(0,0,front.width,front.height);
   const emergence=ease((t-(move.id===6?850:300))/(impactAt-650)),sink=ease((after-.45)/.55),alpha=Math.min(1,t/350,(duration-t)/500);
   const creature=(name,width,x=0,y=0,angle=0)=>sprite(fg,pictures[name],anchor.x+x*ppu,anchor.y-y*ppu,width*ppu,angle,alpha);
@@ -85,7 +85,7 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
    const leap=impact<0?Math.sin(pre*Math.PI*.65):Math.max(0,1-impact/1600);
    creature('shark',.8,impact<0?1.6*(1-pre):-.5*clamp(impact/1500),-.65+leap*.8,impact<0?-.35+.35*pre:clamp(impact/1800)*-.6);
   }else if(move.id===1){
-   const mast=rigLayout().masts[pending.targetMast],tip=shipToWorld(f,-1,{x:mast.x,y:mast.top}),target=at(tip.x,tip.y);
+   const mast=rigLayout().masts[pending.targetMast],tip=shipToWorld(f,pending.side==='enemy'?1:-1,{x:mast.x,y:mast.top}),target=at(tip.x,tip.y);
    const reach=emergence*(1-sink),waterline=anchor.y+.2*ppu;
    bg.save();bg.beginPath();bg.rect(0,0,back.width,waterline);bg.clip();
    sprite(bg,pictures.tentacles,anchor.x,waterline+(1-reach)*.95*ppu,1.4*ppu,0,alpha);
@@ -108,14 +108,14 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
    if(impact>-150&&impact<1100){fg.strokeStyle='#b6f3ff';fg.lineWidth=7;fg.beginPath();fg.moveTo(anchor.x+.5*ppu,0);fg.lineTo(anchor.x-.1*ppu,anchor.y-1.2*ppu);fg.lineTo(anchor.x+.2*ppu,anchor.y-1.3*ppu);fg.lineTo(anchor.x,anchor.y);fg.stroke();}
   }else{creature('fireball',.85,2.5-5*t/duration,.25);}
   // A pre-impact portrait survives normal sync and HP=0 until its splash.
-  if(impacted&&impact<2200)for(const {g,img} of reacting){if(f.crew.find(live=>live.id===g.id)?.hp>0)continue;const q=stationPosition(pending.before,g.slot),v=shipToWorld(f,-1,{x:q.x,y:q.y}),pos=at(v.x,v.y);sprite(fg,img,pos.x,pos.y+(reduced?0:Math.sin(impact/80)*.045*ppu),q.width*ppu,reduced?0:Math.sin(impact/90)*.09,1-ease((impact-1600)/600));}
+  if(impacted&&impact<2200)for(const {g,img} of reacting){if(f.crew.find(live=>live.id===g.id)?.hp>0)continue;const q=stationPosition(pending.before,g.slot),v=shipToWorld(f,pending.side==='enemy'?1:-1,{x:q.x,y:q.y}),pos=at(v.x,v.y);sprite(fg,img,pos.x,pos.y+(reduced?0:Math.sin(impact/80)*.045*ppu),q.width*ppu,reduced?0:Math.sin(impact/90)*.09,1-ease((impact-1600)/600));}
   if(impacted&&victimImage){
-   const q=stationPosition(pending.before,victim.slot),v=shipToWorld(f,-1,{x:q.x,y:q.y}),pos=at(v.x,v.y),u=clamp(impact/(reduced?650:2200));
+   const q=stationPosition(pending.before,victim.slot),v=shipToWorld(f,pending.side==='enemy'?1:-1,{x:q.x,y:q.y}),pos=at(v.x,v.y),u=clamp(impact/(reduced?650:2200));
    if(u<1)sprite(fg,victimImage,pos.x-u*1.3*ppu,pos.y-(reduced?0:Math.sin(u*Math.PI)*1.65)*ppu+u*u*.8*ppu,q.width*ppu,reduced?0:u*7,1-ease((u-.85)/.15));
   }
   // The actual pre-impact mast canvas includes its cloth; dead sails cannot erase this copy.
   if(impacted&&savedRig&&impact<(reduced?700:2300)){
-   const u=clamp(impact/(reduced?700:2300)),mast=rigLayout().masts[pending.targetMast],foot=shipToWorld(f,-1,{x:mast.x,y:mast.foot}),pivot=at(foot.x,foot.y);
+   const u=clamp(impact/(reduced?700:2300)),mast=rigLayout().masts[pending.targetMast],foot=shipToWorld(f,pending.side==='enemy'?1:-1,{x:mast.x,y:mast.foot}),pivot=at(foot.x,foot.y);
    fg.save();fg.globalAlpha=1-ease((u-.65)/.35);fg.translate(pivot.x,pivot.y);fg.rotate(-(f.pose?.roll||0)+(reduced?0:-u*u*1.65));fg.translate(0,u*u*.6*ppu);fg.scale(-ppu,ppu);fg.drawImage(savedRig,-810/480-mast.x,-1.44+mast.foot,1792/480,1008/480);fg.restore();
   }
   if(impacted){
@@ -133,6 +133,6 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
    draw(Math.min(duration,elapsed));
    if(elapsed>=duration){resolve();return;}frame=requestAnimationFrame(tick);
   }catch(error){reject(error);}}frame=requestAnimationFrame(tick);});
- }finally{cancelAnimationFrame(frame);resizeObserver.disconnect();stopVoice();field.querySelector('#enemyShip')?.style.setProperty('--special-rock','0deg');for(const c of [back,front]){c.getContext('2d').clearRect(0,0,c.width,c.height);c.hidden=true;}title.hidden=true;delete field.dataset.special;delete field.dataset.specialStage;}
+ }finally{cancelAnimationFrame(frame);resizeObserver.disconnect();stopVoice();field.querySelector(pending.side==='enemy'?'#playerShip':'#enemyShip')?.style.setProperty('--special-rock','0deg');for(const c of [back,front]){c.getContext('2d').clearRect(0,0,c.width,c.height);c.hidden=true;}title.hidden=true;delete field.dataset.special;delete field.dataset.specialStage;}
 }
 
