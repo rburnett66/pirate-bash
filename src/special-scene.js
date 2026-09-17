@@ -64,7 +64,7 @@ export async function playSpecialScene({field,move,pending,getBattle,getCamera,r
    fg.save();fg.beginPath();fg.moveTo(0,0);fg.lineTo(front.width,0);fg.lineTo(front.width,waterline);
    for(let px=front.width;px>=0;px-=8)fg.lineTo(px,waterline+(reduced?0:Math.sin((px-x)/ppu*8+t/400)*.025*ppu));
    fg.lineTo(0,waterline);fg.closePath();fg.clip();
-   sprite(fg,pictures.whale,x,waterline+height*(1-.5*rise)+smash*.35*ppu,width,angle,alpha);fg.restore();
+   sprite(fg,pictures.whale,x,waterline+height*(1-.6*rise)+smash*.35*ppu,width,angle,alpha);fg.restore();
    fg.save();fg.globalAlpha=alpha*rise;fg.strokeStyle='#d2faff';fg.lineWidth=Math.max(2,.025*ppu);
    fg.beginPath();fg.ellipse(x,waterline,.7*ppu,.075*ppu,0,0,Math.PI*2);fg.stroke();fg.restore();
   };
