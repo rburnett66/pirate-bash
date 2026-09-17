@@ -13,14 +13,35 @@ function validateChallenge(value){
  return {v:1,seed:value.seed,ship,...(value.id?{id:value.id}:{})};
 }
 export function challengeURL(state,base,seed){
- const data=JSON.stringify(challengeSnapshot(state,seed)),bytes=new TextEncoder().encode(data);
- const token=btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
- const url=new URL(base);url.hash='challenge='+token;return url.href;
+ return linkFor(challengeSnapshot(state,seed),base,'challenge');
 }
-export function readChallenge(hash){
- if(!hash.startsWith('#challenge='))return null;
- const token=hash.slice(11);if(token.length>12000||!/^[\w-]+$/.test(token))throw Error('This challenge link is invalid.');
- try{return validateChallenge(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(token.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0)))));}catch{throw Error('This challenge link is invalid.');}
+function tokenFrom(source,kind){
+ const url=new URL(source,'https://pirate.invalid/');
+ const query=url.searchParams,fragment=new URLSearchParams(url.hash.slice(1));
+ const values=[...query.getAll(kind),...fragment.getAll(kind)];
+ if(values.length>1)throw Error('This link contains duplicate data. Ask for a new link.');
+ return values[0]??null;
+}
+export function hasChallengeLink(source){const url=new URL(source,'https://pirate.invalid/'),fragment=new URLSearchParams(url.hash.slice(1));return ['challenge','challenge-result'].some(kind=>url.searchParams.has(kind)||fragment.has(kind));}
+export function clearChallengeLink(source){const url=new URL(source);url.searchParams.delete('challenge');url.searchParams.delete('challenge-result');url.hash='';return url.href;}
+function decodeToken(token,max){
+ if(token.length>max||!/^[\w-]+$/.test(token))throw Error('Invalid encoded link.');
+ return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(token.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0))));
+}
+function packChallenge(c){
+ const values=fields.map(k=>k==='levels'?M.PIRATES.map(p=>c.ship.levels[p.id]):c.ship[k]);
+ return [2,c.seed,c.id??null,values];
+}
+function unpackChallenge(c){
+ if(!Array.isArray(c))return c;
+ if(c.length!==4||c[0]!==2||!Array.isArray(c[3])||c[3].length!==fields.length)throw Error('Invalid challenge data.');
+ const ship=Object.fromEntries(fields.map((k,i)=>[k,c[3][i]]));
+ if(!Array.isArray(ship.levels)||ship.levels.length!==M.PIRATES.length)throw Error('Invalid crew levels.');
+ ship.levels=Object.fromEntries(M.PIRATES.map((p,i)=>[p.id,ship.levels[i]]));
+ return {v:1,seed:c[1],ship,...(c[2]!==null?{id:c[2]}:{})};
+}
+export function readChallenge(source){
+ try{const token=tokenFrom(source,'challenge');return token===null?null:validateChallenge(unpackChallenge(decodeToken(token,12000)));}catch{throw Error('This challenge link is invalid.');}
 }
 export function practiceGame(challenge,recipient=null,now=Date.now()){
  const {ship,seed}=validateChallenge(challenge),s=recipient?structuredClone(recipient):M.fresh(now);
@@ -47,9 +68,10 @@ export function practiceGame(challenge,recipient=null,now=Date.now()){
 // Receipts are for browser-local saves, not server-verified multiplayer results.
 function ledger(s){return s.friendChallenges??={issued:[],claimed:[],completed:{}};}
 function linkFor(value,base,kind){
- const bytes=new TextEncoder().encode(JSON.stringify(value));
+ const packed=kind==='challenge'?packChallenge(value):[2,value.id,value.friend,value.won?1:0,value.turns];
+ const bytes=new TextEncoder().encode(JSON.stringify(packed));
  const token=btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
- const url=new URL(base);url.hash=kind+'='+token;return url.href;
+ const url=new URL(base);url.hash='';url.search='';url.searchParams.set(kind,token);return url.href;
 }
 export function issueChallenge(s,base){
  const id=Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
@@ -62,11 +84,12 @@ function validateResult(r){
  return {v:1,id:r.id,friend:r.friend,won:r.won,turns:r.turns};
 }
 export function resultsURL(r,base){return linkFor(validateResult(r),base,'challenge-result');}
-export function readChallengeResult(hash){
- if(!hash.startsWith('#challenge-result='))return null;
- const token=hash.slice(18);
- if(token.length>2000||!/^[\w-]+$/.test(token))throw Error('This results link is invalid.');
- try{return validateResult(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(token.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0)))));}catch{throw Error('This results link is invalid.');}
+export function readChallengeResult(source){
+ try{const token=tokenFrom(source,'challenge-result');if(token===null)return null;
+  let r=decodeToken(token,2000);
+  if(Array.isArray(r)){if(r.length!==5||r[0]!==2||![0,1].includes(r[3]))throw Error('Invalid result data.');r={v:1,id:r[1],friend:r[2],won:r[3]===1,turns:r[4]};}
+  return validateResult(r);
+ }catch{throw Error('This results link is invalid.');}
 }
 export function completeChallenge(captain,challenge,game){
  const c=validateChallenge(challenge),b=game.battle;

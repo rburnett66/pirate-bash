@@ -1,4 +1,4 @@
-import {readChallenge,practiceGame,issueChallenge,ownsChallenge,completeChallenge,resultsURL,readChallengeResult,claimChallengeResult} from './challenges.js';
+import {readChallenge,hasChallengeLink,clearChallengeLink,practiceGame,issueChallenge,ownsChallenge,completeChallenge,resultsURL,readChallengeResult,claimChallengeResult} from './challenges.js';
 import {shipScreen,inventory,upgradeComparison} from './ship-screen.js';
 import {celebrateUpgrade} from './upgrade-celebration.js';
 import {resultScreen,preloadResult} from './result-screen.js';
@@ -395,9 +395,7 @@ function rewardFireworks(){
 }
 function showChallenge(){
  let link;try{updateChallengeCaptain(s=>{link=issueChallenge(s,location.href);});}catch(error){toast(error.message);return;}
- const text='Can you beat my ship in Pirate Bash? You get a bonus gunner, and we each earn 100 wood. Send me your results after the battle: '+link;
- const ios=/iPhone|iPad|iPod/.test(navigator.userAgent),sms='sms:'+(ios?'&':'?')+'body='+encodeURIComponent(text);
- modal('<div class="eyebrow">FRIEND CHALLENGE</div><h2>Challenge a friend</h2><p>They battle a copy of your ship, using their own ship or a new ship to keep. They get one bonus gunner and 100 wood after the battle. Open their results link to collect your 100 wood.</p><div class="row spaced"><a class="challenge-text-button" href="'+esc(sms)+'">Send as text</a>'+button('Copy link','copy-challenge')+'</div><label class="challenge-link-label">Challenge link<input id="challengeLink" readonly value="'+esc(link)+'"></label>'+(/^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname)?'<p class="footer-note">For phone testing, create this link from the phone preview address. Both phones must be on the same Wi-Fi while the server is running.</p>':''));
+ modal('<div class="eyebrow">FRIEND CHALLENGE</div><h2>Challenge a friend</h2><p>They battle a copy of your ship, using their own ship or a new ship to keep. They get one bonus gunner and 100 wood after the battle. Open their results link to collect your 100 wood.</p><div class="row spaced">'+button('Share challenge','share-challenge','','primary')+button('Copy link','copy-challenge')+'</div><label class="challenge-link-label">Challenge link<input id="challengeLink" readonly value="'+esc(link)+'"></label>'+(/^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname)?'<p class="footer-note">For phone testing, create this link from the phone preview address. Both phones must be on the same Wi-Fi while the server is running.</p>':''));
 }
 function updateChallengeCaptain(change){
  if(saveError)throw Error(saveError);
@@ -408,8 +406,8 @@ function updateChallengeCaptain(change){
 }
 function resultsShare(result){
  if(!result)return '<p>This older challenge has no return link. Ask your friend for a new challenge to earn wood.</p>';
- const link=resultsURL(result,location.href),sms='sms:'+(/iPhone|iPad|iPod/.test(navigator.userAgent)?'&':'?')+'body='+encodeURIComponent('I '+(result.won?'beat':'battled')+' your ship in Pirate Bash! Open my results to collect 100 wood: '+link);
- return '<div class="row spaced">'+button('Copy results link','copy-results','','primary')+'<a class="challenge-text-button" href="'+esc(sms)+'">Text results</a></div><label class="challenge-link-label">Results link<input id="resultsLink" readonly value="'+esc(link)+'"></label>';
+ const link=resultsURL(result,location.href);
+ return '<div class="row spaced">'+button('Copy results link','copy-results','','primary')+button('Share results','share-results')+'</div><label class="challenge-link-label">Results link<input id="resultsLink" readonly value="'+esc(link)+'"></label>';
 }
 function showCompletedChallenge(){
  const b=state.battle;let receipt;
@@ -425,6 +423,16 @@ function acceptChallenge(){
   state=game;page='arena';gunner=null;close();render();matchIntro();
  }catch(error){toast(error.message);}
 }
+async function copyShareLink(inputId){
+ const input=el(inputId);
+ try{await navigator.clipboard.writeText(input.value);toast('Link copied. Paste it into your message.');}
+ catch{input.focus();input.select();input.setSelectionRange(0,input.value.length);if(document.execCommand('copy'))toast('Link copied. Paste it into your message.');else toast('Press and hold the selected link, then choose Copy.');}
+}
+async function sharePreparedLink(inputId){
+ const url=el(inputId).value;
+ if(navigator.share){try{await navigator.share({url});return;}catch(error){if(error.name==='AbortError')return;}}
+ await copyShareLink(inputId);
+}
 function homeConfiguration(){return {action:'configure',level:state.shipLevel,sailLevel:state.sailLevel,flag:state.flag,figure:state.figurehead,crew:Object.entries(state.slots).map(([slot,id])=>({id,slot,hp:M.stats(pirate(id),state.levels[id]).hp,name:pirate(id).name,type:{hull:0,crew:1,sails:2}[pirate(id).primary]})),cosmetic:state.cosmetic,plating:state.plating,motion:state.settings.motion,preview:true,cutaway:tab==='gunners'||tab==='ship',hideRig:tab==='gunners'};}
 async function purchaseHull(expected){
  if(upgradeBusy||saveError)return;const previous=structuredClone(state),before=M.hullConfig(state.shipLevel);if(!M.shipUpgrade(state,expected)){toast('Not enough supplies, or finish your current battle first.');return;}
@@ -438,13 +446,14 @@ function actionResult(ok,msg){if(!ok)toast('Not enough supplies, or this action 
 document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-action]');if(!b||b.disabled||upgradeBusy)return;const {action:a,id}=b.dataset;switch(a){
 case 'nav':page=id;render();window.scrollTo({top:0,left:0,behavior:'instant'});el('main').scrollTo({top:0,left:0,behavior:'instant'});break;
 case 'challenge':showChallenge();break;
-case 'copy-challenge':case 'copy-results':{const input=el(a==='copy-results'?'resultsLink':'challengeLink');try{await navigator.clipboard.writeText(input.value);toast('Link copied.');}catch{input.focus();input.select();input.setSelectionRange(0,input.value.length);if(document.execCommand('copy'))toast('Link copied.');else toast('Press and hold the selected link, then choose Copy.');}break;}
+case 'copy-challenge':case 'copy-results':await copyShareLink(a==='copy-results'?'resultsLink':'challengeLink');break;
+case 'share-challenge':case 'share-results':await sharePreparedLink(a==='share-results'?'resultsLink':'challengeLink');break;
 case 'accept-challenge':case 'practice-again':acceptChallenge();break;
 case 'retry-challenge-result':showCompletedChallenge();break;
 case 'challenge-results':modal('<h2>Your battle results</h2><p>Your 100 wood is already collected. Send this link to your friend for their reward.</p>'+resultsShare(state.friendChallenges.lastResult));break;
 case 'last-result':finish();break;
 case 'harbor':if(HARBORS.some(h=>h.id===id)){state.settings.harbor=id;save();close();render();}break;
-case 'close':close();if(page==='arena'&&state.battle?.phase==='result'){page='battle';if(regularState){state=regularState;regularState=null;history.replaceState(null,'',location.pathname+location.search);}else state.battle=null;save();render();}break;
+case 'close':close();if(page==='arena'&&state.battle?.phase==='result'){page='battle';if(regularState){state=regularState;regularState=null;history.replaceState(null,'',clearChallengeLink(location.href));}else state.battle=null;save();render();}break;
 case 'tab':tab=id;render();break;
 case 'yard':page='crew';tab='yard';render();break;
 case 'select':selected=Number(id);render();break;
@@ -499,7 +508,7 @@ case 'finisher':await finisher();break;
 case 'scope':telescope=!telescope;setBattleView(telescope?'scope':'crew');updateArena();break;
 case 'retreat':modal('<h2>Strike your colors?</h2><p>Retreat counts as a loss.</p><div class="row spaced">'+button('Retreat','confirm-retreat','','danger')+button('Keep fighting','close','','primary')+'</div>');break;
 case 'confirm-retreat':close();state.battle.won=false;state.battle.phase='result';finish();break;
-case 'return':close();if(regularState){state=regularState;regularState=null;history.replaceState(null,'',location.pathname+location.search);}else state.battle=null;page='battle';save();render();break;
+case 'return':close();if(regularState){state=regularState;regularState=null;history.replaceState(null,'',clearChallengeLink(location.href));}else state.battle=null;history.replaceState(null,'',clearChallengeLink(location.href));page='battle';save();render();break;
 case 'rematch':{b.disabled=true;b.textContent='Waiting for their answer…';await sleep(1500);const r=M.requestRematch(state);save();if(r){close();page='arena';gunner=null;render();matchIntro();toast('Challenge accepted. Their accuracy is reduced 20%.');}else{modal('<div class="rematch-scene">'+artImage('fog')+'</div><h2>RUNNING SCARED.</h2><p>'+esc(state.lastResult.enemyName)+' has decided the open sea looks safer. No rematch, no reward. Their pride is another matter.</p><div class="spaced">'+button('Back to port','return','','primary')+'</div>');}break;}
 }});
 document.addEventListener('change',async e=>{if(e.target.id==='waterLook'){const library=waterLibrary(state.settings.water);library.selected=e.target.value;state.settings.water=waterLibrary(library);save();toast('Battle water look selected.');}if(e.target.id==='captainName'){state.name=e.target.value.trim().slice(0,24)||'Captain';save();}if(e.target.id==='importSave'){const file=e.target.files[0];if(!file)return;try{const next=M.restore(await file.text());state=next;saveError='';save();render();toast('Captain restored.');}catch{toast('That file is not a valid captain backup. Nothing changed.');}}});
@@ -525,13 +534,14 @@ setInterval(async()=>{if(page==='arena'&&!busy&&!document.hidden&&!el('sheet').o
 function duration(ms){const m=Math.max(0,Math.ceil(ms/60000));return m>=60?Math.floor(m/60)+'h '+m%60+'m':m+'m';}
 function openIncomingChallenge(){
  try{
-  if(!/^#challenge(?:-result)?=/.test(location.hash))return;
+  if(!hasChallengeLink(location.href))return;
   if(regularState)throw Error('Return to port before opening another challenge or result.');
-  const result=readChallengeResult(location.hash);
+  const result=readChallengeResult(location.href);
   if(result){const awarded=updateChallengeCaptain(s=>claimChallengeResult(s,result));render();modal('<div class="eyebrow">CHALLENGE RESULTS</div><h2>'+esc(result.friend)+(result.won?' beat your ship!':' battled your ship!')+'</h2><p>'+result.turns+' turns</p><p><strong>'+(awarded?'+100 wood added to your inventory.':'You already collected 100 wood for this challenge.')+'</strong></p>'+button('Return to port','return','','primary'));return;}
-  incomingChallenge=readChallenge(location.hash);
+  incomingChallenge=readChallenge(location.href);
   if(incomingChallenge)modal('<div class="eyebrow">FRIEND CHALLENGE</div><h2>'+esc(incomingChallenge.ship.name)+' challenges you!</h2><p>Battle a copy of their ship with your own ship, or get a new ship to keep. A bonus gunner joins you for this battle.</p><p>'+(incomingChallenge.id?'Finish the battle for 100 wood, then send your results so your friend can collect 100 wood too.':'This older practice link has no wood reward.')+'</p>'+button('Accept challenge','accept-challenge','','primary'));
  }catch(error){modal('<h2>Cannot open link</h2><p>'+esc(error.message)+'</p>');}
 }
 window.addEventListener('hashchange',openIncomingChallenge);
-render();if(/^#challenge(?:-result)?=/.test(location.hash))openIncomingChallenge();else if(!state.onboarded)setTimeout(()=>{if(!state.onboarded&&!el('sheet').open&&!/^#challenge(?:-result)?=/.test(location.hash))help();},500);
+window.addEventListener('popstate',openIncomingChallenge);
+render();openIncomingChallenge();if(!state.onboarded)setTimeout(()=>{if(!state.onboarded&&!el('sheet').open&&!hasChallengeLink(location.href))help();},500);
