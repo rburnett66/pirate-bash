@@ -1,17 +1,18 @@
+import {windSpeed} from './wind.js';
 import {BALLISTICS,collisionAt,facing,parabolicPath} from './ballistics.js';
 import {maskSampleTimes} from './hull-mask.js';
 import {worldToShip} from './ship-pose.js';
 export const poseOf=f=>({heave:f.pose?.heave||0,roll:f.pose?.roll||0});
-export function seaShot(origin,side,speed,angle){
+export function seaShot(origin,side,speed,angle,wind=0){
  const rad=angle*Math.PI/180,vy=speed*Math.sin(rad),duration=(vy+Math.sqrt(vy*vy+2*BALLISTICS.gravity*(origin.y-BALLISTICS.sea)))/BALLISTICS.gravity;
- const end={x:origin.x+facing(side)*speed*Math.cos(rad)*duration,y:BALLISTICS.sea,t:duration};
- return {angle,duration,impact:null,path:parabolicPath(origin,side,speed,angle,duration,end)};
+ const end={x:origin.x+(facing(side)*speed*Math.cos(rad)+windSpeed(wind))*duration,y:BALLISTICS.sea,t:duration};
+ return {angle,duration,impact:null,path:parabolicPath(origin,side,speed,angle,duration,end,wind)};
 }
 // Sweep in ship-local space so moving wood cannot skip over a projectile.
 // Tiny time slices bound rotation/arc curvature; exact grid crossings sample every crossed texel.
-export function movingContact(f,side,origin,speed,angle,from,to,previousPose,frameFrom=from,frameTo=to){
+export function movingContact(f,side,origin,speed,angle,from,to,previousPose,frameFrom=from,frameTo=to,wind=0){
  if(to<=from)return null;
- const rad=angle*Math.PI/180,vx=facing(side)*speed*Math.cos(rad),vy=speed*Math.sin(rad),current=poseOf(f),body={...f,x:0,pose:null};
+ const rad=angle*Math.PI/180,vx=facing(side)*speed*Math.cos(rad)+windSpeed(wind),vy=speed*Math.sin(rad),current=poseOf(f),body={...f,x:0,pose:null};
  const local=t=>{
   const r=Math.max(0,Math.min(1,(t-frameFrom)/(frameTo-frameFrom||1)));
   const pose={heave:previousPose.heave+(current.heave-previousPose.heave)*r,roll:previousPose.roll+(current.roll-previousPose.roll)*r};

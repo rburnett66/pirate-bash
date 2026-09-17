@@ -1,3 +1,4 @@
+import {battleWind,WIND_TUNING} from './wind.js';
 import {PROGRESSION_VERSION,SHIP_LADDER,hullConfig,hullSections,sailConfig,SAIL_LEVELS,figureConfig,figureBonus,FIGUREHEADS,FLAGS,SHIP_TUNING} from './ship-config.js';
 export {hullConfig,hullSections,sailConfig,SAIL_LEVELS,FIGUREHEADS,FLAGS};
 import {poseOf,seaShot,movingContact} from './moving-shot.js';
@@ -41,13 +42,14 @@ if(s.bench!==null&&(!obj(s.bench)||!s.levels[s.bench.id]||s.levels[s.bench.id]>=
 const partsOK=(parts,n)=>Array.isArray(parts)&&parts.length===n&&parts.every(p=>obj(p)&&num(p.hp)&&num(p.maxHp)&&p.maxHp>0&&p.hp<=p.maxHp);
 const maskOK=f=>{try{return !f.hullMask||!!maskPixels(f);}catch{return false;}};
 const fighterOK=f=>obj(f)&&(!f.pose||(obj(f.pose)&&Number.isFinite(f.pose.heave)&&Math.abs(f.pose.heave)<=.4&&Number.isFinite(f.pose.roll)&&Math.abs(f.pose.roll)<=.27))&&maskOK(f)&&(!f.hullParts||(num(f.x,12)&&LADDER[f.shipLevel]&&partsOK(f.hullParts,f.legacySections||hullConfig(f.shipLevel).sections)&&partsOK(f.mastParts,3)&&partsOK(f.sailParts,8)))&&num(f.hull)&&num(f.maxHull)&&f.maxHull>0&&f.hull<=f.maxHull&&num(f.sails,100)&&num(f.durability,100)&&Array.isArray(f.crew)&&f.crew.length<=8&&f.crew.every(g=>obj(g)&&PIRATES.some(p=>p.id===g.id)&&num(g.hp)&&int(g.level,12)&&g.level>0&&/^[dh][0-3]$/.test(g.slot))&&obj(f.enh);
-if(s.battle!==null){const b=s.battle;if(!obj(b)||!['player','enemy','flight','special','result'].includes(b.phase)||!fighterOK(b.player)||!fighterOK(b.enemy)||!int(b.rng,4294967295)||!int(b.turn,25)||!int(b.shots,2)||!Array.isArray(b.events)||!Array.isArray(b.log)||!bool(b.rewarded)||!bool(b.charged)||!bool(b.used))bad();}
+if(s.battle!==null){const b=s.battle;if(!obj(b)||!Number.isInteger(b.wind)||Math.abs(b.wind)>WIND_TUNING.maxStrength||!['player','enemy','flight','special','result'].includes(b.phase)||!fighterOK(b.player)||!fighterOK(b.enemy)||!int(b.rng,4294967295)||!int(b.turn,25)||!int(b.shots,2)||!Array.isArray(b.events)||!Array.isArray(b.log)||!bool(b.rewarded)||!bool(b.charged)||!bool(b.used))bad();}
 if(s.battle?.special){const p=s.battle.special;if(s.battle.phase!=='special'||!obj(p)||!int(p.id,FINISHERS.length-1)||!int(p.sequence)||p.sequence<1||!bool(p.applied)||!fighterOK(p.before)||([1,3].includes(p.id)&&!int(p.targetMast,2))||(p.id===0&&!p.before.crew.some(g=>g.id===p.targetCrew&&g.hp>0)))bad();}
 if(s.battle?.phase==='special'&&!s.battle.special)bad();
 if(s.battle?.phase==='flight'&&(!s.battle.pending||!['player','enemy'].includes(s.battle.pending.side)||!num(s.battle.pending.angle,75)||s.battle.pending.angle<5||!s.battle[s.battle.pending.side]?.crew.some(g=>g.id===s.battle.pending.gunner&&g.hp>0)))bad();
 
 if(s.battle?.pending?.plan){
  const p=s.battle.pending;
+ if(p.wind!==undefined&&(!Number.isInteger(p.wind)||Math.abs(p.wind)>WIND_TUNING.maxStrength))bad();
  if(p.origin&&(!obj(p.origin)||!Number.isFinite(p.origin.x)||Math.abs(p.origin.x)>20||!Number.isFinite(p.origin.y)||Math.abs(p.origin.y)>5))bad();
  if(p.live!==undefined&&(!bool(p.live)||!obj(p.previousPose)||!Number.isFinite(p.previousPose.heave)||Math.abs(p.previousPose.heave)>.4||!Number.isFinite(p.previousPose.roll)||Math.abs(p.previousPose.roll)>.27||!p.origin))bad();
  const impactOK=i=>i===null||(obj(i)&&['hull','crew','sails','masts'].includes(i.kind)&&Number.isFinite(i.x)&&Math.abs(i.x)<=1.5&&Number.isFinite(i.y)&&Math.abs(i.y)<=2.5&&(i.kind==='crew'?int(i.id,36)&&/^[dh][0-3]$/.test(i.slot):int(i.index,7)));
@@ -88,7 +90,7 @@ export function flag(s,id){const f=FLAGS.find(f=>f.id===id);if(!f)return false;i
 export function cosmetic(s,i){if(!Number.isInteger(i)||i<0||i>=E.SAILS.length)return false;if(!s.cosmetics.includes(i)){if(!pay(s,{gold:E.SAILS[i]}))return false;s.cosmetics.push(i);}s.cosmetic=i;return true;}
 export function board(s,port=s.port){const r=seeded(871+port*937),rows=Array.from({length:port===s.port?99:100},(_,i)=>({id:i,name:['Black','Salty','Crimson','Lucky','Old','Mad','Silver','Dread'][i%8]+' '+['Morgan','Bonny','Flint','Hook','Marrow','Reed','Drake','Tide'][Math.floor(i/8)%8]+' '+(i+1),wins:Math.floor(r()*19),trophies:Math.floor(r()*900),lastWin:Math.floor(r()*1e6),level:1+Math.floor(r()*Math.min(6,1+port)),self:false}));if(port===s.port)rows.push({id:'self',name:s.name,wins:s.weeklyWins,trophies:s.trophies,lastWin:s.lastWin,level:s.shipLevel,self:true});return rows.sort((a,b)=>b.wins-a.wins||b.trophies-a.trophies||b.lastWin-a.lastWin||String(a.id).localeCompare(String(b.id)));}
 function fighter(s,enemy,r){let roster=positions(s).filter(k=>s.slots[k]).map(k=>({id:s.slots[k],slot:k,hp:stats(PIRATES.find(p=>p.id===s.slots[k]),s.levels[s.slots[k]]).hp,level:s.levels[s.slots[k]]}));if(enemy){const pool=[...PIRATES];roster=roster.map((g,i)=>{const p=pool.splice(Math.floor(r()*pool.length),1)[0];return {...g,id:p.id,hp:stats(p,g.level).hp};});}return {move:enemy?0:s.move,shipLevel:s.shipLevel,sailLevel:s.sailLevel,cosmetic:enemy?null:s.cosmetic,flag:enemy?7:s.flag,hull:hullConfig(s.shipLevel).hp,maxHull:hullConfig(s.shipLevel).hp,sails:100,crew:roster,plating:enemy?'bare':s.plating,canvas:enemy?'plain':s.canvas,durability:enemy?100:s.durability,enh:enemy?{}:clone(s.enh),figure:enemy?null:s.figurehead,figureGrade:enemy?0:(s.figureheads[s.figurehead]||0),plates:enemy?Array.from({length:hullSections(s)},()=>({kind:'bare',durability:100})):clone(s.plates.slice(0,hullSections(s))),canvasDurability:enemy?100:s.canvasDurability};}
-export function startBattle(s,t=Date.now(),rematch=false){if(!Object.values(s.slots).length)return false;const old=s.lastResult;if(rematch&&(!old||old.won||old.rematch||old.rematchAsked))return false;const seed=rematch?old.seed:Math.floor(t)%2147483647,r=seeded(seed);const b={id:String(t),seed,rng:seed,turn:1,shots:2,seconds:30,dualHits:0,streak:0,streakVersion:2,charged:false,used:false,phase:'player',log:[],events:[],rematch,enemyName:rematch?old.enemyName:board(s).filter(p=>!p.self)[Math.floor(r()*99)].name,temperament:['supportive','angry','fun','playful','competitive','rager','silly'][Math.floor(r()*7)],player:fighter(s,false,r),enemy:fighter(s,true,r),started:t,rewarded:false};if(rematch&&old.opponent){b.enemy=clone(old.opponent);b.temperament=old.temperament;}prepareBattle(b);b.opponent=clone(b.enemy);s.battle=b;return b;}
+export function startBattle(s,t=Date.now(),rematch=false){if(!Object.values(s.slots).length)return false;const old=s.lastResult;if(rematch&&(!old||old.won||old.rematch||old.rematchAsked))return false;const seed=rematch?old.seed:Math.floor(t)%2147483647,r=seeded(seed);const b={id:String(t),seed,wind:battleWind(seed),rng:seed,turn:1,shots:2,seconds:30,dualHits:0,streak:0,streakVersion:2,charged:false,used:false,phase:'player',log:[],events:[],rematch,enemyName:rematch?old.enemyName:board(s).filter(p=>!p.self)[Math.floor(r()*99)].name,temperament:['supportive','angry','fun','playful','competitive','rager','silly'][Math.floor(r()*7)],player:fighter(s,false,r),enemy:fighter(s,true,r),started:t,rewarded:false};if(rematch&&old.opponent){b.enemy=clone(old.opponent);b.temperament=old.temperament;}prepareBattle(b);b.opponent=clone(b.enemy);s.battle=b;return b;}
 function random(b){b.rng=(Math.imul(b.rng,1664525)+1013904223)>>>0;return b.rng/4294967296;}
 export function active(f){return f.crew.filter(g=>g.hp>0);}
 // Movement is tied to sail power: two full sail-equivalents grant one move.
@@ -98,6 +100,7 @@ export function outcome(b){if((b.enemy.hull<=0&&b.enemy.sails<=0)||!active(b.ene
 
 export function prepareBattle(b){
  if(!b)return b;
+ b.wind??=0;
  ensureGeometry(b.player,'player');ensureGeometry(b.enemy,'enemy');
  if(b.streakVersion!==2){b.streak=b.charged?4:0;b.streakVersion=2;}
  b.movesLeft??=sailMoves(b.player);b.movesLeft=Math.min(b.movesLeft,sailMoves(b.player));b.enemyShots??=2;b.enemyMoves??=1;b.pending??=null;
@@ -128,7 +131,7 @@ export function previewShot(s,{side='player',gunner=null,angle=35}={}){
 export function launchShot(s,{side='player',gunner=null,angle=35,live=false}={}){
  const b=prepareBattle(s.battle);if(!b||b.phase!==side||b.pending||(side==='player'?b.shots:b.enemyShots)<=0)return null;
  const flight=previewShot(s,{side,gunner,angle});if(!flight)return null;
- if(live){flight.shots=flight.shots.map(q=>seaShot(flight.origin,side,flight.spec.speed,q.angle));flight.duration=Math.max(...flight.shots.map(q=>q.duration));}
+ if(live){flight.shots=flight.shots.map(q=>seaShot(flight.origin,side,flight.spec.speed,q.angle,flight.wind));flight.duration=Math.max(...flight.shots.map(q=>q.duration));}
  b.pending={side,gunner:flight.gunnerId,angle,...(live?{live:true,previousPose:poseOf(b[side==='player'?'enemy':'player'])}:{})};rememberFlight(b.pending,flight);b.phase='flight';return flight;
 }
 function totalDamage(f){
@@ -162,12 +165,12 @@ function forecastVolley(b,flight,g,p){
   const i=[...remaining].sort((a,b)=>flight.shots[a].duration-flight.shots[b].duration||a-b)[0],shot=flight.shots[i];
   if(shot.impact)impactDamage(foe,shot.impact,base,flight.spec,1/flight.spec.count);
   remaining.delete(i);
-  for(const j of remaining){const angle=flight.shots[j].angle;flight.shots[j]={...traceProjectile(foe,flight.side,flight.origin,angle,flight.spec.speed),angle};}
+  for(const j of remaining){const angle=flight.shots[j].angle;flight.shots[j]={...traceProjectile(foe,flight.side,flight.origin,angle,flight.spec.speed,flight.wind),angle};}
  }
  flight.duration=Math.max(...flight.shots.map(s=>s.duration));return flight;
 }
 function rememberFlight(pending,flight){
- pending.origin={...flight.origin};
+ pending.origin={...flight.origin};pending.wind=flight.wind??0;
  pending.plan=flight.shots.map(s=>({angle:s.angle,duration:s.duration,impact:s.impact,end:s.path.at(-1)}));
  pending.resolved=[];pending.impacts=[];pending.elapsed=0;flightCache.set(pending,flight);return flight;
 }
@@ -177,8 +180,8 @@ export function pendingFlight(s){
  if(!pending.plan){const flight=previewShot(s,pending);return flight?rememberFlight(pending,flight):null;}
  const {side,gunner,angle}=pending,g=b[side].crew.find(g=>g.id===gunner);if(!g)return null;
  const p=PIRATES.find(p=>p.id===gunner),spec={...projectileFor(p),speed:Math.sqrt(stats(p,g.level).range/10*3.2)},origin=pending.origin||muzzle(b[side],side,g);
- const shots=pending.plan.map(({end,...q})=>({...q,path:parabolicPath(origin,side,spec.speed,q.angle,q.duration,end)}));
- const flight={side,gunnerId:gunner,angle,spec,origin,shots,duration:Math.max(...shots.map(s=>s.duration))};flightCache.set(pending,flight);return flight;
+ const shots=pending.plan.map(({end,...q})=>({...q,path:parabolicPath(origin,side,spec.speed,q.angle,q.duration,end,pending.wind??b.wind??0)}));
+ const flight={side,gunnerId:gunner,angle,spec,wind:pending.wind??b.wind??0,origin,shots,duration:Math.max(...shots.map(s=>s.duration))};flightCache.set(pending,flight);return flight;
 }
 
 function refreshMovingFlight(b,pending,flight,elapsed){
@@ -190,14 +193,14 @@ function refreshMovingFlight(b,pending,flight,elapsed){
  while(remaining.size){
   const candidates=[];
   for(const i of remaining){
-   const shot=flight.shots[i],hit=movingContact(foe,flight.side,flight.origin,flight.spec.speed,shot.angle,cursor,Math.min(to,shot.duration),previous,from,to);
+   const shot=flight.shots[i],hit=movingContact(foe,flight.side,flight.origin,flight.spec.speed,shot.angle,cursor,Math.min(to,shot.duration),previous,from,to,flight.wind);
    if(hit)candidates.push({i,...hit});
    else if(shot.duration<=to)candidates.push({i,duration:shot.duration,impact:null,end:shot.path.at(-1)});
   }
   if(!candidates.length)break;
   candidates.sort((a,b)=>a.duration-b.duration||a.i-b.i);
   const {i,duration,impact,end}=candidates[0],shot=flight.shots[i];
-  Object.assign(shot,{duration,impact,path:parabolicPath(flight.origin,flight.side,flight.spec.speed,shot.angle,duration,end)});
+  Object.assign(shot,{duration,impact,path:parabolicPath(flight.origin,flight.side,flight.spec.speed,shot.angle,duration,end,flight.wind)});
   pending.plan[i]={angle:shot.angle,duration,impact,end};
   if(impact)impactDamage(foe,impact,base,flight.spec,1/flight.spec.count);
   remaining.delete(i);cursor=duration;

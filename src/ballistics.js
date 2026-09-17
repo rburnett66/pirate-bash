@@ -1,3 +1,4 @@
+import {windSpeed} from './wind.js';
 import {SHIP_LADDER,hullConfig,stationAnchors,sailConfig,deckFoot} from './ship-config.js';
 export {SHIP_LADDER} from './ship-config.js';
 import {shipToWorld,worldToShip} from './ship-pose.js';
@@ -47,8 +48,8 @@ export function collisionAt(f,side,point){
  if(hull)return {kind:'hull',index:section,x,y};
  return null;
 }
-export function traceProjectile(f,side,origin,angle,speed=BALLISTICS.speed){
- const rad=angle*Math.PI/180,dir=facing(side),vx=speed*Math.cos(rad)*dir,vy=speed*Math.sin(rad);
+export function traceProjectile(f,side,origin,angle,speed=BALLISTICS.speed,wind=0){
+ const rad=angle*Math.PI/180,dir=facing(side),vx=speed*Math.cos(rad)*dir+windSpeed(wind),vy=speed*Math.sin(rad);
  const path=[{...origin,t:0}],foe=side==='player'?'enemy':'player';
  let impact=null,last=path[0];
 
@@ -71,16 +72,16 @@ export function traceProjectile(f,side,origin,angle,speed=BALLISTICS.speed){
 }
 export function trajectory(b,side,g,spec,angle){
  const own=ensureGeometry(b[side],side),otherSide=side==='player'?'enemy':'player',foe=ensureGeometry(b[otherSide],otherSide);
- const origin=muzzle(own,side,g),shots=Array.from({length:spec.count},(_,i)=>{const a=angle+(spec.count===1?0:(i-(spec.count-1)/2)*.8);return {...traceProjectile(foe,side,origin,a,spec.speed),angle:a};});
- return {side,gunnerId:g.id,angle,spec,origin,shots,duration:Math.max(...shots.map(s=>s.duration))};
+ const origin=muzzle(own,side,g),shots=Array.from({length:spec.count},(_,i)=>{const a=angle+(spec.count===1?0:(i-(spec.count-1)/2)*.8);return {...traceProjectile(foe,side,origin,a,spec.speed,b.wind),angle:a};});
+ return {side,gunnerId:g.id,angle,spec,wind:b.wind??0,origin,shots,duration:Math.max(...shots.map(s=>s.duration))};
 }
 export function pointAt(path,t){
  let lo=0,hi=path.length-1;while(hi-lo>1){const mid=(lo+hi)>>1;if(path[mid].t<t)lo=mid;else hi=mid;}
  const a=path[lo],b=path[hi],r=clamp((t-a.t)/(b.t-a.t||1),0,1);return {x:a.x+(b.x-a.x)*r,y:a.y+(b.y-a.y)*r};
 }
 
-export function parabolicPath(origin,side,speed,angle,duration,end){
- const rad=angle*Math.PI/180,vx=speed*Math.cos(rad)*facing(side),vy=speed*Math.sin(rad),path=[{...origin,t:0}];
+export function parabolicPath(origin,side,speed,angle,duration,end,wind=0){
+ const rad=angle*Math.PI/180,vx=speed*Math.cos(rad)*facing(side)+windSpeed(wind),vy=speed*Math.sin(rad),path=[{...origin,t:0}];
  for(let t=BALLISTICS.step;t<duration;t+=BALLISTICS.step)path.push({x:origin.x+vx*t,y:origin.y+vy*t-.5*BALLISTICS.gravity*t*t,t});
  path.push({...end});return path;
 }
