@@ -189,3 +189,20 @@
 /* View Pirate starts beside the close control instead of below an empty row. */
 #sheet:has(.gunner-detail-art):not(.match-intro):not(.match-search):not(.battle-result-sheet){padding-top:20px}
 #sheet:has(.gunner-detail-art)>h2{padding-right:64px}
+
+/* Mobile haul cards give the chest art the space used by the type label. */
+@media(max-width:600px),(pointer:coarse) and (max-height:600px){
+ .hold-panel button.chest{grid-template-columns:1fr;grid-template-rows:1fr auto;justify-items:center;text-align:center;min-height:126px;top:0;padding:4px}
+ .hold-panel button.chest strong{display:none}
+ .hold-panel button.chest .chest-art{grid-column:1;grid-row:1;width:110px;height:100px;max-width:100%;object-fit:contain}
+ .hold-panel button.chest small{grid-column:1;grid-row:2}
+ .hold-panel .empty-chest .chest-art{width:90px;height:84px;max-width:100%;object-fit:contain}
+}
+@media(max-width:600px){
+ .hold-panel .chests{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .hold-panel button.chest .chest-art{width:128px;height:112px;transform:scale(1.2)}
+}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:600px){
+ .hold-panel button.chest{height:90px;min-height:90px;padding:2px;row-gap:0}
+ .hold-panel button.chest .chest-art{height:66px;transform:scale(1.5)}
+}
