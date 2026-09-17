@@ -159,3 +159,14 @@
 .battle-result .result-port-button img{display:block;width:100%;height:auto;max-height:none;object-fit:contain}
 .battle-result .result-footer{min-height:0;padding:10px 16px}
 .battle-result .result-summary strong{font-size:clamp(12px,1.5vw,22px)}
+
+/* View Pirate keeps the whole supplied character visible beside their details. */
+.gunner-detail-art{float:right;width:38%;height:300px;margin:0 0 16px 18px;pointer-events:none}
+.gunner-detail-art .pirate-art{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 8px 10px #0005)}
+#sheet:has(.gunner-detail-art)::after{content:"";display:block;clear:both}
+@media(max-width:600px){
+ .gunner-detail-art{width:40%;height:240px;margin-left:10px}
+}
+@media(orientation:landscape) and (max-height:600px){
+ .gunner-detail-art{width:30%;height:220px;margin-bottom:0}
+}

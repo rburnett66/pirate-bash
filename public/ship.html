@@ -911,6 +911,7 @@ void main() {
 import {HULL_MASK,maskPixels} from "/pirate-bash/src/hull-mask.js";
 import {stationPosition,SHIP_LADDER} from "/pirate-bash/src/ballistics.js";
 import {stationAnchors} from "/pirate-bash/src/ship-config.js";
+import {gunnerImage} from "/pirate-bash/src/gunner-art.js";
 import {ShipArtRenderer} from "/pirate-bash/src/ship-art-renderer.js";
 (() => {
   'use strict';
@@ -1859,7 +1860,7 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
    const position=stationPosition({shipLevel:gameLevel,practiceBonus:gamePracticeBonus},st.slot),foot=position.y,w=position.width*ppu,h=position.height*ppu;
    const x=rect.width/2+(st.x-cam.x)*ppu,y=rect.height/2-(foot-cam.y)*ppu;
    const pedestal=st.gunner===gameSelected?'<span data-pedestal style="position:absolute;left:'+(x-w*.6)+'px;top:'+(y-h*.09)+'px;width:'+w*1.2+'px;height:'+h*.15+'px;border-radius:50%;background:linear-gradient(#fff5ae,#d69922);box-shadow:0 0 12px #ffd450;pointer-events:none"></span>':'';
-   return pedestal+'<img data-gunner="'+st.gunner+'" data-alive="'+!st.out+'" alt="'+(st.name||'Gunner')+'" src="/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+st.gunner+'.png" style="position:absolute;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;left:'+x+'px;top:'+(y-h)+'px;width:auto;height:'+h+'px;translate:-50% 0;opacity:'+(st.out?0:1)+';filter:'+(st.gunner===gameSelected?'drop-shadow(0 0 3px #fff29a)':'none')+'">';
+   return pedestal+'<img data-gunner="'+st.gunner+'" data-alive="'+!st.out+'" alt="'+(st.name||'Gunner')+'" src="'+gunnerImage(st.gunner)+'" style="position:absolute;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;left:'+x+'px;top:'+(y-h)+'px;width:auto;height:'+h+'px;translate:-50% 0;opacity:'+(st.out?0:1)+';filter:'+(st.gunner===gameSelected?'drop-shadow(0 0 3px #fff29a)':'none')+'">';
   }).join('');
   portraits.innerHTML=drawRows(false);portPortraits.innerHTML=drawRows(true);
   parent.postMessage({type:'pirate-stations',side:gameSide,anchors:stationAnchors(gameLevel).map(p=>({...p,left:50+(p.x-cam.x)*ppu/rect.width*100,top:50-(p.y+p.height/2-cam.y)*ppu/rect.height*100}))},location.origin);

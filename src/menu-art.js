@@ -1,3 +1,4 @@
+import {gunnerImage} from './gunner-art.js';
 // Processed supplied art stays byte-for-byte intact in public/menu-art.
 export const ART = {
   battle:'battle__8f2f3bff', crew:'crew__c937254a', booty:'booty-pass__395cc0eb', store:'store__69204157',
@@ -23,5 +24,5 @@ const crops = {1:[150,50,2],2:[145,50,1],3:[142,48,1],4:[150,51,0],5:[140,50,1],
   6:[145,49,0],7:[142,51,1],8:[145,50,1],9:[148,50,0],10:[140,49,0]};
 export function portrait(p,cls='') {
   const [scale,x,y]=crops[p.id]||[145,50,0];
-  return '<span class="framed-portrait '+cls+'" style="--portrait-scale:'+scale+'%;--portrait-x:'+x+'%;--portrait-y:'+y+'%"><span class="portrait-window"><img src="/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+p.id+'.png" alt="" draggable="false"></span>'+artImage('frame','portrait-frame')+'</span>';
+  return '<span class="framed-portrait '+cls+'" style="--portrait-scale:'+scale+'%;--portrait-x:'+x+'%;--portrait-y:'+y+'%"><span class="portrait-window"><img src="'+gunnerImage(p.id)+'" alt="" draggable="false" loading="lazy" decoding="async"></span>'+artImage('frame','portrait-frame')+'</span>';
 }

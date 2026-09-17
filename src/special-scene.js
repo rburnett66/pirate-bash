@@ -1,3 +1,4 @@
+import {gunnerImage} from './gunner-art.js';
 import {stationPosition,rigLayout} from './ballistics.js';
 import {shipToWorld} from './ship-pose.js';
 
@@ -32,8 +33,8 @@ export function sirenVoice(enabled,duration,context){
 export async function playSpecialScene({field,move,pending,getBattle,getCamera,reduced,onImpact,onAfterImpact,onCelebrate,sound,rigImage}){
  const pictures=Object.fromEntries(await Promise.all(sceneArt(move).map(async n=>[n,await load('/pirate-bash/public/killstreaks/'+n+'.png')])));
  const victim=pending.before.crew.find(g=>g.id===pending.targetCrew);
- const victimImage=victim?await load('/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+victim.id+'.png'):null;
- const reacting= [5,6].includes(move.id)?await Promise.all(pending.before.crew.filter(g=>g.hp>0&&g.slot.startsWith('d')).map(async g=>({g,img:await load('/pirate-bash/Pirate%20Art/pirate_segments/zombie-pirate/zombie-pirate-'+g.id+'.png')}))):[];
+ const victimImage=victim?await load(gunnerImage(victim.id)):null;
+ const reacting= [5,6].includes(move.id)?await Promise.all(pending.before.crew.filter(g=>g.hp>0&&g.slot.startsWith('d')).map(async g=>({g,img:await load(gunnerImage(g.id))}))):[];
  const savedRig=rigImage?await load(rigImage):null;
  const back=field.querySelector('#specialBehind'),front=field.querySelector('#specialFront'),title=field.querySelector('#specialAnnouncement');
  const bg=back.getContext('2d'),fg=front.getContext('2d');back.hidden=front.hidden=title.hidden=false;
