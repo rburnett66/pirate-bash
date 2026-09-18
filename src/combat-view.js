@@ -9,6 +9,11 @@ export function cutawaySide({phase,pending},busy,attacker,view,focus){
  return phase==='player'?'player':null;
 }
 export function battleCamera(width,height,playerX,enemyX,mode='crew',targetX=enemyX){
+ if(mode==='special'){
+  // Frame the target ship with proportional margins, even on short phone screens.
+  const ppu=Math.min(width/3.8,height*.84/2.8);
+  return {ppu,ox:width/2-targetX*ppu,oy:height/2+.65*ppu};
+ }
  const close=mode==='crew',span=close?4.25:Math.max(6.8,enemyX-playerX+3.0);
  const usable=Math.max(80,height-55),ppu=Math.min(width/span,usable/(close?2.05:2.45));
  const wanted=close?(playerX+enemyX)/2:mode==='impact'?(playerX+enemyX)/2+(targetX-(playerX+enemyX)/2)*.13:(playerX+enemyX)/2;

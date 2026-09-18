@@ -82,7 +82,7 @@ export class ShipArtRenderer{
    }ctx.restore();
   }
  }
- paint(cam,canvas,now,ocean,foam){
+ paint(cam,canvas,now,ocean,foam,foamLook=1){
   if(!this.ready)return;
   const clock=performance.now()/1000,falling=this.fallen.some(t=>t!==null&&clock-t<1.25),key=[canvas.width,canvas.height,cam.ppu,cam.x,cam.y,this.revision,this.hideRig,this.motion&&this.wind?Math.floor(clock*24):0,falling?Math.floor(clock*30):0].join(':');
   for(const c of this.canvases)if(c.width!==canvas.width||c.height!==canvas.height){c.width=canvas.width;c.height=canvas.height;}
@@ -96,6 +96,27 @@ export class ShipArtRenderer{
   }
   const wetKey=key+':'+Math.floor(now*15);if(wetKey===this.wetKey)return;this.wetKey=wetKey;
   const ctx=this.hull.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);transform(ctx);ctx.drawImage(this.body,0,0);
-  if(!this.preview&&ocean?.length===32){ctx.save();ctx.globalCompositeOperation='source-atop';ctx.beginPath();for(let i=0;i<32;i++){const p=worldToArt({x:-1.35+i*2.7/31,y:ocean[i]});i?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.lineTo(1500,1100);ctx.lineTo(0,1100);ctx.closePath();ctx.fillStyle='#12607444';ctx.fill();ctx.beginPath();for(let i=0;i<32;i++){const p=worldToArt({x:-1.35+i*2.7/31,y:ocean[i]});i?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.strokeStyle='#c7f2e9bb';ctx.lineWidth=3+Math.max(0,...foam)*5;ctx.stroke();ctx.restore();}
+  if(!this.preview&&!this.cutaway&&ocean?.length===32){
+   // Wet only existing exterior pixels: cutaways and breach interiors stay dry.
+   const points=Array.from(ocean,(y,i)=>worldToArt({x:-1.35+i*2.7/31,y}));
+   const waterline=()=>{ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));};
+   const meanY=points.reduce((sum,p)=>sum+p[1],0)/points.length;
+   ctx.save();ctx.globalCompositeOperation='source-atop';
+   waterline();ctx.lineTo(points.at(-1)[0],1100);ctx.lineTo(points[0][0],1100);ctx.closePath();
+   const depth=ctx.createLinearGradient(0,meanY-10,0,meanY+150);
+   depth.addColorStop(0,'#287f8a99');depth.addColorStop(1,'#0a435dcc');ctx.fillStyle=depth;ctx.fill();
+   waterline();ctx.strokeStyle='#163d46aa';ctx.lineWidth=14;ctx.stroke();
+   // Broken, moving foam climbs higher where the water simulation reports foam.
+   for(let i=1;i<points.length;i++){
+    const amount=Math.max(0,Math.min(1.5,(foam?.[i]||0)))*foamLook;
+    if(!amount)continue;
+    const [x,y]=points[i],previous=points[i-1],pulse=.65+.35*Math.sin(i*2.3+now*2.6);
+    ctx.beginPath();ctx.moveTo(previous[0],previous[1]-2);ctx.lineTo(x,y-2);
+    ctx.strokeStyle=`rgba(210,246,240,${Math.min(.85,.3+amount*.4)*pulse})`;
+    ctx.lineWidth=3+amount*9*pulse;ctx.lineCap='round';ctx.stroke();
+    if(i%2===0){ctx.beginPath();ctx.ellipse(x,y-amount*8*pulse,2+amount*2,1+amount,0,0,Math.PI*2);ctx.fillStyle='#e3fff0bb';ctx.fill();}
+   }
+   ctx.restore();
+  }
  }
 }

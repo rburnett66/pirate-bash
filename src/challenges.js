@@ -47,17 +47,21 @@ export function practiceGame(challenge,recipient=null,now=Date.now()){
  const {ship,seed}=validateChallenge(challenge),s=recipient?structuredClone(recipient):M.fresh(now);
  let rng=seed;const random=n=>{rng=(Math.imul(rng,1664525)+1013904223)>>>0;return Math.floor(rng/4294967296*n);};
  if(!recipient){
-  s.name='Challenger';s.shipLevel=1+random(6);s.sailLevel=1+random(5);s.cosmetic=random(6);s.cosmetics=[s.cosmetic];s.flag=1+random(33);s.flags=[s.flag];s.slots={};
+  const crewCount=Object.keys(ship.slots).length,hulls=[1,2,3,4,5,6].filter(shipLevel=>M.positions({shipLevel}).length>=crewCount);
+  s.name='Challenger';s.shipLevel=hulls[random(hulls.length)];s.sailLevel=1+random(5);s.cosmetic=random(6);s.cosmetics=[s.cosmetic];s.flag=1+random(33);s.flags=[s.flag];s.slots={};
   const pool=[...M.PIRATES],maxLevel=Math.max(...Object.values(ship.slots).map(id=>ship.levels[id]));
-  for(const slot of M.positions(s)){const p=pool.splice(random(pool.length),1)[0];s.levels[p.id]=1+random(maxLevel);s.slots[slot]=p.id;}
+  for(const slot of M.positions(s).slice(0,crewCount)){const p=pool.splice(random(pool.length),1)[0];s.levels[p.id]=1+random(maxLevel);s.slots[slot]=p.id;}
  }
  s.onboarded=true;s.battle=null;s.lastResult=null;
  // An empty saved deck still receives the bonus gunner before battle creation.
  const pool=M.PIRATES.filter(p=>!Object.values(s.slots).includes(p.id)),p=pool[random(pool.length)];
  const levels=Object.values(s.slots).map(id=>s.levels[id]),level=Math.max(1,Math.round(levels.reduce((n,l)=>n+l,0)/Math.max(1,levels.length)));
  const empty=M.positions(s).find(slot=>!s.slots[slot]),slot=empty||'d'+M.hullConfig(s.shipLevel).deck;
+ const baseLevel=s.levels[p.id];
  if(empty){s.slots[slot]=p.id;s.levels[p.id]=level;}
  const b=M.startBattle(s,seed);b.id='practice-'+now;b.practice=true;b.challengeId=challenge.id;b.enemyName=ship.name;
+ // The bonus belongs only to this battle, including when it fills a normal station.
+ if(empty){delete s.slots[slot];s.levels[p.id]=baseLevel;}
  const opponent=Object.assign(M.fresh(now),structuredClone(ship));b.enemy=M.startBattle(opponent,seed).player;b.enemy.x=8.4;b.enemy.cosmetic=ship.cosmetic??1;b.opponent=structuredClone(b.enemy);
  b.player.practiceBonus=!empty;
  if(!empty)b.player.crew.push({id:p.id,level,slot,hp:M.stats(p,level).hp});

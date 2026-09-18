@@ -32,13 +32,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @media(max-width:600px){.wallet{left:15%;right:42%;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);column-gap:2px}.wallet strong{font-size:16px}.wallet-add{width:24px}.last-battle{gap:12px}.last-battle button{flex-shrink:0}}
 .wallet{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px}.wallet-add{position:absolute;right:-92%;top:8%;width:44px;height:44px;min-height:44px;background:transparent!important;border:0;box-shadow:none;color:transparent;font-size:0}.wallet-add::after{content:'+';position:absolute;right:1px;bottom:1px;width:19px;height:19px;background:#4e2e13;border:1px solid #d7a958;border-radius:4px;color:#ffe0a2;font-size:17px;line-height:15px}.wallet-add:hover:not(:disabled){background:#ffe2a322!important}.wallet strong{font-size:clamp(15px,1.5vw,21px)}
 
-.chest-card-reveal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0 8px;min-height:152px}
+.chest-card-reveal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0 8px}
 .chest-reward-card{display:grid;justify-items:center;align-content:start;gap:5px;padding:8px 5px;border:1px solid #b99050;border-radius:10px;background:linear-gradient(145deg,#18394a,#0a1d2a);text-align:center;animation:chest-card-pop .34s cubic-bezier(.2,.85,.25,1.2) both}
 .chest-reward-card .framed-portrait{width:76px;height:76px}
 .chest-reward-card strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .chest-reward-card small{color:#ffdf8b;font-size:10px;font-weight:900;letter-spacing:.08em}
 @keyframes chest-card-pop{0%{opacity:0;transform:translateY(18px) scale(.72)}75%{opacity:1;transform:translateY(-3px) scale(1.04)}100%{opacity:1;transform:translateY(0) scale(1)}}
-@media(max-width:600px){.chest-card-reveal{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;min-height:300px}.chest-reward-card{padding:5px 4px;gap:3px}.chest-reward-card .framed-portrait{width:62px;height:62px}.chest-reward-card strong{font-size:12px}}
+@media(max-width:600px){.chest-card-reveal{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.chest-reward-card{padding:5px 4px;gap:3px}.chest-reward-card .framed-portrait{width:62px;height:62px}.chest-reward-card strong{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.chest-reward-card{animation:none}}
 @media(max-width:600px){.hold-panel .hold-title{display:block;width:150px;height:62px}.hold-panel>.row.between>.row{gap:8px}.hold-panel{padding:10px}.hold-panel button.chest{border-width:3px}.hold-panel button.chest .chest-art{width:62px;height:56px}}
 .hold-panel .empty-chest{position:relative;top:-12px}

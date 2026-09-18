@@ -1294,7 +1294,7 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
   let dpr = 1, lastW = 0, lastH = 0;
   const cam = { x: 0, y: 0, ppu: 1, unit: 1, shakeX: 0, shakeY: 0 };
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, matchMedia('(pointer:coarse)').matches ? 1 : 2);
     const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
     if (w !== lastW || h !== lastH) { canvas.width = w; canvas.height = h; lastW = w; lastH = h; }
     // Fit the ship with room around it, the same on any screen shape.
@@ -1545,7 +1545,7 @@ const COMMON_GLSL = document.getElementById('common').textContent.trim();
   }
   function render() {
     resize();
-    artRenderer.paint(cam,canvas,now,gameSurface,gameFoam);
+    artRenderer.paint(cam,canvas,now,gameSurface,gameFoam,gameFoamLook);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 0);

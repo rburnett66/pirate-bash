@@ -45,10 +45,11 @@ function shell(){
 
 function render(){M.advance(state,Date.now());save();shell();const views={battle:home,crew:crew,ports:ports,booty:booty,store:store,settings:settings,water:waterWorkshop,arena:arena};el('main').innerHTML=(saveError?'<div class="error-note">'+saveError+'</div>':'')+(views[page]||home)();if(page==='arena')updateArena();if(page==='ports')focusMap=mountPortMap(M.PORTS,port,stepPort,()=>!state.settings.motion);for(const f of document.querySelectorAll('iframe'))f.addEventListener('load',()=>{let ready=false;try{ready=!!f.contentDocument?.querySelector('canvas')?.getContext('webgl2');}catch{}if(!ready){f.style.visibility='hidden';const note=document.createElement('div');note.className='render-note';note.textContent=f.id==='enemyShip'?'Ship renderer unavailable. Select a gunner, adjust the angle and use Fire.':f.id==='playerShip'?'Your ship renderer is unavailable.':'Ocean renderer unavailable.';f.after(note);}});if(page==='booty'){const track=el('track');track.scrollLeft=Math.max(0,(M.seasonLevel(state)-2)*144);track.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();track.scrollLeft+=e.deltaY;}},{passive:false});track.addEventListener('keydown',e=>{let d={'ArrowRight':144,'ArrowLeft':-144,'PageDown':500,'PageUp':-500}[e.key];if(d){e.preventDefault();track.scrollLeft+=d;}if(e.key==='Home')track.scrollLeft=0;if(e.key==='End')track.scrollLeft=track.scrollWidth;});}}
 function home(){
- const roster=Object.values(state.slots).map(pirate),view=harbor(state.settings.harbor);
+ const view=harbor(state.settings.harbor);
 
  const chests=Array.from({length:5},(_,i)=>{const c=state.chests[i];return c?button(artImage('chest','chest-art')+'<strong>'+c.kind+'</strong><small>Open chest</small>','chest',c.id,'chest'):`<div class="chest empty-chest">${artImage('chest','chest-art')}<small>Win a battle</small></div>`;}).join('');
- const recent=state.lastResult&&(!state.battle||state.battle.phase==='result')?`<div class="last-battle row between"><span>Last battle · ${state.lastResult.won?'Victory':'Defeat'}</span>${button('View battle results','last-result','','small')}</div>`:'';
+ const hasResult=state.lastResult&&(!state.battle||state.battle.phase==='result');
+ const recent=`<div class="harbor-actions">${button('Challenge','challenge','','small')}${button('Results','last-result','','small',!hasResult)}</div>`;
  return `
  <div class="harbor-layout">
   <section class="harbor-main"><div class="harbor-scene brass-panel">
@@ -57,10 +58,9 @@ function home(){
    <div class="sail-action">${button(state.battle&&state.battle.phase!=='result'?'Resume battle →':artImage('find','','Find match'),'start','','art-button')}<small>Local battles · seeded rivals</small></div>
   </div></section>
   <aside class="harbor-aside">
-   <section class="card crew-overview"><div class="row between"><h3>Your fighting crew</h3>${button('Manage →','nav','crew','ghost small')}</div>
-    <div class="crew-dots">${roster.map(p=>`<button class="crew-preview" data-action="detail" data-id="${p.id}" aria-label="View ${esc(p.name)}">${portrait(p)}<span>${esc(p.name)}</span></button>`).join('')}</div>
-    <p class="footer-note">${roster.length} gunners aboard · Ship level ${state.shipLevel}</p>
-    ${recent}<div class="challenge-action">${button('Text a challenge','challenge','','small')}${state.friendChallenges?.lastResult?button('Copy battle results','challenge-results','','small'):''}</div>
+   <section class="card crew-overview"><div class="row between"><h3>Your ship</h3>${button('Manage →','nav','crew','ghost small')}</div>
+    <div class="harbor-ship-preview"><iframe id="homeShip" src="/pirate-bash/public/ship.html?side=home" title="Your ship in port" tabindex="-1"></iframe></div>
+    ${recent}${state.friendChallenges?.lastResult?button('Copy challenge results','challenge-results','','small'):''}
    </section>
    <section class="card orders-card">
     <div class="daily-orders"><div class="row between"><h3>Captain’s orders</h3><span class="pill">DAILY</span></div><div class="quest"><div class="row between"><span>Finish 3 battles</span><span>${Math.min(3,state.quests.matches)}/3</span></div><progress max="3" value="${state.quests.matches}"></progress>${button(state.quests.dailyClaim?'Collected ✓':'Claim 100 season XP','quest','daily','small',state.quests.dailyClaim||state.quests.matches<3)}</div></div>
@@ -72,8 +72,8 @@ function home(){
 }
 
 function card(p){const owned=state.levels[p.id]>0,posted=Object.values(state.slots).includes(p.id),held=state.cards[p.id]||0,upgrade=M.upgradeCost(state,p.id),ready=owned&&!!upgrade&&!state.bench&&held>=upgrade.cards&&state.gold>=upgrade.gold;return '<button class="pirate-card '+(selected===p.id?'selected ':'')+(!owned?'locked':'')+'" style="--rarity:var(--'+p.rarity+')" data-action="'+(tab==='gunners'&&owned?'select':'detail')+'" data-id="'+p.id+'">'+(posted?'<span class="posted">ON SHIP</span>':'')+(ready?'<span class="upgrade-ready" aria-label="Upgrade available">↑</span>':'')+portrait(p)+'<span class="rarity">'+p.rarity+'</span><strong class="name">'+p.name+'</strong><small>'+(owned?'Lv. '+state.levels[p.id]+' · '+p.primary:'Found in chests')+'</small><small class="card-count">'+held+' cards</small></button>';}
-function crew(){return '<div class="tabs">'+[['ship','Ship'],['gunners','Gunners'],['collection','Collection'],['yard','Shipyard'],['equipment','Equipment']].map(([k,n])=>button(n,'tab',k,tab===k?'active':'')).join('')+'</div>'+(tab==='ship'?shipScreen(state,inventoryTab,{button,cost,diagram,materials}):tab==='gunners'?'<div class="split"><section class="card"><div class="row between"><h3>The Blackwake</h3><span class="pill">LEVEL '+state.shipLevel+'</span></div>'+diagram()+'<p style="font-size:12px">'+(selected?'Posting '+pirate(selected).name+'. Choose an open station.':'Select a pirate, then a station. Tap a filled station to stand them down.')+'</p><div class="row spaced">'+button('Cancel selection','unselect','','ghost small',!selected)+(selected?button('View pirate','detail',selected,'small'):'')+'</div><p class="footer-note">● Deck: exposed, clear line of fire<br>● Gun ports: protected by the hull</p></section><section><div class="row between" style="margin-bottom:14px"><h3>Your crew</h3><small>'+M.PIRATES.filter(p=>state.levels[p.id]).length+' / 36 recruited</small></div><div class="roster scroll-panel">'+M.PIRATES.filter(p=>state.levels[p.id]).map(card).join('')+'</div></section></div>':tab==='collection'?'<div class="roster">'+M.PIRATES.map(card).join('')+'</div>':tab==='yard'?yard():equipment());}
-function diagram(){const assigning=tab==='gunners';return '<div class="ship-diagram upgrade-stage '+(assigning?'assigning':'')+'"><iframe id="homeShip" src="/pirate-bash/public/ship.html?side=home" title="Your ship artwork" tabindex="-1"></iframe>'+M.positions(state).map(key=>button(state.slots[key]?'●':'+','slot',key,'slot '+(state.slots[key]?'occupied ':''))).join('')+'</div>';}
+function crew(){return '<div class="tabs">'+[['ship','Ship'],['gunners','Gunners'],['collection','Collection'],['yard','Shipyard'],['equipment','Equipment']].map(([k,n])=>button(n,'tab',k,tab===k?'active':'')).join('')+button('Special Attack','moves','','')+'</div>'+(tab==='ship'?shipScreen(state,inventoryTab,{button,cost,diagram,materials}):tab==='gunners'?'<div class="split"><section class="card"><div class="row between"><h3>The Blackwake</h3><span class="pill">LEVEL '+state.shipLevel+'</span></div>'+diagram()+'<p style="font-size:12px">'+(selected?'Posting '+pirate(selected).name+'. Choose an open station.':'Select a pirate, then a station. Tap a filled station to stand them down.')+'</p><div class="row spaced">'+button('Cancel selection','unselect','','ghost small',!selected)+(selected?button('View pirate','detail',selected,'small'):'')+'</div><p class="footer-note">● Deck: exposed, clear line of fire<br>● Gun ports: protected by the hull</p></section><section><div class="row between" style="margin-bottom:14px"><h3>Your crew</h3><small>'+M.PIRATES.filter(p=>state.levels[p.id]).length+' / 36 recruited</small></div><div class="roster scroll-panel">'+M.PIRATES.filter(p=>state.levels[p.id]).map(card).join('')+'</div></section></div>':tab==='collection'?'<div class="roster">'+M.PIRATES.map(card).join('')+'</div>':tab==='yard'?yard():equipment());}
+function diagram(){const assigning=tab==='gunners';return '<div class="ship-diagram upgrade-stage '+(assigning?'assigning':'')+'"><iframe id="homeShip" src="/pirate-bash/public/ship.html?side=home" title="Your ship artwork" tabindex="-1"></iframe>'+(tab==='ship'?'<span class="ship-mast-attack" title="'+esc(M.FINISHERS[state.move].name)+'">'+specialAttackIcon(state.move)+'</span>':'')+M.positions(state).map(key=>button(state.slots[key]?'●':'+','slot',key,'slot '+(state.slots[key]?'occupied ':''))).join('')+'</div>';}
 
 function yard(){const c=M.hullConfig(state.shipLevel).cost;return '<div class="split"><section class="card"><div class="eyebrow">SHIPWRIGHT’S YARD</div><h2 class="spaced">Room for one more troublemaker.</h2>'+diagram()+materials()+'<div class="rule"></div><p>Each ship level opens one new gun station. Your current crew stays aboard.</p><div class="row spaced">'+button(c?'Upgrade to level '+(state.shipLevel+1):'Fully upgraded','ship-up',state.shipLevel,'primary',!c)+'</div><p class="footer-note">'+(c?cost(c):'Eight stations. A formidable ship.')+'</p></section><section class="card"><h3>The gunsmith</h3><p class="spaced">Cards buy experience. Gold pays the gunsmith. Great weapons take a little time.</p>'+bench()+'<div class="rule"></div><h3>The position ladder</h3>'+Object.entries(M.LADDER).map(([l,[d,h]])=>'<div class="row between" style="padding:10px 0;border-bottom:1px solid var(--line)"><span>Level '+l+'</span><small>'+d+' deck · '+h+' hull</small><strong>'+(+l<=state.shipLevel?'✓':'⌑')+'</strong></div>').join('')+'</section></div>';}
 function bench(){if(!state.bench)return '<div class="empty spaced">Your bench is free.<br><small>Open a crew card to start an upgrade.</small></div>';const b=state.bench,left=Math.max(0,b.ends-Date.now()),gems=Math.ceil(left/360000);return '<div class="card spaced"><h3>'+pirate(b.id).name+'</h3><p data-timer="'+b.ends+'">'+duration(left)+' remaining</p>'+button('Finish now · 💎 '+gems,'skip','','primary small')+'</div>';}
@@ -87,7 +87,7 @@ function portStandings(){return '<div class="board-row board-head"><span>#</span
 function ports(){return '<div class="ports-layout"><section class="port-explorer"><div class="city-switcher"><div class="port-cycle"><button data-action="port-step" data-id="-1" aria-label="Previous city">←</button><span id="portCounter">PORT '+(port+1)+' / '+M.PORTS.length+'</span><button data-action="port-step" data-id="1" aria-label="Next city">→</button></div><h2 id="portName" aria-live="polite">'+M.PORTS[port]+'</h2></div><div class="brass-panel map-frame">'+chartMarkup(M.PORTS)+'</div><p class="port-rules">Top 10 advance · Bottom 10 return · Settles Monday, 00:00 UTC</p></section><section class="card standings"><div class="row between"><h3>Port standings</h3><small>100 captains</small></div><div class="board" id="portBoard" tabindex="0" aria-label="Port standings, scroll for all captains">'+portStandings()+'</div><p class="footer-note">Weekly wins · trophies break ties. Seeded rivals · local standings.</p></section></div>';}
 function setPort(next){port=(next+M.PORTS.length)%M.PORTS.length;if(page!=='ports')return;el('portCounter').textContent='PORT '+(port+1)+' / '+M.PORTS.length;el('portName').textContent=M.PORTS[port];el('portBoard').innerHTML=portStandings();el('portBoard').scrollTop=0;focusMap?.(port);}
 function stepPort(direction){setPort(port+direction);}
-function scenery(){modal('<h2>Choose your harbor scenery</h2><div class="harbor-picker scenery-dialog">'+HARBORS.map(h=>'<button data-action="harbor" data-id="'+h.id+'" class="harbor-choice '+(state.settings.harbor===h.id?'active':'')+'" aria-pressed="'+(state.settings.harbor===h.id)+'">'+artImage(h.id,'',h.name)+'<span>'+h.name+'</span></button>').join('')+'</div>');}
+function scenery(){modal('<h2>Choose your harbor scenery</h2><div class="harbor-picker scenery-dialog">'+HARBORS.map(h=>'<button data-action="harbor" data-id="'+h.id+'" class="harbor-choice '+(state.settings.harbor===h.id?'active':'')+'" aria-pressed="'+(state.settings.harbor===h.id)+'">'+artImage(h.id,'',h.name,'lazy')+'<span>'+h.name+'</span></button>').join('')+'</div>');}
 function booty(){return '<div class="season-intro"><div class="row"><span class="mini-number gold">'+M.seasonLevel(state)+'</span><div><h3>Season of the Drowned Crown</h3><p>'+Math.max(1,Math.ceil(((state.season+1)*28*86400000-Date.now())/86400000))+' days remaining · '+state.xp+' season XP</p></div></div><div class="row">'+button('Claim all available','claim-all','','primary')+button('Finishing moves','moves','','ghost')+button('Weekly orders','weekly','','ghost')+'</div></div><p style="font-size:11px">'+(state.premium?'CAPTAIN’S SHARE · 3× WOOD · LOCAL PREVIEW':'CAPTAIN’S SHARE · 3× WOOD · Preview in Settings; purchases not connected')+'</p><div class="season-track" id="track" tabindex="0" aria-label="Season rewards; use arrow keys to scroll">'+Array.from({length:50},(_,i)=>{const l=i+1;return '<div class="reward-column '+([6,14,22,30,38,46].includes(l)?'wide':'')+'">'+reward(l,true)+'<div class="waypoint '+(l===M.seasonLevel(state)?'current':'')+'"><span>'+l+'</span></div>'+reward(l,false)+'</div>';}).join('')+'</div><p style="font-size:11px" class="foam">CREW’S SHARE · FREE FOR EVERY CAPTAIN</p>';}
 function reward(l,prem){const r=M.rewardAt(l,prem),claimed=state.claims.includes(l+':'+prem),ready=l<=M.seasonLevel(state)&&(!prem||state.premium)&&!claimed;const move='move'in r?M.FINISHERS[r.move]:null;return '<button class="reward '+(prem?'premium ':'')+(ready?'ready ':'')+(claimed?'claimed':'')+'" data-action="claim" data-id="'+l+':'+prem+'" '+(!ready?'disabled':'')+'><span class="reward-art">'+(move?move.icon:'<img class="currency-art" src="/pirate-bash/public/menu-art/'+(r.gems?'gems':'gold')+'.svg" alt="">')+'</span><strong class="label">'+(move?move.name:r.gems?r.gems+' gems':r.gold+' gold')+'</strong><span class="wood-bonus">+'+r.wood+' wood</span><small>'+(claimed?'CLAIMED ✓':ready?'CLAIM REWARD':prem&&!state.premium?'CAPTAIN’S SHARE ⌑':'LEVEL '+l)+'</small></button>';}
 function moves(){modal('<div class="eyebrow">THE DEEP ANSWERS YOUR CALL</div><h2>Make it a spectacle.</h2><p>Land four successful attacks in a row to charge. Misses reset incomplete progress. Charge again after every big attack.</p><div class="gear-grid spaced">'+M.FINISHERS.map(m=>'<div class="card"><div class="gear-icon">'+specialAttackIcon(m.id)+'</div><h3>'+m.name+'</h3><p>'+m.hits+'</p>'+button(state.move===m.id?'Equipped ✓':state.moves.includes(m.id)?'Equip':m.cost.gold+' gold','move',m.id,'small',state.move===m.id)+'</div>').join('')+'</div>');}
@@ -96,7 +96,7 @@ function store(){const deals=M.offers(state);save();return '<section class="card
 let waterDraft=null,waterDraftError='',waterReady=false;
 function waterCard(){
  const library=waterLibrary(state.settings.water),look=activeWater(library);
- return '<section class="card water-card"><div class="eyebrow">OCEAN LOOKS</div><h3>Find your sea.</h3><p>Tune waves, whitecaps, foam, ship rocking and splashes. Save your favorites for battle.</p><label class="water-select">Battle look <select id="waterLook"><option value="default">Coastal swell · built in</option>'+library.presets.map(p=>'<option value="'+esc(p.id)+'" '+(p.id===look.id?'selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select></label><div class="row wrap spaced">'+button('Open Water Workshop','water-open','','primary small')+button('Copy settings','water-copy','','small')+button('Paste settings','water-paste','','ghost small')+'</div><p class="footer-note">'+library.presets.length+' / 24 saved looks. Included in your captain backup. Random selection per game is planned.</p></section>';
+ return '<section class="card water-card"><div class="eyebrow">OCEAN LOOKS</div><h3>Find your sea.</h3><p>Tune waves, whitecaps, foam, ship rocking and splashes. Save your favorites for battle.</p><label class="water-select">Battle look <select id="waterLook"><option value="default">Default · '+esc(activeWater(undefined).name)+'</option><option value="at-sea" '+(library.selected==='at-sea'?'selected':'')+'>At Sea · built in</option>'+library.presets.map(p=>'<option value="'+esc(p.id)+'" '+(p.id===look.id?'selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select></label><div class="row wrap spaced">'+button('Open Water Workshop','water-open','','primary small')+button('Copy settings','water-copy','','small')+button('Paste settings','water-paste','','ghost small')+'</div><p class="footer-note">'+library.presets.length+' / 24 saved looks. Included in your captain backup. Random selection per game is planned.</p></section>';
 }
 function openWater(look=activeWater(state.settings.water)){waterDraft={...look,values:{...look.values}};waterDraftError='';waterReady=false;page='water';render();}
 function waterWorkshop(){
@@ -142,7 +142,7 @@ function settings(){return '<div class="settings-grid"><section class="card sett
 
 function arena(){
  const b=M.prepareBattle(state.battle);if(!b){page='battle';return home();}
- cameraReady=false;viewMode='crew';scope=false;telescope=false;
+ cancelAnimationFrame(cameraAnimation);cameraAnimation=0;cameraTarget=null;cancelAnimationFrame(poseAnimation);poseAnimation=0;visualPoses={};cameraReady=false;viewMode='crew';scope=false;telescope=false;
  return `<section class="arena combat-arena polished-battle">
   <div class="battle-top">${['player','enemy'].map(side=>`<div class="health-card ${side}"><h3>${esc(side==='player'?state.name:b.enemyName)}</h3><div class="health-line"><strong id="${side}Percent"></strong></div><div class="health-meta" id="${side}Meta"></div></div>`).join('')}<div class="battle-tools">${button('🔭','scope','','telescope')}${fullscreenButton()}</div></div>
   <div class="turn-banner" id="turnBanner" role="status"><div class="turn-summary"><strong id="phaseLabel"></strong><span id="turnLabel"></span><span id="shots"></span><span id="turnClock"></span><span id="windIndicator"></span><span class="combat-message-row"><span id="battleLog"></span><span id="shotReadout" aria-live="polite"></span></span></div></div>
@@ -180,9 +180,24 @@ function configure(side){
  layoutCombat();
 }
 let camera={ppu:1,ox:0,oy:0},flying=false,cameraReady=false,viewMode='crew',cameraAnimation=0,cameraTarget=null,flightTarget='enemy',attackSide='player';
+let poseAnimation=0,visualPoses={};
+function animateOceanPose(){
+ if(poseAnimation)return;
+ let last=performance.now();
+ function tick(now){
+  poseAnimation=0;if(page!=='arena'||!state.battle||document.hidden)return;
+  const blend=1-Math.exp(-Math.min(100,now-last)/60);last=now;let moving=false;
+  for(const side of ['player','enemy']){const target=state.battle[side].pose||{heave:0,roll:0},pose=visualPoses[side]??={...target};
+   for(const key of ['heave','roll']){const delta=target[key]-pose[key];pose[key]+=delta*blend;if(Math.abs(delta)>.0001)moving=true;else pose[key]=target[key];}
+  }
+  if(!cameraAnimation)paintCombat(false);
+  if(moving)poseAnimation=requestAnimationFrame(tick);
+ }
+ poseAnimation=requestAnimationFrame(tick);
+}
 function shipView(side){return {cutaway:side===cutawaySide(state.battle,busy,attackSide,viewMode,flightTarget),hideRig:viewMode==='crew'||viewMode==='celebrate'};}
 const screenPoint=p=>({x:camera.ox+p.x*camera.ppu,y:camera.oy-p.y*camera.ppu});
- function desiredCamera(){const field=el('combatField'),b=state.battle;if(!field||!b)return null;if(viewMode==='scope')return battleCamera(field.clientWidth,field.clientHeight,b.enemy.x,b.enemy.x,'crew',b.enemy.x);if(viewMode==='special'){const ppu=Math.min(field.clientWidth/4.2,Math.max(90,field.clientHeight-130)/2.8);return {ppu,ox:field.clientWidth/2-b[flightTarget].x*ppu,oy:(field.clientHeight-130)*.78};}return viewMode==='celebrate'?battleCamera(field.clientWidth,field.clientHeight,b[flightTarget].x,b[flightTarget].x,'crew'):battleCamera(field.clientWidth,Math.max(150,field.clientHeight-(matchMedia('(pointer:coarse) and (orientation:landscape) and (max-height:600px)').matches?45:110)),b.player.x,b.enemy.x,viewMode,b[flightTarget].x);}
+ function desiredCamera(){const field=el('combatField'),b=state.battle;if(!field||!b)return null;if(viewMode==='scope')return battleCamera(field.clientWidth,field.clientHeight,b.enemy.x,b.enemy.x,'crew',b.enemy.x);if(viewMode==='special')return battleCamera(field.clientWidth,field.clientHeight,b.player.x,b.enemy.x,'special',b[flightTarget].x);return viewMode==='celebrate'?battleCamera(field.clientWidth,field.clientHeight,b[flightTarget].x,b[flightTarget].x,'crew'):battleCamera(field.clientWidth,Math.max(150,field.clientHeight-(matchMedia('(pointer:coarse) and (orientation:landscape) and (max-height:600px)').matches?45:110)),b.player.x,b.enemy.x,viewMode,b[flightTarget].x);}
 function setBattleView(mode){
  viewMode=mode;const target=desiredCamera();if(!target)return;
  for(const side of ['player','enemy'])send(side,{action:'view',...shipView(side)});
@@ -193,18 +208,18 @@ function setBattleView(mode){
 }
 function layoutCombat(){
  const target=desiredCamera();if(!target)return;
- if(!cameraReady){camera=target;cameraReady=true;}else if(!cameraAnimation)camera=target;
+ if(!cameraReady){camera=target;cameraReady=true;}else if(cameraAnimation){if(Object.keys(target).some(k=>Math.abs(target[k]-cameraTarget[k])>.01)){setBattleView(viewMode);return;}}else camera=target;
  paintCombat();
 }
-function paintCombat(){
+function paintCombat(syncWater=true){
  const field=el('combatField'),b=state.battle;if(!field||!b)return;const {ppu}=camera,w=field.clientWidth,h=field.clientHeight;
  field.dataset.view=viewMode;
- for(const side of ['player','enemy']){const f=el(side+'Ship'),p=screenPoint({x:b[side].x,y:.85});if(f)Object.assign(f.style,{width:'700px',height:'660px',left:p.x-1.75*ppu+'px',top:p.y-1.65*ppu+'px',transformOrigin:'0 0',transform:`scale(${ppu/200}) translateY(${-(b[side].pose?.heave||0)*200}px) translate(350px,558px) rotate(calc(${-(b[side].pose?.roll||0)*180/Math.PI}deg + var(--special-rock,0deg))) scaleX(${side==='enemy'?-1:1}) translate(-350px,-558px)`});}
+ for(const side of ['player','enemy']){const f=el(side+'Ship'),pose=visualPoses[side]||b[side].pose,p=screenPoint({x:b[side].x,y:.85});if(f)Object.assign(f.style,{width:'700px',height:'660px',left:p.x-1.75*ppu+'px',top:p.y-1.65*ppu+'px',transformOrigin:'0 0',transform:`scale(${ppu/200}) translateY(${-(pose?.heave||0)*200}px) translate(350px,558px) rotate(calc(${-(pose?.roll||0)*180/Math.PI}deg + var(--special-rock,0deg))) scaleX(${side==='enemy'?-1:1}) translate(-350px,-558px)`});}
  el('shotLayer').setAttribute('viewBox','0 0 '+w+' '+h);
  const move=el('waterMovement'),pos=screenPoint({x:b.player.x,y:-.7});
  move.style.left=Math.max(58,Math.min(w-58,pos.x))+'px';move.style.top=Math.min(h-53,pos.y)+'px';move.hidden=busy||b.phase!=='player';
  document.querySelectorAll('#crewTargets button').forEach(n=>{const g=b.player.crew.find(g=>g.id===Number(n.dataset.id));if(!g)return;const q=stationPosition(b.player,g.slot),p=screenPoint(shipToWorld(b.player,1,{x:q.x,y:q.y+q.height/2}));Object.assign(n.style,{left:p.x+'px',top:p.y+'px',width:Math.max(44,q.width*ppu)+'px',height:Math.max(44,q.height*ppu)+'px'});});
- drawAim();syncOcean();
+ drawAim();if(syncWater)syncOcean();
 }
 function currentAim(){const b=state.battle,g=b&&M.active(b.player).find(g=>g.id===gunner);if(!g)return null;return {origin:muzzle(b.player,'player',g),speed:Math.sqrt(M.stats(pirate(g.id),g.level).range/10*3.2)};}
 function drawAim(){
@@ -457,7 +472,7 @@ async function sharePreparedLink(inputId){
  if(navigator.share){try{await navigator.share({url});return;}catch(error){if(error.name==='AbortError')return;}}
  await copyShareLink(inputId);
 }
-function homeConfiguration(){return {action:'configure',level:state.shipLevel,sailLevel:state.sailLevel,flag:state.flag,figure:state.figurehead,crew:Object.entries(state.slots).map(([slot,id])=>({id,slot,hp:M.stats(pirate(id),state.levels[id]).hp,name:pirate(id).name,type:{hull:0,crew:1,sails:2}[pirate(id).primary]})),cosmetic:state.cosmetic,plating:state.plating,motion:state.settings.motion,preview:true,cutaway:tab==='gunners'||tab==='ship',hideRig:tab==='gunners'};}
+function homeConfiguration(){return {action:'configure',level:state.shipLevel,sailLevel:state.sailLevel,flag:state.flag,figure:state.figurehead,crew:Object.entries(state.slots).map(([slot,id])=>({id,slot,hp:M.stats(pirate(id),state.levels[id]).hp,name:pirate(id).name,type:{hull:0,crew:1,sails:2}[pirate(id).primary]})),cosmetic:state.cosmetic,plating:state.plating,motion:state.settings.motion,preview:true,cutaway:page==='crew'&&(tab==='gunners'||tab==='ship'),hideRig:page==='crew'&&tab==='gunners'};}
 async function purchaseHull(expected){
  if(upgradeBusy||saveError)return;const previous=structuredClone(state),before=M.hullConfig(state.shipLevel);if(!M.shipUpgrade(state,expected)){toast('Not enough supplies, or finish your current battle first.');return;}
  if(!save()){state=previous;render();return;}upgradeBusy=true;el('app').inert=true;const after=M.hullConfig(state.shipLevel),stage=el('homeShip')?.parentElement;
@@ -547,11 +562,12 @@ window.addEventListener('message',e=>{
  for(const row of rows){
   if(!['player','enemy'].includes(row.side)||!row.pose||!Number.isFinite(row.pose.heave)||!Number.isFinite(row.pose.roll)||!Array.isArray(row.samples)||row.samples.length!==32)continue;
   const f=b[row.side],dir=row.side==='player'?1:-1;
+  visualPoses[row.side]??={...(f.pose||{heave:0,roll:0})};
   f.pose={heave:Math.max(-.2,Math.min(.2,row.pose.heave)),roll:Math.max(-Math.PI/12,Math.min(Math.PI/12,row.pose.roll))};
   const samples=row.samples.map(p=>({y:worldToShip(f,dir,p).y,foam:p.foam}));
   if(samples.every(p=>Number.isFinite(p.y)&&Number.isFinite(p.foam)))send(row.side,{action:'ocean',look:row.foamLook,surface:samples.map(p=>p.y),foam:samples.map(p=>p.foam)});
  }
- layoutCombat();
+ animateOceanPose();
 });
 
 document.addEventListener('keydown',e=>{if(page==='arena'&&!el('sheet').open&&e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();fire();}});

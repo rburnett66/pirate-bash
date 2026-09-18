@@ -104,12 +104,6 @@
 .polished-battle .ship-wheel-control{width:210px;height:210px;bottom:-125px}
 
 
-.chest-reveal-modal{display:flex;flex-direction:column;gap:6px;overflow:hidden}
-.chest-reveal-modal .dialog-banner{height:110px;object-fit:contain;margin:0 auto}
-.chest-reveal-modal h2{margin:4px 0;font-size:clamp(24px,3.2cqw,42px)}
-.chest-reveal-modal .gold{margin:0;font-size:clamp(20px,2.4cqw,34px)}
-.chest-reveal-modal .chest-card-reveal{flex:1;min-height:0;margin:6px 0;align-items:stretch}
-.chest-reveal-modal .footer-note{margin:0}
 @media(min-width:650px){
  .polished-battle #finisherCharge{bottom:4px}
  .polished-battle .aim-panel{bottom:4px}
@@ -122,11 +116,6 @@
  .polished-battle .aim-actions .primary{height:31px;min-height:31px}
  .polished-battle .ship-wheel-control{width:112px;height:112px;bottom:-5px}
  .polished-battle .arena-water{transform:scaleY(1.16);transform-origin:50% 100%}
- .chest-reveal-modal{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:12px 10px}
- .chest-reveal-modal .dialog-banner{height:76px}
- .chest-reveal-modal h2{font-size:22px}
- .chest-reveal-modal .gold{font-size:20px}
- .chest-reveal-modal .chest-card-reveal{grid-template-columns:repeat(2,minmax(0,1fr));min-height:0;overflow:auto}
 }
 /* A landscape phone needs a shallow HUD and corner controls, not desktop spacing. */
 @media (pointer:coarse) and (orientation:landscape) and (max-height:600px){

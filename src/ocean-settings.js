@@ -1,4 +1,5 @@
 import {PROTOTYPE_DEFAULTS,CONTROL_RANGES} from './ocean-catalog.js';
+import {AT_SEA} from './ocean-presets.js';
 export const WATER_DEFAULTS=Object.freeze({...PROTOTYPE_DEFAULTS,swellAmp:.68,swellLen:28,speed:.85,noise:.18,peakK:2.8,pinch:.18,flatten:.65,lineW:2.2,crestLo:.24,crestHi:.85,crestThick:1.6,hullDraft:.30,hullFoam:1.1,rock:.75,rockMax:4,foamLife:1.8,splashSpeed:13,splashSize:.45,splashLife:1.25});
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 export function waterValues(raw){
@@ -29,7 +30,12 @@ export function waterLibrary(library){
  if(library===undefined)return {selected:'default',presets:[]};
  if(!object(library)||!Array.isArray(library.presets)||library.presets.length>24)throw Error('Invalid water look library.');
  const presets=library.presets.map(p=>{if(!object(p)||typeof p.id!=='string'||!/^look-[a-z0-9-]{1,64}$/.test(p.id))throw Error('Invalid water look.');return {id:p.id,name:waterName(p.name),values:waterValues(p.values)};});
- if(new Set(presets.map(p=>p.id)).size!==presets.length||!['default',...presets.map(p=>p.id)].includes(library.selected))throw Error('Invalid selected water look.');
+ if(new Set(presets.map(p=>p.id)).size!==presets.length||!['default','at-sea',...presets.map(p=>p.id)].includes(library.selected))throw Error('Invalid selected water look.');
  return {selected:library.selected,presets};
 }
-export function activeWater(library){const l=waterLibrary(library);return l.presets.find(p=>p.id===l.selected)||{id:'default',name:'Coastal swell',values:{...WATER_DEFAULTS}};}
+export function activeWater(library,mobile=globalThis.matchMedia?.('(pointer:coarse)').matches??false){
+ const l=waterLibrary(library),custom=l.presets.find(p=>p.id===l.selected);
+ if(custom)return custom;
+ const atSea=l.selected==='at-sea'||mobile;
+ return {id:l.selected,name:atSea?'At Sea':'Coastal swell',values:atSea?waterValues(AT_SEA):{...WATER_DEFAULTS}};
+}
