@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><base href="../">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Wheel water (shader only): PIRATE BASH water prototype</title>
@@ -58,7 +58,7 @@
   .actions { display: flex; gap: 6px; margin-top: 10px; }
   .fatal { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-size: 17px; font-weight: 700; }
 </style>
-<style>body>*:not(canvas):not(script):not(style){display:none!important}canvas{pointer-events:none}</style><link rel="stylesheet" href="/pirate-bash/src/sky-scenery.css"></head>
+<style>body>*:not(canvas):not(script):not(style){display:none!important}canvas{pointer-events:none}</style><link rel="stylesheet" href="./src/sky-scenery.css"></head>
 <body>
 <canvas id="sea" aria-label="Animated water made of sixteen layered wave lines. Tap to drop a cannonball."></canvas>
 <div class="title">
@@ -996,8 +996,8 @@ void main() {
 </script>
 
 <script type="module">
-import {waterValues,WATER_DEFAULTS} from "/pirate-bash/src/ocean-settings.js";
-import {createSkyScenery} from "/pirate-bash/src/sky-scenery.js";
+import {waterValues,WATER_DEFAULTS} from "./src/ocean-settings.js";
+import {createSkyScenery} from "./src/sky-scenery.js";
 (() => {
   'use strict';
 

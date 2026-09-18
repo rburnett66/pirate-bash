@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><base href="../">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Hull damage: PIRATE BASH ship prototype</title>
@@ -908,11 +908,11 @@ void main() {
 </script>
 
 <script type="module">
-import {HULL_MASK,maskPixels} from "/pirate-bash/src/hull-mask.js";
-import {stationPosition,SHIP_LADDER} from "/pirate-bash/src/ballistics.js";
-import {stationAnchors} from "/pirate-bash/src/ship-config.js";
-import {gunnerImage} from "/pirate-bash/src/gunner-art.js";
-import {ShipArtRenderer} from "/pirate-bash/src/ship-art-renderer.js";
+import {HULL_MASK,maskPixels} from "./src/hull-mask.js";
+import {stationPosition,SHIP_LADDER} from "./src/ballistics.js";
+import {stationAnchors} from "./src/ship-config.js";
+import {gunnerImage} from "./src/gunner-art.js";
+import {ShipArtRenderer} from "./src/ship-art-renderer.js";
 (() => {
   'use strict';
 

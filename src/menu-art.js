@@ -15,7 +15,7 @@ export const ART = {
   festivalHarbor:'ports/IMG_7380.JPG', sunsetCove:'ports/IMG_7381.JPG', skullIsland:'ports/IMG_7383.JPG',
   coralKingdom:'ports/IMG_7384.JPG'
 };
-export const imageURL = key => '/pirate-bash/public/menu-art/'+ART[key]+(ART[key]?.includes('/')?'':'.png');
+export const imageURL = key => './public/menu-art/'+ART[key]+(ART[key]?.includes('/')?'':'.png');
 export const artImage = (key,cls='',alt='',loading='eager') => '<img class="'+cls+'" src="'+imageURL(key)+'" alt="'+alt+'" draggable="false" loading="'+loading+'">';
 export const HARBORS = [
   {id:'hawaii',name:'Hawaii',mood:'A fair wind and open water'},

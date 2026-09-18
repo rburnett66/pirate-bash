@@ -1,4 +1,4 @@
-export const UPGRADE_MEDIA={construction:'/pirate-bash/public/upgrade-audio/construction.m4a',reveal:null};
+export const UPGRADE_MEDIA={construction:'./public/upgrade-audio/construction.m4a',reveal:null};
 export const UPGRADE_TIMING={cover:1000,construction:3000,reveal:1500};
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export async function celebrateUpgrade({stage,sound,motion,swap,status}){

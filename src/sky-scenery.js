@@ -25,7 +25,7 @@ export function createSkyScenery(){
     root.append(node);return node;
   });
   const city=document.createElement('img');city.className='sky-city';
-  city.src='/pirate-bash/public/sky-art/horizon-city.png';city.alt='';city.draggable=false;
+  city.src='./public/sky-art/horizon-city.png';city.alt='';city.draggable=false;
   root.append(city);document.body.prepend(root);
   return {update({horizon,width,height,center=0,wind=0,motion=true}){
     const waterline=Math.max(0,Math.min(height,horizon));

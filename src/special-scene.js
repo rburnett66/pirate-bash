@@ -6,7 +6,7 @@ const assets=new Map();
 const names=['shark','kraken','tentacles','whale','gull','siren','ball','flaming-ball','fireball'];
 function load(src){if(!assets.has(src))assets.set(src,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>{assets.delete(src);reject(Error('Big attack artwork could not load. Please try again.'));};img.src=src;}));return assets.get(src);}
 const sceneArt=move=>move.id===1?['kraken','tentacles']:[names.includes(move.art)?move.art:'fireball'];
-export function preloadSpecialArt(move){return Promise.all(sceneArt(move).map(n=>load('/pirate-bash/public/killstreaks/'+n+'.png')));}
+export function preloadSpecialArt(move){return Promise.all(sceneArt(move).map(n=>load('./public/killstreaks/'+n+'.png')));}
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n)),ease=n=>{n=clamp(n);return n*n*(3-2*n);};
 const bounds=new WeakMap();
 function artBounds(img){
@@ -31,7 +31,7 @@ export function sirenVoice(enabled,duration,context){
 
 // Two effect canvases straddle the ship iframes. All world positions are recalculated every frame.
 export async function playSpecialScene({field,move,pending,getBattle,getCamera,reduced,onImpact,onAfterImpact,onCelebrate,sound,rigImage}){
- const pictures=Object.fromEntries(await Promise.all(sceneArt(move).map(async n=>[n,await load('/pirate-bash/public/killstreaks/'+n+'.png')])));
+ const pictures=Object.fromEntries(await Promise.all(sceneArt(move).map(async n=>[n,await load('./public/killstreaks/'+n+'.png')])));
  const victim=pending.before.crew.find(g=>g.id===pending.targetCrew);
  const victimImage=victim?await load(gunnerImage(victim.id)):null;
  const reacting= [5,6].includes(move.id)?await Promise.all(pending.before.crew.filter(g=>g.hp>0&&g.slot.startsWith('d')).map(async g=>({g,img:await load(gunnerImage(g.id))}))):[];

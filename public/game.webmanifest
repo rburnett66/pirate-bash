@@ -1,16 +1,16 @@
 {
-  "id": "/pirate-bash/",
+  "id": "../",
   "name": "PIRATE BASH",
   "short_name": "PIRATE BASH",
-  "start_url": "/pirate-bash/",
-  "scope": "/pirate-bash/",
+  "start_url": "../",
+  "scope": "../",
   "display": "fullscreen",
   "orientation": "any",
   "background_color": "#201309",
   "theme_color": "#201309",
   "icons": [
     {
-      "src": "/pirate-bash/public/menu-art/gift-icon__4186e173.png",
+      "src": "./menu-art/gift-icon__4186e173.png",
       "sizes": "1432x1432",
       "type": "image/png",
       "purpose": "any"

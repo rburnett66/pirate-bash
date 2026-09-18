@@ -3,7 +3,7 @@ import {hullConfig,sailConfig,figureConfig} from './ship-config.js';
 import {HULL_MASK,maskPixels} from './hull-mask.js';
 import {SHIP_ART,shipAppearance,MAST_MOUNTS,RIG_SAILS,RIG_FLAGS,sailPanels,clothPlacement,worldToArt,artRig} from './ship-art-layout.js';
 
-const images=new Map(),image=path=>{if(!images.has(path))images.set(path,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Ship artwork failed to load: '+path));img.src='/pirate-bash/public/ship-art/'+path;}));return images.get(path);};
+const images=new Map(),image=path=>{if(!images.has(path))images.set(path,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Ship artwork failed to load: '+path));img.src='./public/ship-art/'+path;}));return images.get(path);};
 const surface=(w=1792,h=1008)=>Object.assign(document.createElement('canvas'),{width:w,height:h});
 const initial=maskPixels({}),C=HULL_MASK,rig=artRig();
 function bitmap(pixels){const c=surface(C.width,C.height),ctx=c.getContext('2d'),data=ctx.createImageData(C.width,C.height);for(let y=0;y<C.height;y++)for(let x=0;x<C.width;x++){const i=(y*C.width+x)*4;data.data[i+3]=pixels[(C.height-1-y)*C.width+x];}ctx.putImageData(data,0,0);return c;}

@@ -15,6 +15,6 @@ export const SPECIAL_ATTACKS=specs.map(([name,hits,icon,target,art,duration,impa
 
 export function specialAttackIcon(id){
  const move=SPECIAL_ATTACKS[id]||SPECIAL_ATTACKS[0];
- return ['shark','kraken','whale','gull','siren'].includes(move.art)?`<img class="special-loadout-icon" src="/pirate-bash/public/killstreaks/${move.art}.png" alt="${move.name}">`:`<span class="special-loadout-icon" role="img" aria-label="${move.name}">${move.icon}</span>`;
+ return ['shark','kraken','whale','gull','siren'].includes(move.art)?`<img class="special-loadout-icon" src="./public/killstreaks/${move.art}.png" alt="${move.name}">`:`<span class="special-loadout-icon" role="img" aria-label="${move.name}">${move.icon}</span>`;
 }
 

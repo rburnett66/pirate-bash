@@ -87,7 +87,7 @@ body.scaled-ui{height:100dvh;min-height:0;display:grid;place-items:center;overfl
 /* Mockup anchor rectangles: rail x=0..244; main x=264..1268;
    right panels x=1288..1764. Keep the entire main menu in one view. */
 .scaled-ui[data-page=battle] #main{display:grid;grid-template-columns:1004px 476px;grid-template-rows:156px 482px 218px;gap:20px;overflow:hidden;scrollbar-gutter:auto}
-.scaled-ui[data-page=battle] .page-title{grid-column:1;grid-row:1;min-height:0;height:156px;padding:8px 22px;margin:0;border:24px solid transparent;border-image:url('/pirate-bash/public/menu-art/panel.svg') 48 / 24px stretch;background:var(--wood) center/800px 580px}
+.scaled-ui[data-page=battle] .page-title{grid-column:1;grid-row:1;min-height:0;height:156px;padding:8px 22px;margin:0;border:24px solid transparent;border-image:url('../public/menu-art/panel.svg') 48 / 24px stretch;background:var(--wood) center/800px 580px}
 .scaled-ui[data-page=battle] .page-title p{display:none}
 .scaled-ui[data-page=battle] .page-heading{gap:16px}
 .scaled-ui[data-page=battle] .page-title h2{font-size:36px;max-width:590px}
