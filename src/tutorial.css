@@ -1,0 +1,18 @@
+/* Combat controls and tutorial presentation */
+.polished-battle .aim-panel{left:max(12px,env(safe-area-inset-left))!important;right:auto!important;bottom:max(12px,env(safe-area-inset-bottom))!important;z-index:24}
+.polished-battle #finisherCharge{top:12px!important;bottom:auto!important;left:max(12px,env(safe-area-inset-left))!important;right:auto!important}
+body.battle-mode .polished-battle .crew-stack{position:absolute!important;left:12px!important;top:112px!important;bottom:auto!important;max-width:38%}
+#sheet.tutorial-sheet{position:relative;isolation:isolate;text-align:center;width:min(760px,94vw);overflow:auto}
+.tutorial-sheet>h2,.tutorial-sheet>p,.tutorial-sheet>button,.tutorial-sheet>form{position:relative;z-index:2}
+.tutorial-items{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:22px 0}
+.tutorial-item{width:130px;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;animation:tutorial-reveal .45s both ease-out}
+.tutorial-item>img{width:110px;height:120px;object-fit:contain}.tutorial-item strong{font-size:13px}.tutorial-material{font-size:66px}
+.tutorial-sheet .reward-fireworks{z-index:1!important}.tutorial-stars{border:0;display:flex;justify-content:center;gap:8px;margin:20px 0}.tutorial-stars legend{font-size:14px}.tutorial-stars label{position:relative;cursor:pointer}.tutorial-stars input{position:absolute;opacity:0;width:100%;height:100%;inset:0;cursor:pointer}.tutorial-stars span{font-size:38px;color:#738493}.tutorial-stars label:has(input:checked) span,.tutorial-stars label:has(~label input:checked) span{color:#ffd65b}.tutorial-stars input:focus-visible+span{outline:3px solid #fff;border-radius:4px}
+#tutorialNameForm{display:grid;gap:14px;max-width:340px;margin:20px auto}
+@keyframes tutorial-reveal{from{opacity:0;transform:translateY(15px) scale(.94)}to{opacity:1;transform:none}}
+@media(max-width:649px){body.battle-mode .polished-battle .crew-stack{top:100px!important;max-width:38%;width:140px}.tutorial-item{width:105px}.tutorial-item>img{width:95px;height:100px}.tutorial-stars{gap:4px}}
+@media(prefers-reduced-motion:reduce){.tutorial-item{animation:none}}
+
+@media(max-width:649px){body.battle-mode #app{left:0;top:0;transform:none;width:100vw;height:100dvh}body.battle-mode .combat-arena.polished-battle{height:100dvh}}
+
+@media(max-width:649px){.polished-battle .aim-panel{bottom:calc(92px + env(safe-area-inset-bottom))!important}}

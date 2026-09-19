@@ -1,3 +1,4 @@
+import {hullStretch} from './ship-config.js';
 import {gunnerImage} from './gunner-art.js';
 import {windLabel} from './wind.js';
 import {preloadSpecialArt,playSpecialScene} from './special-scene.js';
@@ -142,7 +143,7 @@ function settings(){return '<div class="settings-grid"><section class="card sett
 
 function arena(){
  const b=M.prepareBattle(state.battle);if(!b){page='battle';return home();}
- cancelAnimationFrame(cameraAnimation);cameraAnimation=0;cameraTarget=null;cancelAnimationFrame(poseAnimation);poseAnimation=0;visualPoses={};cameraReady=false;viewMode='crew';scope=false;telescope=false;
+ cancelAnimationFrame(cameraAnimation);cameraAnimation=0;cameraTarget=null;cancelAnimationFrame(poseAnimation);poseAnimation=0;visualPoses={};cameraReady=cameraBattleId===b.id;cameraBattleId=b.id;if(!cameraReady)viewMode='crew';scope=false;telescope=false;
  return `<section class="arena combat-arena polished-battle">
   <div class="battle-top">${['player','enemy'].map(side=>`<div class="health-card ${side}"><h3>${esc(side==='player'?state.name:b.enemyName)}</h3><div class="health-line"><strong id="${side}Percent"></strong></div><div class="health-meta" id="${side}Meta"></div></div>`).join('')}<div class="battle-tools">${button('🔭','scope','','telescope')}${fullscreenButton()}</div></div>
   <div class="turn-banner" id="turnBanner" role="status"><div class="turn-summary"><strong id="phaseLabel"></strong><span id="turnLabel"></span><span id="shots"></span><span id="turnClock"></span><span id="windIndicator"></span><span class="combat-message-row"><span id="battleLog"></span><span id="shotReadout" aria-live="polite"></span></span></div></div>
@@ -165,7 +166,7 @@ function matchIntro(){
  const crew=side=>`<aside class="match-crew ${side}-crew" aria-label="${side==='player'?'Your':'Rival'} crew">${b[side].crew.map(g=>`<div class="match-crew-icon" role="img" aria-label="${esc(pirate(g.id).name)}">${portrait(pirate(g.id))}</div>`).join('')}</aside>`;
  modal(`<div class="match-background">${artImage(harbor(state.settings.harbor).id)}</div><div class="match-heading"><small>PIRATE BASH</small><h1>ALL HANDS ON DECK</h1><p>${esc(M.PORTS[state.port])} · Prepare for a broadside.</p></div><div class="match-teams">${crew('player')}${team('player')}<span class="match-vs">VS</span>${team('enemy')}${crew('enemy')}</div><div class="match-begin">${button(artImage('battle','','Battle'),'begin-battle','','art-button match-battle-button')}</div>`);
  el('sheet').classList.add('match-intro');
- const previewConfig=side=>{const frame=document.querySelector('[data-preview="'+side+'"]'),f=b[side];if(!frame||!f)return;frame.style.visibility='visible';frame.contentWindow?.postMessage({type:'pirate-render',action:'configure',preview:true,level:f.shipLevel,crew:visualCrew(f),parts:f,wind:state.battle?.wind??0,cosmetic:f.cosmetic??(side==='player'?state.cosmetic:null),sailLevel:f.sailLevel,flag:f.flag,figure:f.figure,motion:state.settings.motion},location.origin);};
+ const previewConfig=side=>{const frame=document.querySelector('[data-preview="'+side+'"]'),f=b[side];if(!frame||!f)return;frame.style.visibility='visible';frame.style.transform='scaleX('+hullStretch(f.shipLevel)+')';frame.contentWindow?.postMessage({type:'pirate-render',action:'configure',preview:true,level:f.shipLevel,crew:visualCrew(f),parts:f,wind:state.battle?.wind??0,cosmetic:f.cosmetic??(side==='player'?state.cosmetic:null),sailLevel:f.sailLevel,flag:f.flag,figure:f.figure,motion:state.settings.motion},location.origin);};
  document.querySelectorAll('[data-preview]').forEach(frame=>{const side=frame.dataset.preview;frame.addEventListener('load',()=>{previewConfig(side);const enter=()=>frame.classList.add('match-entered');if(side==='enemy')setTimeout(enter,850);else enter();},{once:true});});
  setTimeout(()=>['player','enemy'].forEach(previewConfig),120);
 }
@@ -175,11 +176,11 @@ function sendOcean(data){el('battleOcean')?.contentWindow?.postMessage({type:'pi
 function syncOcean(){if(!el('battleOcean')||!state.battle)return;sendOcean({action:'scene',...camera,wind:state.battle.wind??0,motion:state.settings.motion,settings:activeWater(state.settings.water).values,ships:['player','enemy'].map(side=>({side,x:state.battle[side].x,dir:side==='player'?1:-1}))});}
 function visualCrew(f){return f.crew.map(g=>({...g,name:pirate(g.id).name,range:M.stats(pirate(g.id),g.level).range,type:{hull:0,crew:1,sails:2}[pirate(g.id).primary]}));}
 function configure(side){
- if(side==='home'){send(side,homeConfiguration());return;}
+ if(side==='home'){el('homeShip').style.transform='scaleX('+hullStretch(state.shipLevel)+')';send(side,homeConfiguration());return;}
  const b=state.battle;if(!b)return;const f=b[side];send(side,{action:'configure',level:f.shipLevel,crew:visualCrew(f),parts:f,wind:state.battle?.wind??0,selected:side==='player'?gunner:null,cosmetic:f.cosmetic??(side==='player'?state.cosmetic:null),sailLevel:f.sailLevel,flag:f.flag,figure:f.figure,motion:state.settings.motion,...shipView(side)});
  layoutCombat();
 }
-let camera={ppu:1,ox:0,oy:0},flying=false,cameraReady=false,viewMode='crew',cameraAnimation=0,cameraTarget=null,flightTarget='enemy',attackSide='player';
+let cameraBattleId=null;let camera={ppu:1,ox:0,oy:0},flying=false,cameraReady=false,viewMode='crew',cameraAnimation=0,cameraTarget=null,flightTarget='enemy',attackSide='player';
 let poseAnimation=0,visualPoses={};
 function animateOceanPose(){
  if(poseAnimation)return;
@@ -197,24 +198,35 @@ function animateOceanPose(){
 }
 function shipView(side){return {cutaway:side===cutawaySide(state.battle,busy,attackSide,viewMode,flightTarget),hideRig:viewMode==='crew'||viewMode==='celebrate'};}
 const screenPoint=p=>({x:camera.ox+p.x*camera.ppu,y:camera.oy-p.y*camera.ppu});
- function desiredCamera(){const field=el('combatField'),b=state.battle;if(!field||!b)return null;if(viewMode==='scope')return battleCamera(field.clientWidth,field.clientHeight,b.enemy.x,b.enemy.x,'crew',b.enemy.x);if(viewMode==='special')return battleCamera(field.clientWidth,field.clientHeight,b.player.x,b.enemy.x,'special',b[flightTarget].x);return viewMode==='celebrate'?battleCamera(field.clientWidth,field.clientHeight,b[flightTarget].x,b[flightTarget].x,'crew'):battleCamera(field.clientWidth,Math.max(150,field.clientHeight-(matchMedia('(pointer:coarse) and (orientation:landscape) and (max-height:600px)').matches?45:110)),b.player.x,b.enemy.x,viewMode,b[flightTarget].x);}
+ function desiredCamera(){
+ const field=el('combatField'),b=state.battle;if(!field||!b)return null;
+ const width=field.clientWidth,height=Math.max(150,field.clientHeight-80);
+ const focus=viewMode==='scope'?'enemy':viewMode==='crew'?(b.phase==='enemy'?'enemy':'player'):flightTarget;
+ if(['crew','scope','celebrate'].includes(viewMode))return battleCamera(width,height,b[focus].x,b[focus].x,'crew',b[focus].x);
+ return battleCamera(width,height,b.player.x,b.enemy.x,viewMode,b[flightTarget].x);
+}
 function setBattleView(mode){
  viewMode=mode;const target=desiredCamera();if(!target)return;
  for(const side of ['player','enemy'])send(side,{action:'view',...shipView(side)});
- cancelAnimationFrame(cameraAnimation);cameraTarget=target;
- const from={...camera},start=performance.now(),duration=state.settings.motion?650:0;
- function tick(now){const t=duration?Math.min(1,(now-start)/duration):1,e=t*t*(3-2*t);camera=Object.fromEntries(Object.keys(target).map(k=>[k,from[k]+(target[k]-from[k])*e]));paintCombat();if(t<1)cameraAnimation=requestAnimationFrame(tick);else{cameraAnimation=0;cameraTarget=null;}}
+ cameraTarget=target;
+ if(!cameraReady){camera={...target};cameraReady=true;paintCombat();return;}
+ if(cameraAnimation)return;
+ let previous=performance.now();
+ function tick(now){
+  cameraAnimation=0;if(page!=='arena'||!el('combatField')||!cameraTarget)return;
+  const blend=1-Math.exp(-Math.max(0,Math.min(40,now-previous))/155);previous=now;
+  let moving=false;
+  for(const key of Object.keys(cameraTarget)){const delta=cameraTarget[key]-camera[key];camera[key]+=delta*blend;if(Math.abs(delta)>.005)moving=true;}
+  paintCombat();
+  if(moving)cameraAnimation=requestAnimationFrame(tick);else cameraTarget=null;
+ }
  cameraAnimation=requestAnimationFrame(tick);
 }
-function layoutCombat(){
- const target=desiredCamera();if(!target)return;
- if(!cameraReady){camera=target;cameraReady=true;}else if(cameraAnimation){if(Object.keys(target).some(k=>Math.abs(target[k]-cameraTarget[k])>.01)){setBattleView(viewMode);return;}}else camera=target;
- paintCombat();
-}
+function layoutCombat(){const target=desiredCamera();if(!target)return;setBattleView(viewMode);paintCombat();}
 function paintCombat(syncWater=true){
  const field=el('combatField'),b=state.battle;if(!field||!b)return;const {ppu}=camera,w=field.clientWidth,h=field.clientHeight;
  field.dataset.view=viewMode;
- for(const side of ['player','enemy']){const f=el(side+'Ship'),pose=visualPoses[side]||b[side].pose,p=screenPoint({x:b[side].x,y:.85});if(f)Object.assign(f.style,{width:'700px',height:'660px',left:p.x-1.75*ppu+'px',top:p.y-1.65*ppu+'px',transformOrigin:'0 0',transform:`scale(${ppu/200}) translateY(${-(pose?.heave||0)*200}px) translate(350px,558px) rotate(calc(${-(pose?.roll||0)*180/Math.PI}deg + var(--special-rock,0deg))) scaleX(${side==='enemy'?-1:1}) translate(-350px,-558px)`});}
+ for(const side of ['player','enemy']){const f=el(side+'Ship'),pose=visualPoses[side]||b[side].pose,p=screenPoint({x:b[side].x,y:.85});if(f)Object.assign(f.style,{width:'700px',height:'660px',left:p.x-1.75*ppu+'px',top:p.y-1.65*ppu+'px',transformOrigin:'0 0',transform:`scale(${ppu/200}) translateY(${-(pose?.heave||0)*200}px) translate(350px,558px) rotate(calc(${-(pose?.roll||0)*180/Math.PI}deg + var(--special-rock,0deg))) scaleX(${(side==='enemy'?-1:1)*hullStretch(b[side].shipLevel)}) translate(-350px,-558px)`});}
  el('shotLayer').setAttribute('viewBox','0 0 '+w+' '+h);
  const move=el('waterMovement'),pos=screenPoint({x:b.player.x,y:-.7});
  move.style.left=Math.max(58,Math.min(w-58,pos.x))+'px';move.style.top=Math.min(h-53,pos.y)+'px';move.hidden=busy||b.phase!=='player';
@@ -281,7 +293,7 @@ function updateArena(){
  const fin=document.querySelector('[data-action=finisher]');fin.disabled=locked||!b.charged||!!noTarget;fin.hidden=!b.charged||!!noTarget;fin.classList.toggle('charged',b.charged&&!noTarget);fin.textContent='ATTACK';fin.title=M.FINISHERS[state.move].name;
  const count=b.charged?4:b.streak;el('chargeBalls').hidden=!!noTarget;el('chargeBalls').setAttribute('aria-label',count+' of 4 successful attacks'+(b.charged?' — big attack ready':''));el('chargeBalls').classList.toggle('ready',b.charged);const equipped=M.FINISHERS[state.move],hasArt=['shark','kraken','gull','whale','siren'].includes(equipped.art),attackIcon=el('chargeAttackIcon');attackIcon.hidden=!hasArt;if(hasArt){const art='./public/killstreaks/'+equipped.art+'.png';if(attackIcon.getAttribute('src')!==art)attackIcon.src=art;attackIcon.alt=equipped.name;}el('chargeAttackText').textContent=noTarget||((hasArt?'':equipped.icon+' ')+equipped.name);el('chargeAttackText').hidden=b.charged&&!noTarget;el('chargeBalls').querySelectorAll('i').forEach((n,i)=>n.classList.toggle('lit',i<count));
  el('battleLog').textContent=b.log.at(-1)||'';
- layoutCombat();save();if(autoSelected)setBattleView('wide');
+ layoutCombat();save();if(autoSelected)setBattleView('crew');
 }
 function sound(freq=120,length=.15){if(!state.settings.sound)return;try{const a=audioContext||(audioContext=new AudioContext()),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='triangle';o.frequency.setValueAtTime(freq,a.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(25,freq/4),a.currentTime+length);g.gain.setValueAtTime(.1,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+length);o.start();o.stop(a.currentTime+length);}catch{}}
 let audioContext;
@@ -326,10 +338,10 @@ async function animateShot(flight){
 }
 async function runEnemyTurn(){
  const b=state.battle;if(!b||b.phase!=='enemy')return;
- busy=true;attackSide='enemy';setBattleView('wide');updateArena();await sleep(650);
+ busy=true;attackSide='enemy';gunner=null;setBattleView('crew');updateArena();await sleep(750);
  if(b.enemyMoves>0){M.moveShip(state,b.enemy.x>8.4?1:-1,'enemy');updateArena();await sleep(250);}
- while(b.phase==='enemy'){if(!M.specialUnavailable(state,'enemy')){busy=false;await finisher(false,'enemy');if(b.phase!=='enemy')break;busy=true;setBattleView('wide');updateArena();}const shot=M.planEnemyShot(state);if(!shot)break;const flight=M.launchShot(state,{...shot,live:true});if(!flight)break;updateArena();await animateShot(flight);if(b.phase==='enemy')await sleep(400);}
- busy=false;updateArena();if(b.phase==='result')finish();
+ while(b.phase==='enemy'){setBattleView('crew');updateArena();await sleep(750);if(!M.specialUnavailable(state,'enemy')){busy=false;await finisher(false,'enemy');if(b.phase!=='enemy')break;busy=true;setBattleView('crew');updateArena();}const shot=M.planEnemyShot(state);if(!shot)break;const flight=M.launchShot(state,{...shot,live:true});if(!flight)break;updateArena();await animateShot(flight);if(b.phase==='enemy')await sleep(400);}
+ busy=false;gunner=null;setBattleView('crew');updateArena();if(b.phase==='result')finish();
 }
 async function resumeCombat(){
  if(busy)return;
@@ -341,13 +353,13 @@ async function fire(){
  if(busy||gunner===null||state.battle?.phase!=='player')return;
  const flight=M.launchShot(state,{live:true,gunner,angle:state.battle.aimAngle??35});if(!flight)return;
  busy=true;updateArena();await animateShot(flight);busy=false;
- if(state.battle.phase==='enemy')await runEnemyTurn();else{updateArena();if(state.battle.phase==='result')finish();}
+ if(state.battle.phase==='enemy')await runEnemyTurn();else{gunner=null;setBattleView('crew');updateArena();if(state.battle.phase==='result')finish();}
 }
 function changeAngle(value){
  if(busy||state.battle?.phase!=='player')return;
  state.battle.aimAngle=Math.max(5,Math.min(75,Math.round(value)));el('aimAngle').value=state.battle.aimAngle;el('angleValue').textContent=state.battle.aimAngle+'°';drawAim();save();
 }
-document.addEventListener('input',e=>{if(e.target.id==='aimAngle'){if(viewMode==='crew')setBattleView('wide');changeAngle(Number(e.target.value));}});
+document.addEventListener('input',e=>{if(e.target.id==='aimAngle'){changeAngle(Number(e.target.value));}});
 let draggingAim=null,draggingWheel=null,wheelFrame=0;
 function wheelMove(e){
  if(!draggingWheel)return;
@@ -365,7 +377,7 @@ document.addEventListener('pointercancel',e=>{if(draggingWheel?.id===e.pointerId
 function pointerAim(e){if(!draggingAim)return;const aim=dragAim(draggingAim,{x:e.clientX,y:e.clientY});draggingAim.result=aim;
  if(aim.moved){if(aim.cancel){el('shotReadout').textContent='RELEASE TO CHOOSE ANOTHER GUNNER';el('aimArc').style.opacity='.25';}else{el('aimArc').style.opacity='1';el('shotReadout').textContent='RELEASE TO FIRE · '+aim.angle+'°';changeAngle(aim.angle);}}
 }
-document.addEventListener('pointerdown',e=>{const field=e.target.closest('#combatField');const control=e.target.closest('button,input,#guns,#weaponInfo,.aim-panel,.move-panel,#shipWheel');if(field&&!control&&gunner!==null&&!busy&&state.battle?.phase==='player'&&e.isPrimary){const box=field.getBoundingClientRect(),crew=document.querySelector('.crew-stack')?.getBoundingClientRect(),streak=document.querySelector('.move-panel')?.getBoundingClientRect(),wheel=el('shipWheel')?.getBoundingClientRect(),enemy=el('enemyShip')?.getBoundingClientRect();const left=crew?.right??box.left,right=enemy?.left??box.right,top=Math.max(box.top,streak?.bottom??box.top),bottom=Math.min(box.bottom,wheel?.top??box.bottom);if(e.clientX<left||e.clientX>right||e.clientY<top||e.clientY>bottom)return;draggingAim={x:e.clientX,y:e.clientY,id:e.pointerId};field.setPointerCapture?.(e.pointerId);setBattleView('wide');e.preventDefault();}});
+document.addEventListener('pointerdown',e=>{const field=e.target.closest('#combatField');const control=e.target.closest('button,input,#guns,#weaponInfo,.aim-panel,.move-panel,#shipWheel');if(field&&!control&&gunner!==null&&!busy&&state.battle?.phase==='player'&&e.isPrimary){const box=field.getBoundingClientRect(),crew=document.querySelector('.crew-stack')?.getBoundingClientRect(),streak=document.querySelector('.move-panel')?.getBoundingClientRect(),wheel=el('shipWheel')?.getBoundingClientRect(),enemy=el('enemyShip')?.getBoundingClientRect();const left=crew?.right??box.left,right=enemy?.left??box.right,top=Math.max(box.top,streak?.bottom??box.top),bottom=Math.min(box.bottom,wheel?.top??box.bottom);if(e.clientX<left||e.clientX>right||e.clientY<top||e.clientY>bottom)return;draggingAim={x:e.clientX,y:e.clientY,id:e.pointerId};field.setPointerCapture?.(e.pointerId);setBattleView('crew');e.preventDefault();}});
 document.addEventListener('pointermove',e=>{if(draggingAim?.id===e.pointerId)pointerAim(e);});
 function cancelAim(){if(el('shotReadout'))el('shotReadout').textContent='';draggingAim=null;scope=false;if(el('aimArc'))el('aimArc').style.opacity='1';updateArena();setBattleView('crew');}
 document.addEventListener('pointerup',e=>{if(!draggingAim||draggingAim.id!==e.pointerId)return;pointerAim(e);const result=draggingAim.result;draggingAim=null;el('aimArc').style.opacity='1';if(result?.moved){if(result.cancel)cancelAim();else fire();}});
@@ -426,6 +438,56 @@ async function finisher(resuming=false,side='player'){
 }
 
 function help(){modal('<div class="eyebrow">WELCOME ABOARD</div><h2>Your ship. Your shots. Your spoils.</h2><p><strong>1. Post your crew.</strong> Select a pirate and tap an open station. Deck gunners are exposed; hull gunners get cover.</p><p class="spaced"><strong>2. Pick your shots.</strong> Your turn is highlighted in gold. Move ahead or back up to twice, choose a gunner, then pull back and release to fire. Aim straight up or backward to cancel; the angle slider and Fire button also work. Each weapon has fixed power and a shown range. Every slow, arcing projectile damages the first intact part it hits; its specialty gets bonus damage. You have two shots per turn.</p><p class="spaced"><strong>3. Make a scene.</strong> Land four successful attacks in a row to charge your equipped big attack. A miss resets incomplete progress; enemy turns do not.</p><p class="spaced"><strong>4. Bring home the booty.</strong> Wins earn chests. Cards and gold upgrade your crew. Weekly wins move you through ports.</p><div class="row spaced">'+button('Aye, captain →','onboard','','primary')+'</div>');}
+function tutorialCommit(change){
+ if(saveError||regularState){toast('Save your captain before collecting this reward.');return false;}
+ try{const next=JSON.parse(JSON.stringify(state));change(next);M.validate(next);localStorage.setItem(KEY,JSON.stringify(next));state=next;return true;}
+ catch(error){toast(error.message||'Could not save your reward. Please try again.');return false;}
+}
+function tutorialModal(html){
+ modal(html);el('sheet').classList.add('tutorial-sheet');el('sheet').querySelector('.close')?.remove();
+}
+function tutorialItems(items){
+ return items.map(i=>{
+  let art,label;
+  if(i.kind==='gunner'){const p=pirate(i.id);art=portrait(p);label=p.name+' · +'+i.count+' card';}
+  else if(i.kind==='flag'){art='<img src="./public/ship-art/'+M.FLAGS.find(f=>f.id===i.id).image+'" alt="Union Jack">';label='Union Jack';}
+  else if(i.kind==='sails'){art='<img src="./public/ship-art/sails/'+SAIL_STYLES[i.id][0]+'.png" alt="Black sails">';label='Black sails';}
+  else{art='<span class="tutorial-material" aria-hidden="true">'+({wood:'🪵',metal:'⚙',cloth:'▱'}[i.kind])+'</span>';label='+'+i.count+' '+i.kind;}
+  return '<article class="chest-reward-card tutorial-item">'+art+'<strong>'+esc(label)+'</strong></article>';
+ }).join('');
+}
+function showTutorial(){
+ const pending=state.tutorial?.pending;if(!pending||regularState)return false;
+ const config=M.TUTORIAL_STAGES[pending.stage-1];
+ if(!pending.presented&&!tutorialCommit(s=>{s.tutorial.pending.presented=true;}))return true;
+ if(config.prompt&&!pending.granted){
+  if(config.prompt==='name'){
+   tutorialModal('<h2>'+config.heading+'</h2><p>'+config.message+'</p><form id="tutorialNameForm"><label for="tutorialName">Captain name</label><input id="tutorialName" maxlength="24" required autocomplete="nickname" value="'+esc(state.name==='Captain'?'':state.name)+'"><button class="primary" type="submit">Enter</button></form>');
+   el('tutorialNameForm').onsubmit=e=>{e.preventDefault();if(tutorialCommit(s=>M.tutorialGrant(s,el('tutorialName').value)))showTutorial();};el('tutorialName').focus();
+  }else{
+   tutorialModal('<h2>'+config.heading+'</h2><p>'+config.message+'</p><form id="tutorialRatingForm"><fieldset class="tutorial-stars"><legend>Your rating</legend>'+[1,2,3,4,5].map(n=>'<label><input type="radio" name="rating" value="'+n+'" required aria-label="'+n+' star'+(n>1?'s':'')+'"><span aria-hidden="true">★</span></label>').join('')+'</fieldset><button class="primary" type="submit">Enter</button></form>');
+   el('tutorialRatingForm').onsubmit=e=>{e.preventDefault();const rating=Number(new FormData(e.target).get('rating'));if(tutorialCommit(s=>M.tutorialGrant(s,rating)))showTutorial();};
+  }
+  return true;
+ }
+ if(!pending.granted&&!tutorialCommit(s=>M.tutorialGrant(s)))return true;
+ const p=state.tutorial.pending;
+ const message=p.stage===1?'And here are some new gunners for your ship.':p.stage===6?'Thank you !!':config.message;
+ tutorialModal('<h2>'+(p.stage===6?'Thank you !!':'Congratulations!')+'</h2><p>'+(p.stage===6?'Here are some materials for your ship.':message)+'</p><div class="tutorial-items" role="list" aria-label="Your rewards">'+tutorialItems(p.items)+'</div><p role="status">Added to your inventory.</p>'+button(config.button,'tutorial-done','','primary'));
+ el('sheet').querySelectorAll('.tutorial-item').forEach((item,i)=>{item.setAttribute('role','listitem');item.style.animationDelay=i*250+'ms';});
+ rewardFireworks();return true;
+}
+function leaveTutorial(){
+ const p=state.tutorial?.pending;if(!p?.granted)return;
+ const destination=M.TUTORIAL_STAGES[p.stage-1].destination;
+ if(!tutorialCommit(s=>{M.tutorialDismiss(s);if(s.battle?.phase==='result')s.battle=null;}))return;
+ close();page=destination==='menu'?'battle':'crew';tab=destination==='gunners'?'gunners':'ship';
+ if(destination==='flags'||destination==='sails')inventoryTab=destination;render();
+}
+el('sheet').addEventListener('cancel',event=>{
+ if(state.tutorial?.pending&&!regularState){event.preventDefault();showTutorial();}
+});
+
 function rewardFireworks(){
  const layer=document.createElement('div');layer.className='reward-fireworks';layer.setAttribute('aria-hidden','true');
  const reduced=!state.settings.motion||matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -480,9 +542,10 @@ async function purchaseHull(expected){
   page='crew';tab='ship';render();modal(upgradeComparison(before,after));
  }catch(error){page='crew';tab='ship';render();toast(error.message);}finally{upgradeBusy=false;el('app').inert=false;}
 }
-window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==el('homeShip')?.contentWindow)return;const d=e.data;if(d?.type==='pirate-art-ready'){artWaiters.get(d.requestId)?.();artWaiters.delete(d.requestId);}if(d?.type==='pirate-stations')for(const p of d.anchors){const button=document.querySelector('.ship-diagram [data-id="'+p.slot+'"]');if(button){button.style.left=p.left+'%';button.style.top=p.top+'%';button.setAttribute('aria-label',(state.slots[p.slot]?pirate(state.slots[p.slot]).name:'Empty')+' '+(p.port?'gun port':'deck')+' station '+(Number(p.slot[1])+1));}}});
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==el('homeShip')?.contentWindow)return;const d=e.data;if(d?.type==='pirate-art-ready'){artWaiters.get(d.requestId)?.();artWaiters.delete(d.requestId);}if(d?.type==='pirate-stations')for(const p of d.anchors){const button=document.querySelector('.ship-diagram [data-id="'+p.slot+'"]');if(button){button.style.left=(50+(p.left-50)*hullStretch(state.shipLevel))+'%';button.style.top=p.top+'%';button.setAttribute('aria-label',(state.slots[p.slot]?pirate(state.slots[p.slot]).name:'Empty')+' '+(p.port?'gun port':'deck')+' station '+(Number(p.slot[1])+1));}}});
 function actionResult(ok,msg){if(!ok)toast('Not enough supplies, or this action is not available yet.');else{save();toast(msg);render();}}
-document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-action]');if(!b||b.disabled||upgradeBusy)return;const {action:a,id}=b.dataset;if(page==='arena'&&state.battle?.phase==='special'&&!['resume-special','fullscreen'].includes(a))return;switch(a){
+document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-action]');if(!b||b.disabled||upgradeBusy)return;const {action:a,id}=b.dataset;if(page==='arena'&&state.battle?.phase==='special'&&!['resume-special','fullscreen'].includes(a))return;if(['close','return','rematch'].includes(a)&&state.tutorial?.pending&&!regularState){showTutorial();return;}switch(a){
+case 'tutorial-done':leaveTutorial();break;
 case 'nav':page=id;render();window.scrollTo({top:0,left:0,behavior:'instant'});el('main').scrollTo({top:0,left:0,behavior:'instant'});break;
 case 'challenge':showChallenge();break;
 case 'copy-challenge':case 'copy-results':await copyShareLink(a==='copy-results'?'resultsLink':'challengeLink');break;
@@ -538,9 +601,9 @@ case 'fullscreen':await toggleFullscreen(modal,toast);break;
 case 'screen-help':modal(screenHelp());break;
 case 'help':help();break;
 case 'onboard':state.onboarded=true;save();close();break;
-case 'start':if(state.battle&&state.battle.phase!=='result'){page='arena';render();await resumeCombat();break;}if(M.startBattle(state)){page='arena';gunner=null;save();render();await matchSearch();if(state.battle?.phase==='player')matchIntro();}else toast('Post at least one pirate to your ship first.');break;
+case 'start':if(showTutorial())break;if(state.battle&&state.battle.phase!=='result'){page='arena';render();await resumeCombat();break;}if(M.startBattle(state)){page='arena';gunner=null;save();render();await matchSearch();if(state.battle?.phase==='player')matchIntro();}else toast('Post at least one pirate to your ship first.');break;
 case 'begin-battle':close();setBattleView('crew');break;
-case 'gun':if(!busy&&state.battle?.phase==='player'){gunner=Number(id);scope=true;telescope=false;updateArena();setBattleView('wide');}break;
+case 'gun':if(!busy&&state.battle?.phase==='player'){gunner=Number(id);scope=true;telescope=false;updateArena();setBattleView('crew');}break;
 case 'sail':if(!busy&&M.moveShip(state,Number(id)))updateArena();break;
 case 'fire':await fire();break;
 case 'resume-special':close();await finisher(true);if(state.battle?.phase==='enemy')await runEnemyTurn();break;
@@ -585,4 +648,4 @@ function openIncomingChallenge(){
 }
 window.addEventListener('hashchange',openIncomingChallenge);
 window.addEventListener('popstate',openIncomingChallenge);
-render();openIncomingChallenge();if(!state.onboarded)setTimeout(()=>{if(!state.onboarded&&!el('sheet').open&&!hasChallengeLink(location.href))help();},500);
+render();openIncomingChallenge();if(state.tutorial?.pending)setTimeout(()=>{if(state.tutorial.pending.presented)showTutorial();else finish();},0);if(!state.onboarded&&!state.tutorial?.pending)setTimeout(()=>{if(!state.onboarded&&!el('sheet').open&&!hasChallengeLink(location.href))help();},500);

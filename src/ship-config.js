@@ -6,7 +6,14 @@ export const SHIP_LADDER={1:[2,1],2:[2,2],3:[3,2],4:[3,3],5:[4,3],6:[4,4]};
 export const SHIP_TUNING={baseMove:.3,moveGain:.05,figureBonus:.05,figureGradeGain:.025};
 const deckSurface=[[-1,.28],[-.63,.14],[-.38,.096],[0,.04],[.25,.059],[.65,.128],[1,.16]];
 export function deckFoot(x){for(let i=1;i<deckSurface.length;i++){const a=deckSurface[i-1],b=deckSurface[i];if(x<=b[0]){const t=Math.max(0,(x-a[0])/(b[0]-a[0]));return a[1]+(b[1]-a[1])*t;}}return .1;}
-const anchors=(n,port)=>Array.from({length:n},(_,i)=>{const x=n===1?0:(i/(n-1)-.5)*1.45;return {slot:(port?'h':'d')+i,x,y:port?-.54:deckFoot(x),port,width:.32*1.3,height:.44*1.3};});
+// Port widths and clear gaps include equal margins at both ends of the gun deck.
+export const PORT_LAYOUT={left:-.95,right:.95,width:{1:.22,2:.17,3:.20,4:.20}};
+export const hullStretch=level=>{const n=SHIP_LADDER[level]?.[1]||1;return n===4?1.24:n===3?1.12:1;};
+const anchors=(n,port)=>Array.from({length:n},(_,i)=>{
+ const portWidth=PORT_LAYOUT.width[n],gap=(PORT_LAYOUT.right-PORT_LAYOUT.left-n*portWidth)/(n+1);
+ const x=port?PORT_LAYOUT.left+gap+portWidth/2+i*(portWidth+gap):n===1?0:(i/(n-1)-.5)*1.45;
+ return {slot:(port?'h':'d')+i,x,y:port?-.54:deckFoot(x),port,portWidth,width:.32*1.3,height:.44*1.3};
+});
 export const HULLS=Object.entries(SHIP_LADDER).map(([key,[deck,hold]],i)=>({
  level:+key,hull:'revised-hull',
  inner:'bodies/xray-hull-nomast-right.png',hp:540+i*40,movement:1+i*SHIP_TUNING.moveGain,

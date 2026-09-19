@@ -47,14 +47,14 @@ export class ShipArtRenderer{
   const ctx=this.body.getContext('2d');ctx.clearRect(0,0,1792,1008);if(!this.cutaway){ctx.drawImage(this.skin,0,0);
    // Port doors are exterior details; the intact material mask still protects crew.
    ctx.save();ctx.globalCompositeOperation='source-atop';
-   for(const p of this.config.holdAnchors){const [x,y]=worldToArt({x:p.x,y:p.y+.24});ctx.save();ctx.translate(x,y);ctx.scale(2,2);ctx.fillStyle='#ba8a41';ctx.fillRect(-26,-23,52,46);ctx.fillStyle='#23180f';ctx.fillRect(-21,-18,42,36);ctx.strokeStyle='#6a4823';ctx.lineWidth=4;ctx.strokeRect(-26,-23,52,46);ctx.fillStyle='#79716a';ctx.beginPath();ctx.ellipse(5,3,13,11,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#100e0a';ctx.beginPath();ctx.arc(8,3,7,0,Math.PI*2);ctx.fill();ctx.restore();}
+   for(const p of this.config.holdAnchors){const [x,y]=worldToArt({x:p.x,y:p.y+.24});ctx.save();ctx.translate(x,y);ctx.scale(p.portWidth*480/52,2);ctx.fillStyle='#ba8a41';ctx.fillRect(-26,-23,52,46);ctx.fillStyle='#23180f';ctx.fillRect(-21,-18,42,36);ctx.strokeStyle='#6a4823';ctx.lineWidth=4;ctx.strokeRect(-26,-23,52,46);ctx.fillStyle='#79716a';ctx.beginPath();ctx.ellipse(5,3,13,11,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#100e0a';ctx.beginPath();ctx.arc(8,3,7,0,Math.PI*2);ctx.fill();ctx.restore();}
    ctx.restore();if(this.figureImage)ctx.drawImage(this.figureImage,1350,730,130,180);
   }
   ctx.globalCompositeOperation='destination-out';
   if(this.parts){const current=maskPixels(this.parts),holes=initial.map((p,i)=>p&&!current[i]?255:0);drawMask(ctx,bitmap(holes));}
   ctx.globalCompositeOperation='source-over';
   const inner=this.inside.getContext('2d');inner.clearRect(0,0,1792,1008);
-  inner.drawImage(this.xray,0,0);if(!this.cutaway){inner.globalCompositeOperation='destination-in';inner.drawImage(this.skin,0,0);inner.globalCompositeOperation='source-over';}this.revision++;
+  inner.drawImage(this.xray,0,0);if(this.cutaway){inner.strokeStyle='#f3c96a';inner.lineWidth=4;for(const p of this.config.holdAnchors){const [x,y]=worldToArt({x:p.x,y:p.y});inner.beginPath();inner.ellipse(x,y-5,p.portWidth*240,8,0,0,Math.PI*2);inner.stroke();}}if(!this.cutaway){inner.globalCompositeOperation='destination-in';inner.drawImage(this.skin,0,0);inner.globalCompositeOperation='source-over';}this.revision++;
  }
  buildRig(){
   this.groups=SHIP_ART.masts.map((m,i)=>{
